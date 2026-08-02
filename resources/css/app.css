@@ -1,0 +1,254 @@
+@import 'tailwindcss';
+
+/* Inter di-self-host lewat @fontsource — tanpa CDN (lihat docs/09 §9.5 CSP). */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+| Design token Chery Arta — lihat docs/06-desain-ui-ux.md §6.2
+| dan .claude/rules/40-ui-design-system.md.
+|
+| ATURAN: warna di JSX HANYA boleh memakai token ini. Hex mentah ditolak.
+*/
+@theme {
+    --font-sans:
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    /* Merek — biru Chery Arta (#1e3a8a dari sistem lama) */
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-200: #c7d2fe;
+    --color-brand-400: #5b7ae0;
+    --color-brand-500: #2f4fbf;
+    --color-brand-600: #24409f;
+    --color-brand-700: #1e3a8a;
+    --color-brand-800: #1b3378;
+    --color-brand-900: #16276b;
+
+    /* Merah — tindakan merusak & peringatan (#dc2626 dari sistem lama).
+       Dinamai 'danger' agar tidak tertukar dengan --color-accent milik
+       shadcn yang berwarna netral. */
+    --color-danger-50: #fef2f2;
+    --color-danger-500: #dc2626;
+    --color-danger-600: #b91c1c;
+
+    /* Emas — hanya untuk satu CTA utama per layar (#fbbf24 dari sistem lama) */
+    --color-gold-300: #fcd34d;
+    --color-gold-400: #fbbf24;
+    --color-gold-500: #f59e0b;
+
+    /* Netral */
+    --color-ink: #0f172a;
+    --color-ink-soft: #475569;
+    --color-ink-muted: #64748b;
+    --color-line: #e2e8f0;
+    --color-surface: #ffffff;
+    --color-canvas: #f8fafc;
+
+    /* Status booking — kontras teks terhadap latarnya >= 4.5:1.
+       Peta status -> token ada di resources/js/lib/status.ts */
+    --color-status-pending-bg: #fef3c7;
+    --color-status-pending-fg: #92400e;
+    --color-status-confirmed-bg: #dbeafe;
+    --color-status-confirmed-fg: #1e40af;
+    --color-status-progress-bg: #e0e7ff;
+    --color-status-progress-fg: #3730a3;
+    --color-status-done-bg: #dcfce7;
+    --color-status-done-fg: #166534;
+    --color-status-cancel-bg: #fee2e2;
+    --color-status-cancel-fg: #991b1b;
+    --color-status-noshow-bg: #f1f5f9;
+    --color-status-noshow-fg: #475569;
+
+    /* Bentuk & elevasi — satu tingkat saja (docs/06 §6.4) */
+    --radius-card: 1rem;
+    --radius-btn: 0.75rem;
+    --shadow-card:
+        0 1px 3px rgb(15 23 42 / 0.08), 0 1px 2px rgb(15 23 42 / 0.04);
+    --shadow-pop: 0 12px 32px rgb(15 23 42 / 0.12);
+
+    /* Pemetaan variabel shadcn */
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+  Border default Tailwind v4 berubah menjadi `currentColor`; gaya kompatibilitas
+  di bawah mempertahankan tampilan seperti v3.
+*/
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+:root {
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(222, 47%, 11%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222, 47%, 11%);
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(222, 47%, 11%);
+
+    /* Biru Chery Arta sebagai warna utama */
+    --primary: hsl(225, 64%, 33%);
+    --primary-foreground: hsl(0, 0%, 100%);
+
+    --secondary: hsl(210, 40%, 96%);
+    --secondary-foreground: hsl(222, 47%, 11%);
+    --muted: hsl(210, 40%, 96%);
+    --muted-foreground: hsl(215, 16%, 47%);
+    --accent: hsl(210, 40%, 96%);
+    --accent-foreground: hsl(222, 47%, 11%);
+
+    /* Merah Chery Arta untuk tindakan merusak */
+    --destructive: hsl(0, 72%, 51%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+
+    --border: hsl(214, 32%, 91%);
+    --input: hsl(214, 32%, 91%);
+    --ring: hsl(225, 64%, 33%);
+
+    --chart-1: hsl(225, 64%, 33%);
+    --chart-2: hsl(43, 96%, 56%);
+    --chart-3: hsl(0, 72%, 51%);
+    --chart-4: hsl(199, 89%, 48%);
+    --chart-5: hsl(160, 60%, 45%);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: hsl(225, 64%, 33%);
+    --sidebar-foreground: hsl(214, 95%, 93%);
+    --sidebar-primary: hsl(43, 96%, 56%);
+    --sidebar-primary-foreground: hsl(222, 47%, 11%);
+    --sidebar-accent: hsl(225, 55%, 40%);
+    --sidebar-accent-foreground: hsl(0, 0%, 100%);
+    --sidebar-border: hsl(225, 50%, 42%);
+    --sidebar-ring: hsl(43, 96%, 56%);
+}
+
+.dark {
+    --background: hsl(222, 47%, 7%);
+    --foreground: hsl(210, 40%, 98%);
+    --card: hsl(222, 44%, 10%);
+    --card-foreground: hsl(210, 40%, 98%);
+    --popover: hsl(222, 44%, 10%);
+    --popover-foreground: hsl(210, 40%, 98%);
+
+    --primary: hsl(224, 76%, 68%);
+    --primary-foreground: hsl(222, 47%, 11%);
+
+    --secondary: hsl(217, 33%, 17%);
+    --secondary-foreground: hsl(210, 40%, 98%);
+    --muted: hsl(217, 33%, 17%);
+    --muted-foreground: hsl(215, 20%, 65%);
+    --accent: hsl(217, 33%, 17%);
+    --accent-foreground: hsl(210, 40%, 98%);
+
+    --destructive: hsl(0, 72%, 58%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+
+    --border: hsl(217, 33%, 20%);
+    --input: hsl(217, 33%, 20%);
+    --ring: hsl(224, 76%, 68%);
+
+    --chart-1: hsl(224, 76%, 68%);
+    --chart-2: hsl(43, 96%, 56%);
+    --chart-3: hsl(0, 72%, 58%);
+    --chart-4: hsl(199, 89%, 60%);
+    --chart-5: hsl(160, 60%, 55%);
+
+    --sidebar-background: hsl(222, 47%, 9%);
+    --sidebar-foreground: hsl(214, 32%, 85%);
+    --sidebar-primary: hsl(43, 96%, 56%);
+    --sidebar-primary-foreground: hsl(222, 47%, 11%);
+    --sidebar-accent: hsl(217, 33%, 17%);
+    --sidebar-accent-foreground: hsl(210, 40%, 98%);
+    --sidebar-border: hsl(217, 33%, 20%);
+    --sidebar-ring: hsl(43, 96%, 56%);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    /* Fokus selalu terlihat — docs/06 §6.8 */
+    :focus-visible {
+        @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    }
+}
+
+/* Hormati preferensi pengguna yang mengurangi gerak (docs/06 §6.8) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

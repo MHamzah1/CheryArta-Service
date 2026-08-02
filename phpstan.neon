@@ -1,0 +1,26 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    # tests/ sengaja TIDAK dianalisis: PHPStan tidak dapat memodelkan closure
+    # binding milik Pest, sehingga $this di dalam it()/test() dikira
+    # PHPUnit\Framework\TestCase dan seluruh helper Laravel (get, actingAs,
+    # assertInertia) dilaporkan sebagai method tidak dikenal. Ini batasan
+    # alat, bukan cacat kode — dan menambah baseline untuk menutupinya
+    # justru dilarang oleh .claude/rules/60-testing-dan-git.md.
+    # Kebenaran uji dijamin oleh `php artisan test`, bukan analisis statis.
+
+    level: 5
+
+    # Aturan proyek: dilarang menambah baseline untuk menyembunyikan temuan.
+    # Perbaiki tipenya (lihat .claude/rules/60-testing-dan-git.md).
+    ignoreErrors: []
+
+    excludePaths:
+        - database/seeders/assets/*
