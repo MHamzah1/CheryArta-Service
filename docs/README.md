@@ -20,13 +20,25 @@ php artisan serve    # terminal 2  → http://localhost:8000
 Gerbang kualitas: `php artisan test` · `./vendor/bin/pint` · `./vendor/bin/phpstan analyse` ·
 `npm run types` · `npm run lint` · `npm run build`
 
-### Prasyarat lingkungan yang belum terpenuhi
+### Akun Demo (lokal saja)
+
+Dibuat oleh `UserSeeder`, password semuanya `password`:
+
+| Peran | Email |
+|-------|-------|
+| Super Admin | `admin@cheryarta.test` |
+| Service Advisor | `advisor@cheryarta.test` |
+| Customer | `rani@example.test` |
+
+> Jangan jalankan seeder ini di produksi — lihat daftar periksa [09 §9.10](09-keamanan-hak-akses.md#910-daftar-periksa-sebelum-rilis).
+
+### Keadaan Lingkungan
 
 | Hal | Keadaan | Tindakan |
 |-----|---------|----------|
-| MariaDB/MySQL | Terpasang (MariaDB 10.4 XAMPP) tetapi **servis mati** | Nyalakan lewat XAMPP Control Panel, lalu buat database `cheryarta_dev`. Dibutuhkan mulai Fase 1 — pengujian memakai SQLite in-memory. |
-| Ekstensi PHP `gd` | **Belum aktif** | Aktifkan `extension=gd` di `C:\xampp\php\php.ini`. Dibutuhkan Fase 2 untuk memproses ulang gambar katalog & fasilitas. |
-| Ekstensi PHP `intl` | Belum aktif | Aktifkan `extension=intl` bila kelak dibutuhkan pemformatan lokal di sisi server. Saat ini pemformatan dilakukan di `resources/js/lib/format.ts`. |
+| MariaDB 10.4 (XAMPP) | ✅ Berjalan, database `cheryarta_dev` sudah dibuat & termigrasi | — |
+| Ekstensi PHP `gd` | ⚠️ **Belum aktif** | Aktifkan `extension=gd` di `C:\xampp\php\php.ini` lalu restart Apache. Dibutuhkan Fase 2 untuk memproses ulang gambar katalog & fasilitas. |
+| Ekstensi PHP `intl` | Belum aktif | Aktifkan bila kelak dibutuhkan pemformatan lokal di sisi server. Saat ini pemformatan dilakukan di `resources/js/lib/format.ts`. |
 
 ---
 

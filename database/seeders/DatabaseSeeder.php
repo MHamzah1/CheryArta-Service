@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seeder dijalankan berurutan.
+     *
+     * Seeder data master (paket layanan, katalog mobil, fasilitas, FAQ,
+     * template WA) ditambahkan pada Fase 1 dan 5 — lihat
+     * docs/04-skema-database.md §4.4.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            UserSeeder::class,
         ]);
     }
 }
