@@ -2,7 +2,28 @@
 
 Legenda akses: **SA** = Super Admin · **ADV** = Service Advisor
 
-## A1 — Dashboard  `/admin`  (SA, ADV)
+## Pembagian Big Fase
+
+Dokumen ini adalah spesifikasi **lengkap** tiap modul. Urutan pengerjaannya diatur
+[roadmap](10-roadmap-implementasi.md#modul-admin-yang-masuk-dan-yang-ditunda):
+
+| Big Fase 1 | Big Fase 2 |
+|------------|------------|
+| **A2** Booking · **A3** Jadwal · **A4** Katalog · **A5** Paket Layanan · **A6** Customer & Kendaraan | **A1** Dashboard · **A7** WhatsApp penuh · **A8** Invoice · **A9** Laporan · **A10** Konten · **A11** Pengguna · **A12** Activity Log |
+
+Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
+
+- **A7** → hanya tombol "Chat via WhatsApp" (`wa.me` + teks dari `config/company.php`).
+  Tabel template, CRUD template, dan log pengiriman menyusul.
+- **A10** → hanya tabel `facilities`, `faqs`, `testimonials`, `contact_messages` + seeder,
+  supaya landing page punya sumber data. Layar CRUD-nya menyusul.
+- **A13/A14** → menu untuk A2–A6 saja. Tetapi **Policy dan pembatasan SA-saja wajib lengkap
+  sejak Big Fase 1** — otorisasi tidak pernah boleh ditunda (temuan S3).
+
+## A1 — Dashboard  `/admin`  (SA, ADV) — ⏳ Big Fase 2
+
+> Selama Big Fase 1, `/admin` **mengalihkan ke `/admin/bookings`**. Dashboard tidak dibuat
+> setengah jadi lalu disunting ulang.
 
 **Tujuan:** menjawab "apa yang harus dikerjakan hari ini" dalam satu layar.
 
@@ -93,12 +114,16 @@ Aksi: nonaktifkan akun (SA), reset password (SA), buat booking untuk customer in
 **`/admin/vehicles`** — daftar seluruh unit terdaftar: plat, model, tahun, pemilik, odometer
 terakhir, jumlah servis. Berguna untuk pertanyaan "unit ini terakhir servis kapan?".
 
-## A7 — Notifikasi WhatsApp  (SA, ADV)
+## A7 — Notifikasi WhatsApp  (SA, ADV) — ⚠️ sebagian di Big Fase 1
 
 Panel tertanam di halaman detail booking, ditambah `/admin/wa-template` (SA) untuk menyunting
 teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-whatsapp.md).
 
-## A8 — Invoice  `/admin/invoices`  (SA, ADV)
+> **Big Fase 1 hanya membuat tombol "Chat via WhatsApp"** di detail booking — membuka `wa.me`
+> dengan teks dari `config/company.php`. Tabel `whatsapp_templates` & `whatsapp_messages`, panel
+> draft, penanda "belum dikirim", dan CRUD template menyusul di F2.2.
+
+## A8 — Invoice  `/admin/invoices`  (SA, ADV) — ⏳ Big Fase 2
 
 | Layar | Isi |
 |-------|-----|
@@ -109,7 +134,7 @@ teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-what
 Aturan: invoice `issued` tidak bisa disunting; hanya SA yang boleh mem-`void`. Seluruh perhitungan
 dilakukan di server ([05 §5.6](05-alur-bisnis.md#56-alur-estimasi-biaya--invoice)).
 
-## A9 — Laporan & Export  `/admin/laporan`  (SA, ADV melihat; export keduanya)
+## A9 — Laporan & Export  `/admin/laporan`  (SA, ADV melihat; export keduanya) — ⏳ Big Fase 2
 
 | Laporan | Isi |
 |---------|-----|
@@ -126,7 +151,16 @@ Export mempertahankan kedua fitur sistem lama:
 Kolom export sama dengan sistem lama: Date, Time, Name, Model, Plat Nomor, Service, Keluhan,
 Phone, Status — ditambah Kode Booking dan Advisor.
 
-## A10 — Konten Landing Page  (SA saja)
+## A10 — Konten Landing Page  (SA saja) — ⚠️ sebagian di Big Fase 1
+
+> **Big Fase 1 hanya membuat tabelnya** (`facilities`, `faqs`, `testimonials`,
+> `contact_messages`) beserta seeder idempoten, supaya landing page F1.6 punya sumber data yang
+> nyata sejak awal. Keempat layar di bawah dibangun di F2.4 — tanpa migrasi data, karena tabelnya
+> sudah terisi.
+>
+> Akibatnya selama Big Fase 1: **pesan dari form kontak masuk ke database tetapi belum bisa
+> dibaca dari panel admin.** Halaman kontak karena itu menonjolkan tombol WhatsApp sebagai jalur
+> utama, dan form hanya jalur cadangan.
 
 | Modul | Isi |
 |-------|-----|
@@ -135,7 +169,7 @@ Phone, Status — ditambah Kode Booking dan Advisor.
 | `/admin/testimoni` | Nama, model mobil, rating 1–5, isi, terbitkan/sembunyikan |
 | `/admin/pesan-masuk` | Pesan dari form kontak: tandai dibaca, balas via WA (klik-to-chat), hapus spam |
 
-## A11 — Pengguna Internal  `/admin/users`  (SA saja)
+## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ Big Fase 2
 
 Daftar akun staf: nama, email, role, status aktif, login terakhir.
 Aksi: tambah advisor, ubah role, nonaktifkan, reset password.
@@ -145,7 +179,7 @@ Pengaman:
 - Super Admin terakhir tidak bisa dinonaktifkan.
 - Akun customer tidak dikelola di sini (ada di A6).
 
-## A12 — Activity Log  `/admin/activity-log`  (SA saja)
+## A12 — Activity Log  `/admin/activity-log`  (SA saja) — ⏳ Big Fase 2
 
 Menjawab "siapa mengubah apa dan kapan" — kebutuhan yang sama sekali tidak terpenuhi sistem lama.
 Kolom: waktu, pelaku, aksi, objek, perubahan (sebelum → sesudah). Filter: pelaku, jenis objek,
@@ -166,7 +200,16 @@ Sistem (SA)   → Pengguna · Template WA · Activity Log
 Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server bila URL-nya
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
+> **Big Fase 1** hanya merender menu yang modulnya sudah ada: Jadwal · Booking · Customer ·
+> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA). Menu lain tidak dirender — bukan
+> ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum ada karena `/admin` mengalihkan ke
+> `/admin/bookings`.
+
 ## A14 — Ringkasan Matriks Hak Akses
+
+> Matriks ini diverifikasi lewat uji otomatis per baris di F2.4.5. Tetapi **baris yang menyangkut
+> A2–A6 wajib berlaku dan teruji sejak Big Fase 1** (F1.3.7 & F1.5.9) — menunda otorisasi berarti
+> mengulang temuan S3 sistem lama.
 
 | Modul | Super Admin | Service Advisor |
 |-------|-------------|-----------------|

@@ -3,19 +3,30 @@
 Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML tunggal
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
-**Status:** Fase 0 (Fondasi) selesai — lihat [10-roadmap-implementasi.md](10-roadmap-implementasi.md)
-**Versi:** 1.1
-**Tanggal:** 2 Agustus 2026
+**Status:** Big Fase 1 · F1.0 (Fondasi) selesai — berikutnya **F1.1 Instalasi & Deploy Railway**
+**Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)
+**Tanggal:** 3 Agustus 2026
 
 ## Menjalankan Proyek
+
+Panduan lengkap (Railway, database bersama, DBeaver, Cloudinary) ada di
+[12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md). Ringkasnya:
 
 ```bash
 composer install && npm install
 cp .env.example .env && php artisan key:generate
-php artisan storage:link
+# isi .env: kredensial DB Railway bersama + CLOUDINARY_URL
 npm run dev          # terminal 1
 php artisan serve    # terminal 2  → http://localhost:8000
 ```
+
+> Tidak ada `php artisan storage:link` — seluruh gambar disimpan di **Cloudinary**, bukan di
+> filesystem, karena disk Railway bersifat ephemeral.
+>
+> Laptop dan PC kantor menunjuk ke **satu database Railway yang sama**, jadi datanya seragam
+> tanpa sinkronisasi. Selama isinya masih data seeder, `migrate:fresh --seed` boleh dipakai untuk
+> menyamakan keadaan — batasnya di
+> [§12.6](12-panduan-instalasi-deploy.md#126-database-bersama-satu-developer-dua-device).
 
 Gerbang kualitas: `php artisan test` · `./vendor/bin/pint` · `./vendor/bin/phpstan analyse` ·
 `npm run types` · `npm run lint` · `npm run build`
@@ -30,14 +41,19 @@ Dibuat oleh `UserSeeder`, password semuanya `password`:
 | Service Advisor | `advisor@cheryarta.test` |
 | Customer | `rani@example.test` |
 
-> Jangan jalankan seeder ini di produksi — lihat daftar periksa [09 §9.10](09-keamanan-hak-akses.md#910-daftar-periksa-sebelum-rilis).
+> Selama Big Fase 1 akun-akun ini memang yang dipakai, termasuk di situs Railway — wajar, karena
+> belum ada pengguna nyata. **Hapus sebelum go-live**
+> ([09 §9.10](09-keamanan-hak-akses.md#910-daftar-periksa-sebelum-rilis),
+> [12 §12.6.6](12-panduan-instalasi-deploy.md#1266-seeder--tulang-punggung-bukan-pelengkap)).
 
 ### Keadaan Lingkungan
 
 | Hal | Keadaan | Tindakan |
 |-----|---------|----------|
-| MariaDB 10.4 (XAMPP) | ✅ Berjalan, database `cheryarta_dev` sudah dibuat & termigrasi | — |
-| Ekstensi PHP `gd` | ⚠️ **Belum aktif** | Aktifkan `extension=gd` di `C:\xampp\php\php.ini` lalu restart Apache. Dibutuhkan Fase 2 untuk memproses ulang gambar katalog & fasilitas. |
+| MySQL Railway (bersama) | ⏳ Dibuat di F1.1 | Menjadi satu-satunya database untuk development **dan** deployment sampai F2.5.1 |
+| MariaDB 10.4 (XAMPP) | ✅ Berjalan, `cheryarta_dev` termigrasi | Dipertahankan **hanya** untuk menguji `migrate`/`rollback` — bukan untuk pengembangan sehari-hari |
+| Cloudinary | ⏳ Dibuat di F1.1 | Penyimpanan seluruh gambar katalog, fasilitas, testimoni, dan brosur PDF |
+| Ekstensi PHP `gd` | ✅ Tidak lagi dibutuhkan | Pemrosesan ulang gambar diserahkan ke transformasi URL Cloudinary (`f_auto,q_auto,w_…`) |
 | Ekstensi PHP `intl` | Belum aktif | Aktifkan bila kelak dibutuhkan pemformatan lokal di sisi server. Saat ini pemformatan dilakukan di `resources/js/lib/format.ts`. |
 
 ---
@@ -55,8 +71,9 @@ Dibuat oleh `UserSeeder`, password semuanya `password`:
 | 07 | [Modul Admin Internal](07-modul-admin.md) | Spesifikasi layar per modul, field, validasi, hak akses |
 | 08 | [Notifikasi WhatsApp](08-notifikasi-whatsapp.md) | Mekanisme klik-to-chat, template pesan, normalisasi nomor, logging |
 | 09 | [Keamanan & Hak Akses](09-keamanan-hak-akses.md) | Matriks role, perbaikan celah sistem lama, kebijakan upload & backup |
-| 10 | [Roadmap Implementasi](10-roadmap-implementasi.md) | 6 fase pengerjaan, deliverable, definition of done, risiko |
+| 10 | [Roadmap Implementasi](10-roadmap-implementasi.md) | **2 Big Fase**, sub-fase, deliverable, definition of done, risiko |
 | 11 | [Struktur Folder Proyek](11-struktur-folder-proyek.md) | Pohon direktori Laravel & React, konvensi penamaan |
+| 12 | [Panduan Instalasi & Deploy](12-panduan-instalasi-deploy.md) | Railway, database bersama, DBeaver, Cloudinary, aturan main migration |
 
 ---
 
@@ -83,18 +100,21 @@ mendokumentasikannya agar mudah dibantah:
 2. **Tidak ada pembayaran online.** Invoice hanya rincian biaya; pembayaran dilakukan di bengkel.
 3. **Bahasa antarmuka: Indonesia.** Istilah teknis (status, role) memakai istilah bengkel yang lazim.
 4. **Zona waktu `Asia/Jakarta`**, mata uang **IDR**, format tanggal `d F Y`.
-5. **Aset gambar dipindah ke storage lokal** (`storage/app/public`), tidak lagi menumpang
-   `raw.githubusercontent.com` seperti sistem lama.
+5. **Aset gambar disimpan di Cloudinary**, tidak lagi menumpang `raw.githubusercontent.com`
+   seperti sistem lama dan tidak pula di filesystem server — disk Railway bersifat ephemeral.
+   *(Direvisi 3 Agustus 2026; sebelumnya `storage/app/public`.)*
 6. **Informasi perusahaan tidak berubah** (alamat Kranji Bekasi, telepon, jam operasional, klaim 15+ tahun pengalaman, 4 keunggulan, 8 fasilitas) — dikutip persis dari prototipe lama.
-7. **Target deployment:** VPS Linux tunggal (Nginx + PHP-FPM + MySQL), bukan serverless.
+7. **Target deployment: Railway, auto-deploy dari GitHub.** *(Direvisi 3 Agustus 2026; sebelumnya
+   VPS Linux + Nginx.)* Selama Big Fase 1 satu database dipakai bersama oleh development dan
+   deployment — dipisahkan di F2.5.1 sebelum go-live.
 
 ## Pertanyaan Terbuka
 
-Hal-hal berikut belum punya jawaban dan **perlu keputusan sebelum Fase 3**:
+Hal-hal berikut belum punya jawaban dan **perlu keputusan sebelum F1.4 (Booking)**:
 
 | # | Pertanyaan | Dampak bila salah |
 |---|------------|-------------------|
-| Q1 | Slot 14:00 di hari **Sabtu** bertabrakan dengan jam tutup Sabtu (14:00). Slot terakhir Sabtu tetap 14:00, atau dipotong sampai 13:00? | Booking Sabtu sore diterima padahal bengkel sudah tutup. Detail: [05-alur-bisnis.md](05-alur-bisnis.md#catatan-konflik-jam-sabtu) |
-| Q2 | Harga paket layanan berbayar (kategori *Other*) — siapa yang menentukan, dan apakah ditampilkan publik di landing page? | Menentukan apakah section "Harga Layanan" muncul di landing page. |
+| ~~Q1~~ | ~~Slot 14:00 di hari **Sabtu** bertabrakan dengan jam tutup Sabtu (14:00).~~ **✅ Diputuskan 3 Agustus 2026: slot Sabtu berhenti di 13:00**, lewat `slots_by_weekday` di `config/booking.php`. Detail: [05-alur-bisnis.md](05-alur-bisnis.md#catatan-konflik-jam-sabtu) | — |
+| Q2 | Harga paket layanan berbayar (kategori *Other*) — siapa yang menentukan, dan apakah ditampilkan publik di landing page? | Menentukan apakah section "Harga Layanan" muncul di landing page. **Dibutuhkan sebelum F1.3 & F1.6.** |
 | Q3 | Apakah customer boleh booking untuk kendaraan **non-Chery**? | Menentukan apakah `vehicles.car_model_id` boleh null + input model manual. Saat ini dirancang **boleh** (nullable). |
 | Q4 | Berapa nomor WA bengkel yang dipakai untuk klik-to-chat, dan apakah satu nomor dipakai bersama semua advisor? | Menentukan apakah nomor pengirim disimpan per user atau per perusahaan. Saat ini dirancang **per perusahaan** (satu nomor resmi). |

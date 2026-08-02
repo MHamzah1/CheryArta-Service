@@ -1,14 +1,66 @@
 # 10 — Roadmap Implementasi
 
-Estimasi memakai satuan **hari kerja untuk satu pengembang**. Urutan fase dipilih agar setiap
-fase menghasilkan sesuatu yang bisa dilihat dan diuji, bukan potongan yang menggantung.
+Pengerjaan dibagi menjadi **dua Big Fase**:
 
-## Fase 0 — Fondasi  (2 hari) — ✅ SELESAI
+| Big Fase | Tujuan | Keadaan akhir |
+|----------|--------|---------------|
+| **Big Fase 1** | Sistem inti berjalan penuh dan hidup di Railway | Pelanggan bisa mendaftar → melihat katalog → memesan servis; advisor bisa mengelola booking, jadwal, customer, katalog, dan paket layanan. Dipakai **developer saja**, belum diumumkan ke pelanggan. |
+| **Big Fase 2** | Pematangan operasional + go-live | Dashboard, invoice, laporan, notifikasi WA penuh, modul konten, activity log, pengerasan keamanan, pemisahan database produksi, rilis publik. |
+
+Estimasi memakai satuan **hari kerja untuk satu pengembang**.
+
+---
+
+## Keputusan yang membentuk roadmap ini
+
+Delapan keputusan berikut diambil pada revisi 3 Agustus 2026 dan menjadi dasar pembagian fase.
+Bila salah satunya berubah, roadmap ini ikut berubah.
+
+| # | Keputusan | Konsekuensi |
+|---|-----------|-------------|
+| R1 | **Booking masuk Big Fase 1 secara penuh** — customer memesan sendiri *dan* admin mengelola | Inti booking (`SlotService`, state machine, kuota) tidak bisa ditunda; F1.4 & F1.5 wajib. |
+| R2 | **Satu database Railway** untuk development sekaligus deployment | Dikerjakan satu orang yang berpindah laptop ↔ PC kantor, jadi data otomatis seragam tanpa sinkronisasi apa pun. `migrate:fresh --seed` **boleh** selama isinya masih data seeder — batasnya di [§Kapan `migrate:fresh` berhenti boleh](#kapan-migratefresh-berhenti-boleh). Dipisahkan di F2.5.1. |
+| R3 | **Gambar disimpan di Cloudinary**, bukan filesystem | Filesystem Railway ephemeral. Konsekuensi skema: kolom `*_path` diganti `*_public_id` + `*_url`. Ekstensi PHP `gd` tidak lagi dibutuhkan. |
+| R4 | **Fasilitas, FAQ, testimoni: tabel DB + seeder idempoten sejak Big Fase 1** | Landing page membaca DB sejak awal; layar CRUD-nya (A10) menyusul di Big Fase 2 tanpa kerja ulang di landing page. |
+| R5 | **Big Fase 1 dipakai developer saja** | Pengerasan (halaman galat, CSP, rate limit menyeluruh, backup, uji lintas peramban) tetap di Big Fase 2. |
+| R6 | **Notifikasi WA di Big Fase 1 = tombol manual sederhana** | Tombol "Chat via WhatsApp" di detail booking, teks dari `config`. Tanpa tabel template, tanpa log kirim — itu A7 di Big Fase 2. |
+| R7 | **Slot Sabtu berhenti di 13:00** — menutup [Q1](README.md#pertanyaan-terbuka) | `config/booking.php` memakai `slots_by_weekday` untuk hari Sabtu. Tidak ada perubahan kode `SlotService`. |
+| R8 | **`/admin` mengalihkan ke `/admin/bookings`** | A1 Dashboard ditunda utuh; `pages/admin/dashboard.tsx` dari Fase 0 dihapus, bukan diisi setengah. |
+
+## Modul admin: yang masuk dan yang ditunda
+
+| Modul | Big Fase 1 | Big Fase 2 |
+|-------|:----------:|:----------:|
+| A1 — Dashboard | ❌ (`/admin` → redirect) | ✅ |
+| A2 — Manajemen Booking + walk-in | ✅ | — |
+| A3 — Jadwal / Okupansi | ✅ | — |
+| A4 — Katalog Mobil | ✅ | — |
+| A5 — Paket Layanan | ✅ | — |
+| A6 — Customer & Kendaraan | ✅ | — |
+| A7 — Notifikasi WhatsApp | ⚠️ tombol manual saja (R6) | ✅ penuh |
+| A8 — Invoice | ❌ | ✅ |
+| A9 — Laporan & Export | ❌ | ✅ |
+| A10 — Konten landing page | ⚠️ tabel + seeder saja (R4) | ✅ layar CRUD |
+| A11 — Pengguna Internal | ❌ | ✅ |
+| A12 — Activity Log | ❌ | ✅ |
+| A13 — Navigasi panel | ⚠️ menu untuk A2–A6 saja | ✅ menu penuh |
+| A14 — Matriks hak akses | ⚠️ **Policy untuk A2–A6 wajib ada** | ✅ matriks penuh |
+
+> **A13 dan A14 tidak bisa ditunda sepenuhnya.** A13 hanyalah spesifikasi menu — tanpa menu,
+> layar A2–A6 tidak bisa dicapai. A14 hanyalah ringkasan matriks — otorisasinya sendiri
+> (Policy tiap sumber daya, pembatasan SA-saja pada A4 & A5) **wajib** ikut Big Fase 1.
+> Menunda otorisasi berarti mengulang temuan S3 sistem lama.
+
+---
+
+# Big Fase 1 — Sistem Inti Berjalan Penuh
+
+## F1.0 — Fondasi  (2 hari) — ✅ SELESAI
 
 > **Penyimpangan dari rencana, disengaja:**
 > 1. Memakai `laravel/react-starter-kit` alih-alih `laravel/laravel` + Breeze — kit itu sudah
 >    membawa Inertia 2 + React 19 + TS + Tailwind 4 + shadcn/ui (Breeze masih Tailwind 3).
-> 2. **Tabel `users` dari tugas 1.1 ditarik maju ke Fase 0.** Middleware `role` (tugas 0.4)
+> 2. **Tabel `users` dari tugas F1.2 ditarik maju ke F1.0.** Middleware `role` (tugas 0.4)
 >    mustahil diuji tanpa kolom `role` dan `is_active`; PHPStan pun menandainya sebagai
 >    properti yang tidak ada. Kolom yang ditambahkan: `phone_wa`, `role`, `address`,
 >    `is_active`, `last_login_at`, `must_reset_password`, `deleted_at`.
@@ -26,116 +78,248 @@ fase menghasilkan sesuatu yang bisa dilihat dan diuji, bukan potongan yang mengg
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## Fase 1 — Autentikasi & Data Inti  (3 hari)
+## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari)
 
-> **Prasyarat:** MariaDB/MySQL harus dinyalakan (XAMPP Control Panel → MySQL → Start), lalu
-> buat database `cheryarta_dev`. Sampai Fase 0 selesai, seluruh pengujian memakai SQLite
-> in-memory sehingga belum membutuhkannya.
-
-| # | Pekerjaan |
-|---|-----------|
-| 1.1 | Migration: ~~`users`~~ (sudah di Fase 0), `car_models`, `car_model_variants`, `car_model_images`, `vehicles`, `service_packages` |
-| 1.2 | Model + relasi + `$fillable` + casts enum |
-| 1.3 | Register (nama, email, WA, password) dengan normalisasi nomor + rate limit |
-| 1.4 | Login/logout/reset password; blokir akun `is_active = false` |
-| 1.5 | Seeder: user, paket layanan (10 kode lama), katalog mobil, fasilitas |
-| 1.6 | CRUD kendaraan milik customer + komponen `PlateInput` (prefix 1–2 huruf) |
-| 1.7 | Uji: registrasi, login, normalisasi nomor, kepemilikan kendaraan |
-
-**Selesai bila:** pelanggan bisa mendaftar, masuk, dan menyimpan kendaraannya.
-
-## Fase 2 — Landing Page Publik  (4 hari)
+Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
+semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
+langkah ada di [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
 
 | # | Pekerjaan |
 |---|-----------|
-| 2.1 | Beranda: hero, 4 keunggulan, layanan, katalog ringkas, cara booking, fasilitas, testimoni, FAQ, lokasi, footer |
-| 2.2 | Halaman katalog + detail model (galeri, varian, spesifikasi, CTA) |
-| 2.3 | Halaman layanan, fasilitas (lightbox), tentang, FAQ, kontak (+ form & rate limit) |
-| 2.4 | Tombol WhatsApp mengambang |
-| 2.5 | SEO: judul per halaman, Open Graph, `schema.org/AutoRepair`, sitemap, robots |
-| 2.6 | Uji responsif 360/768/1280 + pemeriksaan kontras |
+| 1.1.1 | Repositori GitHub + branch `main` terlindungi; Railway project tertaut ke repo (auto-deploy tiap push ke `main`) |
+| 1.1.2 | Service **MySQL** di Railway + aktifkan TCP proxy (public networking) agar bisa diakses dari komputer developer |
+| 1.1.3 | Berkas build: `nixpacks.toml` (PHP + Node, jalankan `npm run build`), start command, dan **pre-deploy command** `php artisan migrate --force` |
+| 1.1.4 | Variabel Railway: `APP_KEY`, `APP_ENV`, `APP_DEBUG=false`, `APP_URL`, `APP_TIMEZONE=Asia/Jakarta`, `DB_*` (referensi ke service MySQL), `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=database` |
+| 1.1.5 | `trustProxies(at: '*')` di `bootstrap/app.php` — tanpa ini Laravel membangun URL `http://` di balik proxy Railway sehingga aset & redirect rusak |
+| 1.1.6 | Akun **Cloudinary** + `CLOUDINARY_URL` di Railway dan di `.env` lokal; `App\Services\ImageUploader` (bungkus SDK `cloudinary/cloudinary_php`) + `FakeImageUploader` untuk uji |
+| 1.1.7 | `.env.example` diperbarui: contoh koneksi ke DB Railway bersama + Cloudinary, **tanpa kredensial nyata** |
+| 1.1.8 | Panduan **DBeaver**: koneksi MySQL ke host & port proxy Railway, `allowPublicKeyRetrieval=true` — ditulis di dokumen 12 |
+| 1.1.9 | Dokumen 12 §12.6: batas pemakaian `migrate:fresh` terhadap DB Railway + prosedur `mysqldump` untuk dipakai kelak saat isi database sudah berarti |
+| 1.1.10 | Workflow GitHub Actions: `php artisan test`, Pint, PHPStan, ESLint, `tsc --noEmit`, `npm run build` |
 
-**Selesai bila:** seluruh konten sistem lama tampil kembali dengan tampilan baru, dan halaman
-bisa dipakai penuh di layar 360px.
+**Selesai bila:** `git push` ke `main` menghasilkan situs hidup di domain Railway; dua komputer
+berbeda menjalankan `php artisan migrate:status` dan melihat hasil identik; DBeaver tersambung ke
+database yang sama; unggah gambar percobaan muncul di Cloudinary.
 
-## Fase 3 — Booking End-to-End  (4 hari)
+### Kapan `migrate:fresh` berhenti boleh
+
+Keputusan **R2** aman untuk sekarang karena dua alasan, dan keduanya punya masa berlaku:
+
+1. **Pengembang tunggal** — berpindah laptop ↔ PC kantor. Tidak ada rekan yang datanya ikut hilang.
+2. **R5 — belum ada pengguna nyata.** Seluruh isi database berasal dari seeder, jadi bisa
+   dibangun ulang kapan saja.
+
+Selama keduanya berlaku, `migrate:fresh`, `migrate:refresh`, `db:wipe`, dan `/db-segar`
+**boleh dijalankan terhadap DB Railway**. Justru itu cara paling sederhana menyamakan dua
+perangkat: satu perintah, keadaan seragam, tanpa sinkronisasi manual.
+
+**Berhenti** begitu salah satu ini terjadi:
+
+- Ada registrasi, booking, atau pesan kontak dari orang **di luar Anda sendiri**.
+- Aplikasi mulai didemokan ke pemilik bengkel dan mereka mengisi data sungguhan.
+- Masuk **F2.5.1** — database produksi dipisahkan; sejak itu `migrate:fresh` hanya untuk DB
+  development.
+
+Tiga akibat yang tetap perlu diingat meski diperbolehkan:
+
+| Akibat | Penanganan |
+|--------|------------|
+| Tabel `sessions` ikut terhapus → semua yang sedang login di situs Railway ter-logout | Jalankan saat situs tidak sedang dipakai/didemokan |
+| Baris gambar hilang, **berkasnya tetap di Cloudinary** → menumpuk jadi berkas yatim | Sesekali bersihkan lewat Media Library Cloudinary; folder sudah terpisah per jenis |
+| Seeder menjadi satu-satunya jalan pulih | Seeder produksi wajib **lengkap & idempoten** — kalau tidak, `migrate:fresh --seed` meninggalkan sistem setengah isi |
+
+## F1.2 — Autentikasi & Data Inti  (3 hari)
 
 | # | Pekerjaan |
 |---|-----------|
-| 3.1 | Migration `bookings` + `booking_status_histories` |
-| 3.2 | `SlotService`: daftar slot, sisa kuota, aturan H-1, hari tutup, batas 60 hari |
-| 3.3 | Endpoint `GET /booking/slots?date=` + komponen `SlotPicker` |
-| 3.4 | Form booking 4 langkah + `BookingService::create()` dengan `lockForUpdate` |
-| 3.5 | Generator kode booking `CA-YYYYMMDD-NNNN` |
-| 3.6 | Halaman sukses, detail booking, timeline, riwayat customer |
-| 3.7 | Jadwal ulang & pembatalan mandiri (Policy + batas H-1) |
-| 3.8 | Pelacakan publik via kode booking |
-| 3.9 | Uji: kuota penuh, permintaan bersamaan, tanggal Minggu, H-1, akses booking milik orang lain |
+| 1.2.1 | Migration: ~~`users`~~ (sudah di F1.0), `car_models`, `car_model_variants`, `car_model_images`, `vehicles`, `service_packages` |
+| 1.2.2 | Migration konten landing: `facilities`, `faqs`, `testimonials`, `contact_messages` (**R4** — tabel dulu, layar CRUD-nya di Big Fase 2) |
+| 1.2.3 | Model + relasi + `$fillable` + casts enum + factory tiap model |
+| 1.2.4 | Register (nama, email, WA, password) dengan normalisasi nomor + rate limit |
+| 1.2.5 | Login/logout/reset password; blokir akun `is_active = false` |
+| 1.2.6 | Seeder idempoten: paket layanan (10 kode lama), katalog mobil, fasilitas, FAQ, testimoni |
+| 1.2.7 | CRUD kendaraan milik customer + komponen `PlateInput` (prefix 1–2 huruf) |
+| 1.2.8 | Uji: registrasi, login, normalisasi nomor, kepemilikan kendaraan, plat 1 & 2 huruf |
+
+**Selesai bila:** pelanggan bisa mendaftar, masuk, dan menyimpan kendaraannya; seluruh tabel
+inti + konten sudah terisi seeder di database Railway bersama.
+
+## F1.3 — Master Admin: Katalog & Paket Layanan  (3 hari)
+
+Dikerjakan **sebelum** landing page, karena landing page menampilkan data yang dikelola di sini.
+
+| # | Pekerjaan |
+|---|-----------|
+| 1.3.1 | **A5 Paket Layanan** `/admin/paket-layanan` (SA): CRUD + validasi kode unik, kategori, `applicable_series`, durasi 15–480, harga/gratis |
+| 1.3.2 | **A4 Katalog Mobil** `/admin/katalog` (SA): CRUD model + slug otomatis + spesifikasi kunci–nilai |
+| 1.3.3 | A4 varian: tabel dalam halaman (nama, harga, spesifikasi, aktif) |
+| 1.3.4 | A4 galeri lewat Cloudinary: unggah banyak gambar, urut seret, tandai utama, **teks alt wajib**; brosur PDF |
+| 1.3.5 | Aturan: model/paket yang sudah dirujuk hanya bisa dinonaktifkan, tidak dihapus |
+| 1.3.6 | Policy `CarModelPolicy`, `ServicePackagePolicy` — **SA saja**, advisor ditolak di server |
+| 1.3.7 | Uji: advisor ditolak di seluruh rute katalog & paket layanan; unggah menolak berkas > 2 MB dan MIME palsu |
+
+**Selesai bila:** Super Admin bisa menambah satu model mobil baru berikut varian dan galerinya
+tanpa menyentuh database, dan gambarnya tampil dari Cloudinary.
+
+## F1.4 — Booking End-to-End (Customer)  (4 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 1.4.1 | Migration `bookings` + `booking_status_histories` |
+| 1.4.2 | `config/booking.php`: `slots_by_weekday` untuk Sabtu berhenti 13:00 (**R7**) |
+| 1.4.3 | `SlotService`: daftar slot, sisa kuota, aturan H-1, hari tutup, batas 60 hari |
+| 1.4.4 | Endpoint `GET /booking/slots?date=` (throttle 60/menit) + komponen `SlotPicker` |
+| 1.4.5 | Form booking 4 langkah + `BookingService::create()` dengan `lockForUpdate` |
+| 1.4.6 | Generator kode booking `CA-YYYYMMDD-NNNN` di dalam transaksi |
+| 1.4.7 | Halaman sukses, detail booking, timeline status, riwayat customer |
+| 1.4.8 | Jadwal ulang & pembatalan mandiri (`BookingPolicy` + batas H-1) |
+| 1.4.9 | Pelacakan publik via kode booking (throttle 10/menit, **hanya** kode + jadwal + status) |
+| 1.4.10 | Uji: kuota penuh, dua permintaan bersamaan, hari Minggu, H-1, > 60 hari, Sabtu 13:30 ditolak, akses booking milik orang lain |
 
 **Selesai bila:** pelanggan dapat memesan, melihat status, menjadwal ulang, dan membatalkan —
-serta seluruh aturan slot lama terbukti lewat uji otomatis.
+dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan manual.
 
-## Fase 4 — Panel Admin  (5 hari)
-
-| # | Pekerjaan |
-|---|-----------|
-| 4.1 | Dashboard: KPI, grafik tren, okupansi slot, tabel hari ini + aksi cepat |
-| 4.2 | Manajemen booking: daftar + filter server + detail + ubah status (state machine) |
-| 4.3 | Booking walk-in (buat customer baru bila perlu) |
-| 4.4 | Halaman jadwal/okupansi harian |
-| 4.5 | Customer & kendaraan (daftar, detail, riwayat) |
-| 4.6 | Master katalog mobil (model, varian, galeri) & paket layanan |
-| 4.7 | Manajemen pengguna internal + Policy |
-| 4.8 | Activity log (`spatie/laravel-activitylog`) |
-| 4.9 | Uji otorisasi: setiap rute admin ditolak untuk customer & tamu |
-
-**Selesai bila:** advisor dapat menjalankan satu hari kerja penuh tanpa menyentuh database.
-
-## Fase 5 — WhatsApp, Invoice, Laporan  (4 hari)
+## F1.5 — Admin Operasional: A2, A3, A6  (3 hari)
 
 | # | Pekerjaan |
 |---|-----------|
-| 5.1 | Migration `whatsapp_templates`, `whatsapp_messages` + seeder 6 template |
-| 5.2 | `WhatsAppNotifier` + `ClickToChatNotifier` + panel draft di detail booking + tandai terkirim |
-| 5.3 | CRUD template WA dengan validasi placeholder |
-| 5.4 | Migration `invoices`, `invoice_items` + `InvoiceService` |
-| 5.5 | Penyunting invoice, terbitkan, tandai lunas, void, PDF (dompdf) |
-| 5.6 | Halaman invoice untuk customer + unduh PDF |
-| 5.7 | Laporan: rekap booking, okupansi, pendapatan, customer baru |
-| 5.8 | Export Excel (server) + Salin untuk Spreadsheet (TSV, perilaku lama) |
-| 5.9 | Konten: fasilitas, FAQ, testimoni, pesan masuk |
+| 1.5.1 | `/admin` → redirect ke `/admin/bookings`; hapus `pages/admin/dashboard.tsx` (**R8**) |
+| 1.5.2 | **A2** daftar booking: filter **di server** (cari nama/plat/kode, status, rentang tanggal, paket, advisor), paginasi 25, kartu di `< md` |
+| 1.5.3 | **A2** detail booking + panel ubah status memakai state machine ([05 §5.3](05-alur-bisnis.md#53-state-machine-status-booking)); transisi tidak sah ditolak server |
+| 1.5.4 | **A2** booking walk-in: cari/buat customer (`must_reset_password`), pilih/tambah kendaraan, **H-1 dilewati**, kuota tetap berlaku, `source = walk_in`, status `confirmed` |
+| 1.5.5 | **A3** jadwal harian: 11 baris slot × kapasitas 2, navigasi ← hari →, penanda slot penuh |
+| 1.5.6 | **A6** `/admin/customers` (daftar, detail, riwayat) & `/admin/vehicles`; nonaktifkan akun + reset password = **SA saja** |
+| 1.5.7 | Tombol "Chat via WhatsApp" di detail booking — `wa.me` + teks dari `config/company.php` (**R6**, bukan A7 penuh) |
+| 1.5.8 | Navigasi `AdminLayout` untuk A2–A6 saja; menu yang belum ada tidak dirender (A13 sebagian) |
+| 1.5.9 | Uji otorisasi: customer & tamu ditolak di **setiap** rute `/admin`; advisor ditolak pada aksi khusus SA |
 
-**Selesai bila:** seluruh fitur sistem lama tergantikan, ditambah invoice dan notifikasi WA.
+**Selesai bila:** advisor dapat menjalankan satu hari kerja penuh — menerima booking telepon,
+mengubah status, mencari riwayat unit — tanpa menyentuh database.
 
-## Fase 6 — Pematangan & Rilis  (3 hari)
+## F1.6 — Landing Page Publik  (4 hari)
+
+Menampilkan data yang sudah dikelola admin di F1.3 (katalog, paket layanan) dan data seeder
+untuk yang belum punya layar admin (fasilitas, FAQ, testimoni — **R4**).
 
 | # | Pekerjaan |
 |---|-----------|
-| 6.1 | Halaman galat 403/404/419/500 berbahasa Indonesia |
-| 6.2 | Header keamanan, CSP, rate limit menyeluruh |
-| 6.3 | Optimasi: gambar `webp` responsif, lazy-load, `route:cache`, `config:cache` |
-| 6.4 | Uji lintas peramban (Chrome, Safari iOS, Firefox) & perangkat nyata |
-| 6.5 | *Opsional:* perintah `booking:import-firebase` bila data lama perlu dibawa |
-| 6.6 | Penyiapan server: Nginx, PHP-FPM, MySQL, Supervisor, cron, SSL |
-| 6.7 | Cadangan otomatis + uji restore |
-| 6.8 | Panduan singkat untuk admin (PDF 2 halaman) + serah terima |
+| 1.6.1 | Beranda: hero, 4 keunggulan, layanan, katalog ringkas, cara booking, fasilitas, testimoni, FAQ, lokasi, footer |
+| 1.6.2 | Halaman katalog + detail model (galeri, varian, spesifikasi, CTA) — sumber: A4 |
+| 1.6.3 | Halaman layanan (sumber: A5), fasilitas (lightbox), tentang, FAQ, kontak (+ form, throttle 5/jam, tersimpan di `contact_messages`) |
+| 1.6.4 | Tombol WhatsApp mengambang (nomor dari `config/company.php`) |
+| 1.6.5 | SEO: judul per halaman, Open Graph, `schema.org/AutoRepair`, sitemap, robots |
+| 1.6.6 | Uji responsif 360/768/1280 + pemeriksaan kontras |
+| 1.6.7 | Uji: halaman publik tidak membocorkan nama lengkap, nomor WA, atau plat pelanggan |
+
+**Selesai bila:** seluruh konten sistem lama tampil kembali dengan tampilan baru, halaman bisa
+dipakai penuh di layar 360px, dan CTA "Booking Servis" benar-benar mengantar ke form F1.4.
+
+> **Catatan jujur:** pesan dari form kontak tersimpan di `contact_messages` tetapi **belum ada
+> layar untuk membacanya** sampai A10 dibangun di F2.4. Selama Big Fase 1 pesan hanya bisa
+> dilihat lewat DBeaver. Ini konsekuensi langsung dari menunda A10, dan tercatat di
+> [tabel risiko](#risiko).
+
+## F1.7 — Stabilisasi Big Fase 1  (1 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 1.7.1 | Seluruh gerbang kualitas hijau: `php artisan test`, Pint, PHPStan, ESLint, `tsc --noEmit`, `npm run build` |
+| 1.7.2 | Setiap migration baru diuji `migrate` **dan** `rollback` — `down()` yang tidak benar baru terasa sakitnya setelah ada data produksi |
+| 1.7.3 | Bersih dari `console.log`, `dd()`, `dump()`, data contoh yang tertinggal |
+| 1.7.4 | `/audit-paritas` terhadap prototipe lama untuk fitur yang masuk Big Fase 1 |
+| 1.7.5 | Dokumen `docs/` diperbarui bila ada perilaku atau skema yang berubah selama pengerjaan |
+| 1.7.6 | Satu putaran `migrate:fresh --seed` terhadap DB Railway, lalu telusuri alur penuh — membuktikan seeder masih lengkap dan kedua device bisa disamakan dengan satu perintah |
+
+**Big Fase 1 selesai bila:** satu alur penuh berhasil di lingkungan Railway — daftar → tambah
+kendaraan → pilih paket → pilih slot → booking dibuat → advisor mengonfirmasi → status berubah →
+customer melihatnya di riwayat.
+
+---
+
+# Big Fase 2 — Pematangan Operasional & Go-Live
+
+## F2.1 — Dashboard & Laporan  (3 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 2.1.1 | **A1** Dashboard: KPI, grafik tren 30 hari (Recharts), okupansi slot hari ini, tabel booking hari ini, peringatan calon `no_show` |
+| 2.1.2 | A1 aksi cepat (Konfirmasi · Mulai · Selesai) lewat Inertia partial reload |
+| 2.1.3 | `/admin` dikembalikan ke dashboard, redirect F1.5.1 dicabut |
+| 2.1.4 | **A9** Laporan: rekap booking, okupansi, customer baru; pendapatan **SA saja** |
+| 2.1.5 | A9 Export Excel (`maatwebsite/excel`, mengikuti filter aktif) + Salin untuk Spreadsheet (TSV) |
+
+## F2.2 — Notifikasi WhatsApp Penuh  (2 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 2.2.1 | Migration `whatsapp_templates`, `whatsapp_messages` + seeder 6 template |
+| 2.2.2 | Interface `WhatsAppNotifier` + implementasi `ClickToChatNotifier`; tombol sederhana F1.5.7 diganti |
+| 2.2.3 | Panel draft di detail booking + tandai terkirim + penanda "belum dikirim" yang menonjol |
+| 2.2.4 | **A7** CRUD template WA (SA) dengan validasi placeholder |
+
+## F2.3 — Invoice  (3 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 2.3.1 | Migration `invoices`, `invoice_items` + `InvoiceService` (seluruh perhitungan di server) |
+| 2.3.2 | **A8** penyunting invoice, terbitkan, tandai lunas, void (SA saja, wajib alasan) |
+| 2.3.3 | PDF invoice (`barryvdh/laravel-dompdf`) |
+| 2.3.4 | Halaman invoice untuk customer + unduh PDF |
+| 2.3.5 | Uji: total dihitung server, invoice `issued` tidak bisa disunting, advisor tidak bisa `void` |
+
+## F2.4 — Konten, Pengguna & Audit  (3 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 2.4.1 | **A10** layar CRUD `/admin/fasilitas`, `/admin/faq`, `/admin/testimoni` (tabelnya sudah ada sejak F1.2.2 — tidak ada migrasi data) |
+| 2.4.2 | **A10** `/admin/pesan-masuk`: tandai dibaca, balas via WA, hapus spam; lencana jumlah belum dibaca di `AdminLayout` |
+| 2.4.3 | **A11** pengguna internal + pengaman (SA tidak bisa menurunkan role sendiri; SA terakhir tidak bisa dinonaktifkan) |
+| 2.4.4 | **A12** activity log (`spatie/laravel-activitylog`), retensi 12 bulan |
+| 2.4.5 | **A13** navigasi panel lengkap + **A14** verifikasi matriks hak akses lewat uji otomatis per baris matriks |
+
+## F2.5 — Pengerasan & Go-Live  (4 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| **2.5.1** | **Pisahkan database produksi dari database development** — akhir dari keputusan R2. Service MySQL kedua di Railway, `.env` developer diarahkan ke DB dev; sejak titik ini `migrate:fresh` hanya boleh menyentuh DB dev |
+| 2.5.2 | Backup terjadwal + **uji restore** (tanpa uji restore, backup hanya asumsi) |
+| 2.5.3 | Halaman galat 403/404/419/500 berbahasa Indonesia |
+| 2.5.4 | Header keamanan, CSP, rate limit menyeluruh sesuai [09 §9](09-keamanan-hak-akses.md) |
+| 2.5.5 | Optimasi: transformasi Cloudinary (`f_auto,q_auto`) responsif, lazy-load, `config:cache`, `route:cache`, `view:cache` di build Railway |
+| 2.5.6 | Uji lintas peramban (Chrome, Safari iOS, Firefox) & perangkat nyata |
+| 2.5.7 | Domain kustom + SSL; `APP_ENV=production`, `APP_DEBUG=false` diverifikasi |
+| 2.5.8 | *Opsional:* perintah `booking:import-firebase` bila data lama perlu dibawa |
+| 2.5.9 | Panduan singkat untuk admin (PDF 2 halaman) + serah terima |
 
 **Selesai bila:** seluruh daftar periksa [09 §9.10](09-keamanan-hak-akses.md#910-daftar-periksa-sebelum-rilis) tercentang.
 
+---
+
 ## Ringkasan Jadwal
 
-| Fase | Hari | Kumulatif |
-|------|-----:|----------:|
-| 0 — Fondasi | 2 | 2 |
-| 1 — Auth & data inti | 3 | 5 |
-| 2 — Landing page | 4 | 9 |
-| 3 — Booking | 4 | 13 |
-| 4 — Panel admin | 5 | 18 |
-| 5 — WA, invoice, laporan | 4 | 22 |
-| 6 — Pematangan & rilis | 3 | **25** |
+| Big Fase | Sub-fase | Hari | Kumulatif |
+|----------|----------|-----:|----------:|
+| **1** | F1.0 — Fondasi ✅ | 2 | 2 |
+| **1** | F1.1 — Instalasi, DB bersama & Railway | 2 | 4 |
+| **1** | F1.2 — Autentikasi & data inti | 3 | 7 |
+| **1** | F1.3 — Master admin (A4, A5) | 3 | 10 |
+| **1** | F1.4 — Booking end-to-end | 4 | 14 |
+| **1** | F1.5 — Admin operasional (A2, A3, A6) | 3 | 17 |
+| **1** | F1.6 — Landing page publik | 4 | 21 |
+| **1** | F1.7 — Stabilisasi | 1 | **22** |
+| **2** | F2.1 — Dashboard & laporan | 3 | 25 |
+| **2** | F2.2 — WhatsApp penuh | 2 | 27 |
+| **2** | F2.3 — Invoice | 3 | 30 |
+| **2** | F2.4 — Konten, pengguna, audit | 3 | 33 |
+| **2** | F2.5 — Pengerasan & go-live | 4 | **37** |
 
-Sekitar **5 minggu kerja** untuk satu pengembang. Bila dikerjakan dua orang (backend + frontend),
-Fase 2 dan 4 dapat berjalan paralel sehingga total ± 3,5 minggu.
+Big Fase 1 ≈ **4,5 minggu kerja** (2 hari sudah selesai → sisa 20 hari). Total ≈ 7,5 minggu untuk
+satu pengembang. Bila dikerjakan dua orang, F1.6 dapat berjalan paralel dengan F1.4–F1.5 sesudah
+F1.3 selesai.
+
+Angka ini **lebih besar dari roadmap versi sebelumnya (25 hari)** karena bertambah dua pekerjaan
+nyata yang dulu tidak ada: penyiapan Railway + Cloudinary + database bersama (F1.1, 2 hari) dan
+pemisahan database produksi menjelang rilis (F2.5.1, bagian dari 4 hari).
 
 ## Definition of Done (berlaku untuk setiap tugas)
 
@@ -147,14 +331,20 @@ Fase 2 dan 4 dapat berjalan paralel sehingga total ± 3,5 minggu.
 6. Props Inertia punya tipe TypeScript.
 7. Pint, ESLint, dan `php artisan test` lulus.
 8. Teks antarmuka berbahasa Indonesia dan konsisten dengan istilah yang dipakai dokumen ini.
+9. **Terbukti hidup setelah di-deploy ke Railway**, bukan hanya jalan di komputer lokal.
+10. Bila skema berubah, **seeder ikut diperbarui** — `migrate:fresh --seed` harus tetap
+    menghasilkan sistem yang utuh dan bisa langsung dipakai.
 
 ## Risiko
 
 | Risiko | Dampak | Penanganan |
 |--------|--------|------------|
-| Aturan slot lama dipertahankan (kuota 2/jam) ternyata tidak sesuai kapasitas bengkel sebenarnya | Slot penuh palsu atau bengkel kebanjiran | Nilai berada di `config/booking.php` — bisa diubah tanpa menyentuh kode; `SlotService` sudah menyiapkan `slots_by_weekday` |
-| Konflik jam Sabtu ([Q1](README.md#pertanyaan-terbuka)) belum diputuskan | Booking diterima saat bengkel tutup | Diputuskan sebelum Fase 3; perubahan hanya di berkas konfigurasi |
-| Notifikasi WA bergantung kedisiplinan advisor menekan kirim | Pelanggan tidak menerima kabar | Panel menampilkan penanda "belum dikirim" yang menonjol; dashboard menampilkan hitungan draft yang belum terkirim |
-| Reset password tanpa SMTP ([09 §9.2](09-keamanan-hak-akses.md#92-autentikasi)) | Pelanggan terkunci dari akunnya | Pastikan SMTP tersedia, atau sediakan alur reset lewat admin sebelum rilis |
-| Foto katalog & fasilitas belum lengkap | Landing page terasa kosong | Kumpulkan aset di Fase 0; sementara pakai 9 gambar dari sistem lama |
-| Scope melebar (stok sparepart, penugasan mekanik) | Jadwal meleset | Sudah ditetapkan sebagai Won't do di [02 §2.6](02-kebutuhan-produk.md#26-batas-scope-wont-do--fase-ini) |
+| **Database dev = database deploy (R2)** | Aman selama isinya data seeder; berubah jadi berbahaya begitu ada satu registrasi nyata | Seeder lengkap & idempoten sebagai jalur pulih; [batas pemakaian `migrate:fresh`](#kapan-migratefresh-berhenti-boleh) ditulis eksplisit. **Dipisahkan di F2.5.1 sebelum go-live** — tugas bernomor, bukan janji longgar |
+| Seeder tidak ikut diperbarui saat skema berubah | `migrate:fresh --seed` menghasilkan sistem setengah isi, dan itu baru ketahuan di device satunya | DoD #10; F1.7 memeriksa satu putaran `migrate:fresh --seed` sebelum Big Fase 1 ditutup |
+| Kuota gratis Cloudinary terlampaui | Gambar katalog gagal tampil | Pantau pemakaian; transformasi `f_auto,q_auto` menekan bandwidth; kredensial terpusat di `ImageUploader` sehingga pindah penyedia hanya menyentuh satu berkas |
+| Filesystem Railway ephemeral | Berkas yang tidak sengaja ditulis ke disk hilang saat redeploy | Seluruh unggahan lewat `ImageUploader` → Cloudinary. Session, cache, dan queue memakai driver `database`, bukan `file` |
+| Pesan form kontak tak terbaca sampai F2.4 | Calon pelanggan mengira diabaikan | Halaman kontak menonjolkan tombol WhatsApp langsung sebagai jalur utama; form hanya jalur cadangan |
+| Aturan slot lama (kuota 2/jam) ternyata tidak sesuai kapasitas bengkel | Slot penuh palsu atau bengkel kebanjiran | Nilai di `config/booking.php` — bisa diubah tanpa menyentuh kode; `SlotService` sudah membaca `slots_by_weekday` |
+| Notifikasi WA bergantung kedisiplinan advisor menekan kirim | Pelanggan tidak menerima kabar | F2.2.3 menampilkan penanda "belum dikirim" yang menonjol; dashboard F2.1 menampilkan hitungan draft |
+| Reset password tanpa SMTP ([09 §9.2](09-keamanan-hak-akses.md#92-autentikasi)) | Pelanggan terkunci dari akunnya | Pastikan SMTP tersedia, atau sediakan alur reset lewat admin sebelum go-live (F2.5) |
+| Scope melebar (stok sparepart, penugasan mekanik) | Jadwal meleset | Sudah ditetapkan Won't do di [02 §2.6](02-kebutuhan-produk.md#26-batas-scope-wont-do--fase-ini) |

@@ -48,20 +48,26 @@ DB::transaction(function () use ($data) {
 });
 ```
 
-### Catatan konflik jam Sabtu
+### Catatan konflik jam Sabtu — ✅ diputuskan
 
 Jam operasional Sabtu adalah **08:00–14:00**, sedangkan slot terakhir juga **14:00** — artinya
-pekerjaan baru dimulai tepat saat bengkel tutup. Ini cacat yang terbawa dari sistem lama dan
-**dipertahankan apa adanya** sesuai keputusan #7, tetapi ditandai sebagai [pertanyaan terbuka
-Q1](README.md#pertanyaan-terbuka).
+pekerjaan baru dimulai tepat saat bengkel tutup. Ini cacat yang terbawa dari sistem lama.
 
-Bila kelak diputuskan diperbaiki, cukup tambahkan pada `config/booking.php`:
+**Keputusan 3 Agustus 2026 ([R7](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)):
+slot Sabtu berhenti di 13:00.** Ini satu-satunya penyimpangan yang disengaja dari keputusan #7
+(“aturan slot dipertahankan persis”), diambil karena alternatifnya adalah menjanjikan servis yang
+tidak mungkin dikerjakan. Kuota 2/jam, aturan H-1, dan Minggu tutup **tidak** berubah.
 
 ```php
-'slots_by_weekday' => [6 => ['08:00', …, '13:00']],  // 6 = Sabtu, slot 13:30 & 14:00 ditutup
+// config/booking.php
+'slots_by_weekday' => [
+    6 => ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00'],
+],  // 6 = Sabtu — slot 13:30 & 14:00 ditutup
 ```
 
-`SlotService` sudah dirancang membaca kunci ini bila ada — tidak ada perubahan kode lain yang dibutuhkan.
+`SlotService` membaca kunci ini bila ada dan jatuh kembali ke `slots` untuk hari lain — tidak ada
+percabangan hari yang ditulis di kode. Uji wajib: **booking Sabtu 13:30 ditolak**
+([F1.4.10](10-roadmap-implementasi.md#f14--booking-end-to-end-customer--4-hari)).
 
 ## 5.2 Alur Booking Customer
 

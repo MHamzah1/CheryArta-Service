@@ -20,7 +20,9 @@ dirancang di sini. Breeze masih memakai Tailwind 3.
 | Font | @fontsource/inter | terbaru | Inter di-*self-host*, tanpa CDN (kebijakan CSP §9.5) |
 | Toast | sonner | terbaru | Menggantikan `alert()` sistem lama |
 | Grafik | Recharts | 2.x | Grafik tren dashboard (dipasang di Fase 4) |
-| Database | **MariaDB 10.4** (dev, XAMPP) / MySQL 8 (produksi) | — | Diminta MySQL; MariaDB 10.4 kompatibel penuh untuk seluruh fitur yang dipakai di sini (InnoDB, `SELECT … FOR UPDATE`, `utf8mb4`) |
+| Database | **MySQL 8 di Railway** | — | Satu instans dipakai bersama development & deployment sampai F2.5.1. MariaDB 10.4 (XAMPP) dipertahankan **hanya** untuk menguji `migrate`/`rollback` |
+| Penyimpanan berkas | **Cloudinary** (`cloudinary/cloudinary_php`) | 2.x | Filesystem Railway ephemeral — berkas di disk hilang tiap redeploy. Transformasi URL menggantikan pemrosesan gambar dengan GD |
+| Hosting | **Railway**, auto-deploy dari GitHub | — | Menggantikan rencana VPS. Rincian: [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md) |
 | Autentikasi | `laravel/react-starter-kit` | — | Register/login/reset bawaan yang sudah teruji |
 | Otorisasi | Policy + Gate + enum `UserRole` | — | Keputusan #8 |
 | Export | `maatwebsite/excel` | 3.x | Menggantikan SheetJS di klien (temuan S7) |
@@ -44,24 +46,26 @@ flowchart TB
         R[React 19 + TypeScript<br/>Inertia Client]
     end
 
-    subgraph Server["VPS — Nginx + PHP-FPM"]
+    subgraph Server["Railway — service web (container ephemeral)"]
         MW[Middleware<br/>auth · role · CSRF · throttle]
         C[Controllers<br/>Inertia::render]
         FR[Form Requests<br/>validasi]
         S[Service Layer<br/>BookingService · SlotService<br/>InvoiceService · WhatsAppNotifier]
         M[Eloquent Models + Policies]
         Q[Queue Worker<br/>database driver]
-        FS[(storage/app/public<br/>gambar katalog & fasilitas)]
+        IU[ImageUploader]
     end
 
-    DB[(MySQL 8)]
+    DB[(Railway MySQL 8)]
+    CDN[(Cloudinary<br/>gambar katalog, fasilitas, brosur)]
     WA[WhatsApp Web/Desktop<br/>via tautan wa.me]
 
     R -- "XHR Inertia (JSON)" --> MW --> C
     C --> FR --> S --> M --> DB
     C -- "props + shared data" --> R
     S --> Q
-    C --> FS
+    C --> IU --> CDN
+    R -. "memuat gambar langsung" .-> CDN
     R -. "dibuka admin di tab baru" .-> WA
 ```
 
@@ -195,37 +199,58 @@ return [
 **`config/company.php`** — profil perusahaan (dipakai landing page, footer, template WA, PDF invoice).
 Isinya dikutip persis dari [01-analisis-sistem-lama.md §1.5](01-analisis-sistem-lama.md#15-informasi-perusahaan-dikutip-persis-tidak-boleh-diubah).
 
-## 3.8 Berkas & Penyimpanan
+## 3.8 Berkas & Penyimpanan — Cloudinary
 
-- Disk `public` (`storage/app/public` → symlink `public/storage`).
-- Struktur: `car-models/{id}/`, `facilities/`, `testimonials/`.
-- Upload: maks 2 MB, hanya `jpg|jpeg|png|webp`, nama file di-generate ulang (tidak memakai nama asli), diverifikasi lewat MIME sungguhan bukan ekstensi.
-- Setiap gambar disimpan dalam 2 ukuran (thumbnail 400px, penuh 1600px) dan dikonversi ke `webp`.
-- Migrasi awal: 9 gambar dari `raw.githubusercontent.com` (1 hero + 8 fasilitas) diunduh dan ditaruh di repo `database/seeders/assets/`.
+Filesystem container Railway bersifat **ephemeral**: apa pun yang ditulis ke disk hilang pada
+redeploy berikutnya. Karena itu tidak ada `storage:link` dan tidak ada berkas unggahan di disk.
+
+- Seluruh unggahan melalui `app/Services/ImageUploader.php` — pembungkus SDK
+  `cloudinary/cloudinary_php`. **Tidak ada** pemanggilan SDK di controller atau model, sehingga
+  ganti penyedia kelak hanya menyentuh satu berkas. `FakeImageUploader` dipakai di uji Pest agar
+  pengujian tidak menembak jaringan.
+- Folder Cloudinary: `car-models/{id}/`, `facilities/`, `testimonials/`, `brochures/`.
+- Database menyimpan `*_public_id` (untuk hapus/ganti) **dan** `*_url` (agar render halaman tidak
+  memanggil API) — bukan path. Lihat [12 §12.5](12-panduan-instalasi-deploy.md#125-menyiapkan-cloudinary).
+- Validasi **tetap di server** dan tidak berubah: maks 2 MB, hanya `jpg|jpeg|png|webp`
+  (brosur `pdf` maks 5 MB), diverifikasi lewat MIME sungguhan bukan ekstensi, nama berkas
+  di-generate ulang. Cloudinary bukan pengganti validasi.
+- Ukuran turunan tidak lagi dibuat di server. Transformasi dilakukan di URL:
+  `f_auto,q_auto,w_400` (thumbnail) dan `f_auto,q_auto,w_1600` (penuh). Konsekuensinya
+  ekstensi PHP `gd` **tidak dibutuhkan**.
+- Migrasi awal: 9 gambar dari `raw.githubusercontent.com` (1 hero + 8 fasilitas) ada di repo
+  `database/seeders/assets/`, diunggah ke Cloudinary oleh seeder.
 
 ## 3.9 Lingkungan & Deployment
 
+Target deployment adalah **Railway dengan auto-deploy dari GitHub**, bukan VPS. Panduan langkah
+demi langkah: [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
+
 | Lingkungan | Keterangan |
 |------------|------------|
-| Lokal | Laragon/XAMPP + `php artisan serve` + `npm run dev`; DB `cheryarta_dev` |
-| Staging | Opsional, subdomain, `APP_ENV=staging`, `APP_DEBUG=false` |
-| Produksi | VPS: Nginx, PHP-FPM 8.3, MySQL 8, Supervisor untuk `queue:work`, cron untuk `schedule:run` |
+| Lokal | `php artisan serve` + `npm run dev`, **tersambung ke database Railway yang sama** dengan deployment |
+| Railway | Service `web` (Laravel + Vite) + service MySQL; auto-deploy tiap push ke `main` |
 
-Langkah rilis:
+**Rilis tidak dijalankan manual.** Push ke `main` memicu build Nixpacks
+(`composer install` → `npm ci` → `npm run build`), lalu **pre-deploy command**
+`php artisan migrate --force`, lalu start command yang menjalankan `config:cache`,
+`route:cache`, `view:cache` sebelum menyalakan server pada `$PORT`.
 
-```bash
-php artisan down --render="errors::503"
-git pull && composer install --no-dev --optimize-autoloader
-npm ci && npm run build
-php artisan migrate --force
-php artisan config:cache route:cache view:cache
-php artisan storage:link
-php artisan queue:restart
-php artisan up
-```
+Tiga hal yang khas Railway dan mudah terlewat:
 
-Variabel `.env` penting: `APP_TIMEZONE=Asia/Jakarta`, `DB_*`, `SESSION_DRIVER=database`,
-`QUEUE_CONNECTION=database`, `COMPANY_WA_NUMBER=62xxxxxxxxxx`, `FILESYSTEM_DISK=public`.
+1. **`trustProxies(at: '*')`** di `bootstrap/app.php` — tanpa ini Laravel membangun URL `http://`
+   di balik proxy Railway sehingga aset Vite dan redirect rusak.
+2. **`SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION` wajib `database`**, bukan `file` —
+   driver `file` di disk ephemeral membuat pengguna ter-logout acak setiap redeploy.
+3. **`LOG_CHANNEL=stderr`** — `storage/logs` ikut hilang saat redeploy.
+
+Variabel penting: `APP_KEY` (jangan digenerate ulang setelah ada data), `APP_TIMEZONE=Asia/Jakarta`,
+`DB_*` (referensi `${{MySQL.*}}`), `CLOUDINARY_URL`, `COMPANY_WA_NUMBER=62xxxxxxxxxx`.
+
+> **Selama Big Fase 1 hanya ada satu database**, dipakai development sekaligus deployment.
+> Karena dikerjakan satu orang yang berpindah perangkat dan seluruh isinya berasal dari seeder,
+> `migrate:fresh --seed` **diperbolehkan** — itu justru cara menyamakan kedua device. Batasnya
+> ada di [12 §12.6](12-panduan-instalasi-deploy.md#126-database-bersama-satu-developer-dua-device).
+> Database produksi dipisahkan di F2.5.1 sebelum go-live.
 
 ## 3.10 Kualitas & Otomasi
 
