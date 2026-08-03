@@ -78,16 +78,30 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ SISI KODE SELESAI
+## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ HAMPIR SELESAI
 
 Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
 semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
 langkah ada di [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
 
-> **Sisi kode selesai:** 1.1.3, 1.1.5, 1.1.6, 1.1.7, 1.1.8, 1.1.9, 1.1.10.
-> **Menunggu tindakan di panel** (tidak bisa dikerjakan dari dalam repo): 1.1.1 proteksi branch
-> `main` + penautan Railway ↔ repo, 1.1.2 service MySQL + TCP proxy, 1.1.4 pengisian Variables,
-> dan pembuatan akun Cloudinary pada 1.1.6. Daftar periksanya di
+> **Keadaan per 3 Agustus 2026.** Situs sudah hidup di Railway dan komputer developer sudah
+> memandang database yang sama.
+>
+> **Selesai:** 1.1.2 service MySQL + TCP proxy · 1.1.3 berkas build · 1.1.4 Variables ·
+> 1.1.5 `trustProxies` · 1.1.6 Cloudinary (akun + kredensial di Railway) · 1.1.7 `.env.example` ·
+> 1.1.8 panduan DBeaver · 1.1.9 batas `migrate:fresh` · 1.1.10 workflow CI ·
+> dan penautan Railway ↔ repo pada 1.1.1.
+>
+> **Belum selesai:**
+> 1. **Proteksi branch `main`** (sisa 1.1.1) — masih bisa push langsung ke `main`.
+> 2. **Seeder belum pernah dijalankan** terhadap DB Railway; tabel `users` masih 0 baris,
+>    sehingga kriteria "sistem yang langsung bisa dipakai" belum terbukti.
+> 3. **`cloudinary:cek` belum hijau** — `CLOUDINARY_URL` ada di Variables Railway tetapi
+>    belum diisi di `.env` lokal.
+> 4. **Baru satu komputer** yang diverifikasi; janji "dua komputer melihat hasil identik"
+>    belum diuji.
+>
+> Daftar periksa beserta buktinya di
 > [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11).
 >
 > **Penyimpangan dari rencana, disengaja:**
