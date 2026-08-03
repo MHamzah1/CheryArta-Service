@@ -201,9 +201,45 @@ Tiga akibat yang tetap perlu diingat meski diperbolehkan:
 **Selesai bila:** pelanggan bisa mendaftar, masuk, dan menyimpan kendaraannya; seluruh tabel
 inti + konten sudah terisi seeder di database Railway bersama.
 
-## F1.3 — Master Admin: Katalog & Paket Layanan  (3 hari)
+## F1.3 — Master Admin: Katalog & Paket Layanan  (3 hari) — ✅ SELESAI
 
 Dikerjakan **sebelum** landing page, karena landing page menampilkan data yang dikelola di sini.
+
+> **Selesai 3 Agustus 2026.** 182 uji Pest hijau (62 di antaranya baru, di
+> `tests/Feature/Admin/`); Pint, PHPStan, ESLint, `tsc --noEmit`, dan `npm run build` bersih.
+> Tidak ada migration baru — seluruh tabelnya sudah lahir di F1.2.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **Aturan 1.3.5 ditegakkan di Service, bukan di Policy.** `CarModelPolicy` dan
+>    `ServicePackagePolicy` murni menjawab "siapa" (Super Admin saja); "boleh dihapus atau
+>    tidak" dijawab `CarModelService`/`ServicePackageService` lewat
+>    `App\Exceptions\MasterDataInUseException`, yang ditangani terpusat di `bootstrap/app.php`
+>    menjadi toast penjelasan. Penolakan berupa 403 tidak memberi tahu admin apa yang harus
+>    dilakukan; pesannya kini menyebut "nonaktifkan saja".
+> 2. **`ServicePackage::isReferenced()` masih mengembalikan `false`.** Satu-satunya tabel yang
+>    akan merujuk paket layanan adalah `bookings`, yang baru lahir di F1.4. Method-nya sudah ada
+>    beserta jalur penolakannya, jadi F1.4 cukup mengganti isi method itu — bukan menambah
+>    pemeriksaan baru di controller.
+> 3. **Tiga service baru** — `CarModelService`, `CarModelGalleryService`, `ServicePackageService`
+>    — di luar empat service inti, dengan alasan yang sama seperti `VehicleService` di F1.2.
+> 4. **Rute admin mengikat model lewat `{car_model:id}`**, bukan slug seperti katalog publik.
+>    Slug boleh disunting admin, dan URL panel tidak boleh berubah di tengah penyuntingan.
+> 5. **Spesifikasi dikirim sebagai daftar pasangan `[{key, value}]`**, meski disimpan sebagai
+>    objek `{"mesin":"1.6 TGDI"}` sesuai [04 §4.2](04-skema-database.md). Bentuk daftar menjaga
+>    urutan baris dan membuat kunci kembar bisa ditolak validasi dengan pesan yang menunjuk
+>    baris tepatnya; `CarModelService` yang mengubahnya menjadi objek.
+> 6. **`App\Support\SeriesCatalog`** menyatukan kode seri dari `car_models.series_code` dan dari
+>    `service_packages.applicable_series` yang sudah tersimpan. Tanpa bagian kedua, paket lama
+>    `CSH_Free` mustahil disunting karena model seri CSH belum ada di katalog.
+> 7. **Komponen `DataTable` dan `Pagination` dibuat lebih awal** ([06 §6.6](06-desain-ui-ux.md)),
+>    karena dua daftar di fase ini sudah membutuhkannya. F1.5 tinggal memakainya.
+> 8. **Form model dikirim POST + `X-HTTP-Method-Override: PUT`.** Brosur PDF membuat
+>    pengirimannya multipart, dan multipart tidak mengenal PUT. Jalur ini ikut diuji.
+>
+> **Sisa yang belum terbukti:** unggahan sungguhan ke Cloudinary. Seluruh uji memakai
+> `FakeImageUploader` (tidak ada uji yang menembak jaringan), jadi kriteria "gambarnya tampil
+> dari Cloudinary" masih perlu satu kali pembuktian manual lewat layar `/admin/katalog`
+> dengan `CLOUDINARY_URL` terisi — atau lewat `php artisan cloudinary:cek`.
 
 | # | Pekerjaan |
 |---|-----------|

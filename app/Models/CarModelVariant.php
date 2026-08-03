@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $car_model_id
  * @property string $name
  * @property bool $is_active
+ * @property int $sort_order
  */
 class CarModelVariant extends Model
 {

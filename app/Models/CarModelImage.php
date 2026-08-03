@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $url
  * @property string $alt
  * @property bool $is_primary
+ * @property int $sort_order
+ * @property-read string $thumbnail_url
  */
 class CarModelImage extends Model
 {

@@ -94,6 +94,18 @@ class CarModel extends Model
         return $this->hasMany(Vehicle::class);
     }
 
+    /**
+     * Apakah model ini sudah dipakai kendaraan pelanggan.
+     *
+     * Kendaraan yang sudah dihapus lunak ikut dihitung: barisnya masih ada dan
+     * masih menunjuk ke model ini, sehingga menghapus model tetap akan
+     * mengosongkan `vehicles.car_model_id` miliknya (FK `nullOnDelete`).
+     */
+    public function isReferenced(): bool
+    {
+        return $this->vehicles()->withTrashed()->exists();
+    }
+
     /** @param  Builder<$this>  $query */
     public function scopeActive(Builder $query): void
     {

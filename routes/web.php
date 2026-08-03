@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\CarModelController;
+use App\Http\Controllers\Admin\CarModelImageController;
+use App\Http\Controllers\Admin\CarModelVariantController;
+use App\Http\Controllers\Admin\ServicePackageController;
 use App\Http\Controllers\Customer\VehicleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -44,6 +48,50 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
     ->name('admin.')
     ->group(function () {
         Route::get('/', fn () => Inertia::render('admin/dashboard'))->name('dashboard');
+
+        // --- Master data — Super Admin saja (docs/07 §A14) ------------------
+        // Advisor ditolak di sini, bukan sekadar tidak melihat menunya.
+        Route::middleware('role:super_admin')->group(function () {
+
+            // A5 — Paket Layanan
+            Route::get('paket-layanan', [ServicePackageController::class, 'index'])->name('service-packages.index');
+            Route::get('paket-layanan/tambah', [ServicePackageController::class, 'create'])->name('service-packages.create');
+            Route::post('paket-layanan', [ServicePackageController::class, 'store'])->name('service-packages.store');
+            Route::get('paket-layanan/{service_package}/ubah', [ServicePackageController::class, 'edit'])->name('service-packages.edit');
+            Route::put('paket-layanan/{service_package}', [ServicePackageController::class, 'update'])->name('service-packages.update');
+            Route::delete('paket-layanan/{service_package}', [ServicePackageController::class, 'destroy'])->name('service-packages.destroy');
+
+            // A4 — Katalog Mobil. Diikat lewat id, bukan slug: slug boleh
+            // disunting, dan URL panel tidak boleh berubah di tengah jalan.
+            Route::get('katalog', [CarModelController::class, 'index'])->name('car-models.index');
+            Route::get('katalog/tambah', [CarModelController::class, 'create'])->name('car-models.create');
+            Route::post('katalog', [CarModelController::class, 'store'])->name('car-models.store');
+
+            Route::prefix('katalog/{car_model:id}')
+                ->name('car-models.')
+                ->scopeBindings()
+                ->group(function () {
+                    Route::get('ubah', [CarModelController::class, 'edit'])->name('edit');
+                    // Form model membawa brosur PDF, jadi pengirimannya
+                    // multipart lewat POST + _method=PUT (pola baku Inertia).
+                    Route::put('/', [CarModelController::class, 'update'])->name('update');
+                    Route::delete('/', [CarModelController::class, 'destroy'])->name('destroy');
+                    Route::delete('brosur', [CarModelController::class, 'destroyBrochure'])->name('brochure.destroy');
+
+                    // Varian — tabel di dalam halaman ubah model
+                    Route::post('varian', [CarModelVariantController::class, 'store'])->name('variants.store');
+                    Route::put('varian/{variant}', [CarModelVariantController::class, 'update'])->name('variants.update');
+                    Route::delete('varian/{variant}', [CarModelVariantController::class, 'destroy'])->name('variants.destroy');
+
+                    // Galeri — scopeBindings memastikan gambar milik model lain
+                    // berujung 404, bukan tersunting diam-diam.
+                    Route::post('galeri', [CarModelImageController::class, 'store'])->name('images.store');
+                    Route::put('galeri/urutan', [CarModelImageController::class, 'reorder'])->name('images.reorder');
+                    Route::put('galeri/{image}', [CarModelImageController::class, 'update'])->name('images.update');
+                    Route::put('galeri/{image}/utama', [CarModelImageController::class, 'primary'])->name('images.primary');
+                    Route::delete('galeri/{image}', [CarModelImageController::class, 'destroy'])->name('images.destroy');
+                });
+        });
     });
 
 require __DIR__.'/settings.php';

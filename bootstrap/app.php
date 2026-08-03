@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\MasterDataInUseException;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,5 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Master data yang masih dirujuk baris lain: pengguna perlu tahu APA
+        // yang harus dilakukan ("nonaktifkan saja"), bukan sekadar halaman
+        // galat. Aturannya sendiri ditegakkan di Service — lihat
+        // App\Exceptions\MasterDataInUseException.
+        $exceptions->render(function (MasterDataInUseException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->with('error', $e->getMessage());
+        });
     })->create();
