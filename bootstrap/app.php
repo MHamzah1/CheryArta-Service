@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\MasterDataInUseException;
+use App\Exceptions\SlotUnavailableException;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -46,5 +47,16 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage()], 422)
                 : back()->with('error', $e->getMessage());
+        });
+
+        // Slot direbut orang lain di antara memuat halaman dan menekan tombol.
+        // Ditampilkan inline di bawah kolom jam — sama seperti galat validasi
+        // lain — bukan sebagai halaman galat (.claude/rules/40).
+        $exceptions->render(function (SlotUnavailableException $e, Request $request) {
+            $errors = [SlotUnavailableException::FIELD => [$e->getMessage()]];
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
+                : back()->withInput()->withErrors($errors);
         });
     })->create();

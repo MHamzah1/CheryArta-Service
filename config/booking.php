@@ -54,19 +54,22 @@ return [
 
     /*
     | Penimpaan slot untuk hari tertentu (0 = Minggu ... 6 = Sabtu).
-    | Dibiarkan kosong: aturan lama dipertahankan persis.
     |
-    | CATATAN PERTANYAAN TERBUKA Q1 (docs/README.md): jam operasional Sabtu
-    | adalah 08:00-14:00, sedangkan slot terakhir juga 14:00. Bila kelak
-    | diputuskan diperbaiki, cukup isi:
+    | KEPUTUSAN R7 (3 Agustus 2026, docs/05-alur-bisnis.md#catatan-konflik-jam-sabtu):
+    | jam operasional Sabtu adalah 08:00-14:00, sedangkan sistem lama tetap
+    | menawarkan slot 13:30 dan 14:00 — menjanjikan pekerjaan yang baru dimulai
+    | tepat saat bengkel tutup. Slot Sabtu karena itu berhenti di 13:00.
     |
-    |   6 => ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    |         '11:00', '11:30', '13:00'],
+    | Ini SATU-SATUNYA penyimpangan yang disengaja dari keputusan #7 ("aturan
+    | slot dipertahankan persis"). Kuota 2/jam, aturan H-1, dan Minggu tutup
+    | tidak berubah.
     |
-    | SlotService sudah membaca kunci ini bila tersedia — tidak ada
-    | perubahan kode lain yang dibutuhkan.
+    | SlotService membaca kunci ini bila ada dan jatuh kembali ke `slots` untuk
+    | hari lain — tidak ada percabangan hari yang ditulis di kode.
     */
-    'slots_by_weekday' => [],
+    'slots_by_weekday' => [
+        6 => ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00'],
+    ],
 
     /*
     | Batas minimal (hari) sebelum tanggal booking agar customer masih

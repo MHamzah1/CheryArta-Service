@@ -254,7 +254,43 @@ Dikerjakan **sebelum** landing page, karena landing page menampilkan data yang d
 **Selesai bila:** Super Admin bisa menambah satu model mobil baru berikut varian dan galerinya
 tanpa menyentuh database, dan gambarnya tampil dari Cloudinary.
 
-## F1.4 — Booking End-to-End (Customer)  (4 hari)
+## F1.4 — Booking End-to-End (Customer)  (4 hari) — ✅ SELESAI
+
+> **Selesai 3 Agustus 2026.** 272 uji Pest hijau — 81 di antaranya baru di `tests/Feature/Booking/`,
+> ditambah uji slot Sabtu di `BookingConfigTest` dan uji aturan 1.3.5 yang baru bisa dijalankan
+> setelah tabel `bookings` ada. Pint, PHPStan, ESLint, `tsc --noEmit`, dan `npm run build` bersih.
+> Kedua migration diuji `migrate` **dan** `migrate:rollback` terhadap database Railway bersama.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **`App\Support\SlotTime` ditambahkan**, dan `booking_date` memakai cast `immutable_date:Y-m-d`.
+>    MySQL mengembalikan kolom TIME sebagai `09:00:00` sedangkan SQLite (dipakai uji) mengembalikan
+>    apa yang ditulis; tanpa bentuk kanonis, kueri kuota lulus di uji lalu diam-diam gagal di
+>    produksi. Cacat ini nyata ditemukan saat uji pertama dijalankan, bukan diantisipasi.
+> 2. **`estimated_finish_at` diisi sejak booking dibuat**, bukan menunggu status `in_progress`
+>    seperti tertulis di [05 §5.3](05-alur-bisnis.md#53-state-machine-status-booking). Rumusnya
+>    memang `booking_datetime + estimated_duration_minutes` ([04 §4.2](04-skema-database.md)), dan
+>    halaman pelacakan publik membutuhkannya sejak awal. F1.5 tinggal menghitung ulang saat
+>    kendaraan benar-benar mulai dikerjakan.
+> 3. **Dua Rule object, bukan `NotSunday` + `AvailableSlot`** seperti dicontohkan
+>    `.claude/rules/10`. `BookableDate` menggabungkan hari tutup + H-1 + batas 60 hari karena
+>    ketiganya menyoroti kolom yang sama dan hanya satu pesan yang perlu tampil; namanya juga tidak
+>    menyebut "Sunday" karena hari tutup datang dari config, bukan dari kode.
+> 4. **`SlotUnavailableException` ditangani terpusat** di `bootstrap/app.php` menjadi galat inline
+>    di bawah kolom jam — polanya sama dengan `MasterDataInUseException` di F1.3.
+> 5. **Penerbitan kode booking mengulang transaksi** bila nomor urutnya keburu dipakai. Baris yang
+>    belum ada tidak bisa dikunci, sehingga dua permintaan pertama pada tanggal yang sama bisa
+>    menyusun `-0001` bersamaan; unique index menangkapnya dan yang kalah mengulang.
+> 6. **`App\Support\BookingPresenter` ditambahkan** untuk membentuk props. Alasannya keamanan, bukan
+>    kerapian: bentuk publik (`publicTracking`) dan bentuk pemilik (`detail`) berdiri berdampingan
+>    sehingga sulit tanpa sengaja membocorkan `admin_note` atau identitas pemesan.
+> 7. **`ServicePackage::isReferenced()` kini benar-benar memeriksa `bookings`** — janji yang
+>    ditinggalkan F1.3 sudah ditepati, beserta ujinya.
+>
+> **Sisa yang belum terbukti:** penguncian baris (`lockForUpdate`) hanya berlaku nyata di MySQL;
+> SQLite yang dipakai uji mengabaikan klausa itu. Yang terbukti otomatis adalah **keatomikannya** —
+> kueri hitung kuota berjalan saat transaksi sudah terbuka — dan bahwa tiga permintaan beruntun
+> pada satu slot tidak pernah menembus kuota. Perilaku dua permintaan yang benar-benar bersamaan
+> perlu satu kali pembuktian manual terhadap MySQL.
 
 | # | Pekerjaan |
 |---|-----------|

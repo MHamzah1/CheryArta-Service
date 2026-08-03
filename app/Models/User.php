@@ -106,6 +106,19 @@ class User extends Authenticatable
         return $this->hasMany(Vehicle::class);
     }
 
+    /**
+     * Booking milik pengguna ini. Alasan yang sama seperti `vehicles()`:
+     * booking customer selalu diambil lewat relasi ini
+     * (`$user->bookings()->where(...)`), bukan `Booking::find()` lalu
+     * diperiksa belakangan.
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     /** Boleh mengakses panel internal /admin. */
     public function isStaff(): bool
     {

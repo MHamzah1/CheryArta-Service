@@ -200,6 +200,20 @@ it('mengizinkan paket menyimpan kodenya sendiri saat disunting', function () {
         ->assertSessionHasNoErrors();
 });
 
+it('menolak menghapus paket yang sudah dipakai booking', function () {
+    // Aturan 1.3.5 baru benar-benar hidup setelah tabel `bookings` lahir di
+    // F1.4 — sebelumnya ServicePackage::isReferenced() selalu mengembalikan
+    // false karena tidak ada tabel yang merujuknya.
+    $package = ServicePackage::factory()->create();
+    App\Models\Booking::factory()->create(['service_package_id' => $package->id]);
+
+    $this->actingAs(superAdmin())
+        ->delete(route('admin.service-packages.destroy', $package))
+        ->assertSessionHas('error');
+
+    expect(ServicePackage::whereKey($package->id)->exists())->toBeTrue();
+});
+
 it('menghapus paket yang belum dipakai', function () {
     $package = ServicePackage::factory()->create();
 

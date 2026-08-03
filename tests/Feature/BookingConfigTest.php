@@ -30,6 +30,19 @@ it('mempertahankan sebelas slot waktu sistem lama', function () {
     ]);
 });
 
+it('menghentikan slot Sabtu di 13:00', function () {
+    // Keputusan R7 (3 Agustus 2026) — satu-satunya penyimpangan yang disengaja
+    // dari keputusan #7, karena slot 14:00 menjanjikan pekerjaan yang baru
+    // dimulai tepat saat bengkel tutup. Lihat docs/05 §Catatan konflik jam Sabtu.
+    expect(config('booking.slots_by_weekday.6'))->toBe([
+        '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00',
+    ]);
+});
+
+it('tidak mengubah slot hari kerja lain lewat penimpaan Sabtu', function () {
+    expect(array_keys(config('booking.slots_by_weekday')))->toBe([6]);
+});
+
 it('tidak menyediakan slot pada jam istirahat 12:00-13:00', function () {
     expect(config('booking.slots'))
         ->not->toContain('12:00')

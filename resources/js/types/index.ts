@@ -208,6 +208,98 @@ export interface CarModelImage {
     sort_order: number;
 }
 
+/**
+ * Batas kalender booking, dihitung server dari `config/booking.php`.
+ * Angka aturan booking TIDAK boleh ditulis ulang di React (temuan B2).
+ */
+export interface SlotRules {
+    earliest_date: string;
+    latest_date: string;
+    /** 0 = Minggu … 6 = Sabtu. */
+    closed_weekdays: number[];
+    quota_per_slot: number;
+}
+
+export interface SlotAvailability {
+    /** Bentuk `H:i`, mis. "09:00". */
+    time: string;
+    remaining: number;
+    is_full: boolean;
+}
+
+/** Jawaban `GET /booking/slots?date=` — satu-satunya endpoint JSON alur booking. */
+export interface SlotResponse {
+    date: string;
+    is_bookable: boolean;
+    /** Kalimat siap tampil bila tanggalnya tidak bisa dipesan. */
+    reason: string | null;
+    slots: SlotAvailability[];
+}
+
+export interface BookingVehicleOption {
+    id: number;
+    plate_full: string;
+    display_model: string;
+    year: number | null;
+    last_odometer: number | null;
+    is_primary: boolean;
+    series_code: string | null;
+}
+
+export interface ServicePackageOption {
+    id: number;
+    name: string;
+    description: string | null;
+    applicable_series: string[];
+    estimated_duration_minutes: number;
+    price: string | number;
+    is_free: boolean;
+}
+
+/** Bentuk ringkas booking, dipakai daftar riwayat. */
+export interface BookingSummary {
+    booking_code: string;
+    booking_date: string;
+    booking_time: string;
+    status: string;
+    estimated_finish_at: string | null;
+    vehicle_plate: string;
+    vehicle_model: string;
+    package_name: string;
+    package_price: string | number;
+    package_is_free: boolean;
+}
+
+export interface BookingDetail extends BookingSummary {
+    complaint: string | null;
+    odometer: number | null;
+    cancel_reason: string | null;
+    source: string;
+    package_description: string | null;
+    package_duration_minutes: number;
+    rescheduled_from: { booking_code: string; booking_date: string; booking_time: string } | null;
+}
+
+export interface TimelineEntry {
+    id: number;
+    from_status: string | null;
+    to_status: string;
+    note: string | null;
+    created_at: string | null;
+}
+
+/**
+ * Hasil pelacakan publik. Sengaja TIDAK memuat nama, telepon, plat, atau
+ * keluhan — lihat App\Support\BookingPresenter::publicTracking().
+ */
+export interface PublicTracking {
+    booking_code: string;
+    booking_date: string;
+    booking_time: string;
+    status: string;
+    estimated_finish_at: string | null;
+}
+
 /** Bentuk paginasi Laravel, dipakai seluruh tabel daftar. */
 export interface Paginated<T> {
     data: T[];

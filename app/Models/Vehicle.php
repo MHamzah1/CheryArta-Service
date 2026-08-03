@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -23,7 +24,10 @@ use Illuminate\Support\Str;
  * @property string $plate_number
  * @property string $plate_suffix
  * @property string $plate_full
+ * @property int|null $year
+ * @property int|null $last_odometer
  * @property bool $is_primary
+ * @property-read string $display_model
  */
 class Vehicle extends Model
 {
@@ -125,6 +129,12 @@ class Vehicle extends Model
 
             return $this->carModel->name;
         });
+    }
+
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 
     /** @param  Builder<$this>  $query */

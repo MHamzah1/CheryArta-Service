@@ -8,6 +8,7 @@ use App\Enums\ServicePackageCategory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -52,20 +53,22 @@ class ServicePackage extends Model
         ];
     }
 
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     /**
      * Apakah paket ini sudah dipakai baris lain.
      *
-     * Satu-satunya tabel yang kelak merujuk paket layanan adalah `bookings`,
-     * dan tabel itu baru lahir di F1.4. Sampai saat itu paket yang belum
-     * terpakai aman dihapus.
-     *
-     * Saat relasi `bookings()` ada, ganti isi method INI menjadi
-     * `$this->bookings()->exists()` — jangan menambahkan pemeriksaan baru di
-     * controller, supaya aturan 1.3.5 tetap hidup di satu tempat.
+     * Booking yang sudah dihapus lunak ikut dihitung: barisnya masih ada dan
+     * masih menunjuk ke paket ini, sehingga menghapus paket akan membuat
+     * riwayat servis lama kehilangan keterangan pekerjaannya.
      */
     public function isReferenced(): bool
     {
-        return false;
+        return $this->bookings()->withTrashed()->exists();
     }
 
     /** @param  Builder<$this>  $query */

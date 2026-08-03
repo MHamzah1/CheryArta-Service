@@ -8,20 +8,7 @@
 
 const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-const BULAN = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-];
+const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
 /** 450000 → "Rp 450.000" · null → "-" */
 export function formatRupiah(value: number | string | null | undefined): string {
@@ -74,6 +61,28 @@ export function formatJam(value: string | null | undefined): string {
     const [hour, minute] = value.split(':');
 
     return `${hour}.${minute ?? '00'}`;
+}
+
+/**
+ * "2026-08-03T10:30:00+07:00" → "10.30"
+ *
+ * Komponen jamnya dibaca langsung dari teks, TIDAK lewat `new Date()`: server
+ * sudah mengirim waktu Asia/Jakarta, dan mengubahnya ke zona peramban akan
+ * menggeser jam bagi pengguna di luar WIB — bentuk lain dari temuan B7.
+ */
+export function formatJamIso(value: string | null | undefined): string {
+    if (!value) return '-';
+
+    const cocok = value.match(/T(\d{2}):(\d{2})/);
+
+    return cocok ? `${cocok[1]}.${cocok[2]}` : '-';
+}
+
+/** "2026-08-03T10:30:00+07:00" → "3 Agu 2026, 10.30" */
+export function formatTanggalJamIso(value: string | null | undefined): string {
+    if (!value) return '-';
+
+    return `${formatTanggalSingkat(value)}, ${formatJamIso(value)}`;
 }
 
 /** "2026-08-03" + "09:00" → "Senin, 3 Agustus 2026 pukul 09.00" */

@@ -6,7 +6,11 @@ use App\Http\Controllers\Admin\CarModelController;
 use App\Http\Controllers\Admin\CarModelImageController;
 use App\Http\Controllers\Admin\CarModelVariantController;
 use App\Http\Controllers\Admin\ServicePackageController;
+use App\Http\Controllers\Customer\BookingController;
+use App\Http\Controllers\Customer\BookingHistoryController;
 use App\Http\Controllers\Customer\VehicleController;
+use App\Http\Controllers\Public\BookingTrackingController;
+use App\Http\Controllers\Public\SlotAvailabilityController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -26,6 +30,19 @@ use Inertia\Inertia;
 // --- Publik -----------------------------------------------------------
 Route::get('/', fn () => Inertia::render('welcome'))->name('home');
 
+// Ketersediaan slot: satu-satunya endpoint JSON di alur booking (docs/03 §3.4).
+// Didaftarkan SEBELUM `booking/{booking}` agar "slots" tidak dikira kode booking.
+Route::get('booking/slots', SlotAvailabilityController::class)
+    ->middleware('throttle:60,1')
+    ->name('booking.slots');
+
+// Pelacakan tanpa login — hanya kode, jadwal, dan status (docs/05 §5.7).
+// Throttle-nya yang membuat kode booking tidak bisa ditebak dengan mencoba
+// berulang kali.
+Route::get('cek-service', BookingTrackingController::class)
+    ->middleware('throttle:10,1')
+    ->name('public.tracking');
+
 // --- Customer ---------------------------------------------------------
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
@@ -37,6 +54,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('kendaraan/{vehicle}/ubah', [VehicleController::class, 'edit'])->name('vehicles.edit');
         Route::put('kendaraan/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
         Route::delete('kendaraan/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
+        // Booking servis. `{booking}` diikat lewat kode booking, bukan id yang
+        // bisa ditebak berurutan (Booking::getRouteKeyName()).
+        Route::get('booking', [BookingController::class, 'create'])->name('booking.create');
+        Route::post('booking', [BookingController::class, 'store'])->name('booking.store');
+        Route::get('booking/{booking}/sukses', [BookingController::class, 'success'])->name('booking.success');
+        Route::get('booking/{booking}', [BookingController::class, 'show'])->name('booking.show');
+        Route::put('booking/{booking}/jadwal-ulang', [BookingController::class, 'reschedule'])->name('booking.reschedule');
+        Route::put('booking/{booking}/batal', [BookingController::class, 'cancel'])->name('booking.cancel');
+
+        Route::get('riwayat', [BookingHistoryController::class, 'index'])->name('history.index');
     });
 });
 
