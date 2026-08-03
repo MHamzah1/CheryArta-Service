@@ -27,4 +27,9 @@ cmds = ["npm run build"]
 #    membekukan nilai kosong.
 # 2. `--host=0.0.0.0 --port=$PORT` — Railway menyuntikkan $PORT. Mengabaikannya
 #    membuat health check `/up` gagal dan deploy ditandai merah.
-cmd = "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"
+# 3. `--no-reload` WAJIB ada agar PHP_CLI_SERVER_WORKERS berlaku. Tanpa flag ini
+#    `artisan serve` menyalakan pengawas perubahan berkas dan hanya membuat SATU
+#    proses, lalu memperingatkan di log: "Unable to respect the
+#    PHP_CLI_SERVER_WORKERS environment variable without the --no-reload flag".
+#    Mengawasi perubahan berkas juga tidak ada gunanya di dalam kontainer.
+cmd = "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT --no-reload"

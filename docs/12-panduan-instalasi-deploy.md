@@ -157,7 +157,14 @@ Catatan yang mudah terlewat:
   Driver `file` di filesystem ephemeral akan membuat pengguna ter-logout acak setiap redeploy.
 - **`PHP_CLI_SERVER_WORKERS=4`** — start command memakai `php artisan serve`, dan server bawaan
   PHP hanya melayani satu permintaan pada satu waktu tanpa variabel ini. Cukup untuk Big Fase 1
-  yang dipakai developer saja (**R5**); bila kelak ada trafik nyata, ganti ke Nginx + PHP-FPM
+  yang dipakai developer saja (**R5**); bila kelak ada trafik nyata, ganti ke Nginx + PHP-FPM.
+
+  > **Variabel ini tidak berlaku sendirian.** `artisan serve` mengabaikannya kecuali start
+  > command juga memuat `--no-reload`; tanpa flag itu ia menyalakan pengawas perubahan berkas
+  > dan tetap membuat satu proses saja. Gejalanya hanya terlihat sebagai baris `WARN` di log
+  > deploy, bukan sebagai kegagalan — situsnya tetap hidup, hanya melayani satu permintaan pada
+  > satu waktu. Ditemukan 3 Agustus 2026 lewat `railway logs -d`; `nixpacks.toml` sudah
+  > diperbaiki
   lewat `Dockerfile` sendiri.
 - **`CLOUDINARY_FAKE` tidak diisi di Railway.** Nilainya harus `false`/absen agar unggahan benar
   benar sampai ke Cloudinary.
