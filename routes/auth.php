@@ -16,7 +16,11 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // 5 percobaan per jam — .claude/rules/50-keamanan.md. Batas login sendiri
+    // ditegakkan di LoginRequest (5 per menit, per email + IP), bukan di sini,
+    // karena kuncinya perlu memuat email.
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:5,60');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,23 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
+            ]);
+        }
+
+        $user = Auth::user();
+
+        // Akun yang dinonaktifkan admin tidak boleh masuk meski passwordnya
+        // benar. Diperiksa SETELAH attempt dengan sengaja: pesan ini hanya
+        // terlihat oleh orang yang sudah membuktikan tahu passwordnya,
+        // sehingga tidak bisa dipakai menebak email mana yang terdaftar
+        // (.claude/rules/50-keamanan.md — pesan galat netral).
+        if ($user instanceof User && ! $user->is_active) {
+            Auth::guard('web')->logout();
+
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun Anda sedang dinonaktifkan. Hubungi bengkel untuk mengaktifkannya kembali.',
             ]);
         }
 

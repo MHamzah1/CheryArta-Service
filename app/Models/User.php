@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -90,6 +91,19 @@ class User extends Authenticatable
                 ? null
                 : PhoneNumber::normalize($value),
         );
+    }
+
+    /**
+     * Kendaraan milik pengguna ini.
+     *
+     * Data customer diambil lewat relasi ini, bukan `Vehicle::find()` lalu
+     * diperiksa belakangan — .claude/rules/50-keamanan.md.
+     *
+     * @return HasMany<Vehicle, $this>
+     */
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class);
     }
 
     /** Boleh mengakses panel internal /admin. */

@@ -158,7 +158,34 @@ Tiga akibat yang tetap perlu diingat meski diperbolehkan:
 | Baris gambar hilang, **berkasnya tetap di Cloudinary** → menumpuk jadi berkas yatim | Sesekali bersihkan lewat Media Library Cloudinary; folder sudah terpisah per jenis |
 | Seeder menjadi satu-satunya jalan pulih | Seeder produksi wajib **lengkap & idempoten** — kalau tidak, `migrate:fresh --seed` meninggalkan sistem setengah isi |
 
-## F1.2 — Autentikasi & Data Inti  (3 hari)
+## F1.2 — Autentikasi & Data Inti  (3 hari) — ✅ SELESAI
+
+> **Selesai 3 Agustus 2026.** 124 uji Pest hijau; Pint, PHPStan, ESLint, `tsc --noEmit`, dan
+> `npm run build` bersih. Kesembilan migration diuji `migrate` **dan** `migrate:rollback`
+> terhadap database Railway bersama, lalu dipasang kembali.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **Kolom gambar memakai pasangan `public_id` + `url`**, bukan `path`/`image_path` seperti
+>    tertulis di [04 §4.2](04-skema-database.md). Kolom `path` lahir sebelum keputusan **R3**
+>    memindahkan seluruh berkas ke Cloudinary; bentuk pasangan inilah yang dihasilkan
+>    `App\Support\UploadedAsset::toColumns()`. Dokumen 04 sudah diperbarui.
+> 2. **8 paket layanan, bukan 10.** Penghitungan ulang terhadap prototipe menemukan 8 opsi;
+>    angka 10 di [01 §1.5](01-analisis-sistem-lama.md) keliru dan sudah dikoreksi.
+> 3. **Tiga enum tambahan** — `CarCategory`, `FuelType`, `ServicePackageCategory`. Kolomnya
+>    disebut "varchar + PHP Enum" di dokumen 04 tetapi enumnya belum pernah didefinisikan.
+> 4. **`VehicleService` ditambahkan** di luar empat service inti. Invarian "satu kendaraan utama
+>    per pemilik" menyentuh banyak baris sekaligus sehingga butuh transaksi — terlalu berat
+>    untuk controller, dan bukan urusan model.
+> 5. **Rute `/admin` kini dijaga `role:super_admin,service_advisor`.** Catatan "FASE 1" di
+>    `routes/web.php` menunggu kolom `role` & `is_active`, yang sudah ada sejak F1.0.
+> 6. **Gambar fasilitas & katalog belum di-seed.** Berkasnya ada di
+>    `database/seeders/assets/`, tetapi mengunggahnya menuntut `CLOUDINARY_URL` terisi —
+>    dan seeder yang gagal tanpa kredensial membuat `migrate:fresh --seed` mustahil dijalankan
+>    di CI. Gambar dipasang lewat layar admin di F1.3.
+>
+> **Sisa yang belum terbukti:** DoD #9 ("terbukti hidup setelah di-deploy ke Railway") — belum
+> ada push ke `main` sejak perubahan ini, jadi yang teruji baru lingkungan lokal terhadap
+> database Railway.
 
 | # | Pekerjaan |
 |---|-----------|

@@ -53,4 +53,48 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_akun_nonaktif_tidak_bisa_masuk_meski_passwordnya_benar()
+    {
+        $user = User::factory()->inactive()->create();
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_login_berhasil_mencatat_waktu_masuk_terakhir()
+    {
+        $user = User::factory()->create(['last_login_at' => null]);
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertNotNull($user->refresh()->last_login_at);
+    }
+
+    public function test_login_dibatasi_lima_percobaan_per_menit()
+    {
+        $user = User::factory()->create();
+
+        foreach (range(1, 5) as $ignored) {
+            $this->post('/login', [
+                'email' => $user->email,
+                'password' => 'password-salah',
+            ]);
+        }
+
+        // Percobaan keenam ditolak lewat pesan throttle, bukan pesan kredensial.
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
 }

@@ -39,7 +39,7 @@ Daftar ini adalah kontrak minimum: sistem baru **tidak boleh** kehilangan satu p
 | F4 | Form booking 8 field + plat nomor 3 segmen | 1556–1664 | Dipertahankan, ditambah pilihan kendaraan tersimpan |
 | F5 | Validasi plat, telepon, tanggal H-1, hari Minggu | 2268–2303, 3128–3136 | Dipindah ke server (Form Request), tetap ada versi klien |
 | F6 | Kuota maksimal 2 booking per slot jam | 2305–2321 | Dipertahankan persis, dipindah ke server |
-| F7 | Dropdown paket layanan berkelompok (10 opsi) | 1596–1619 | Pindah ke tabel `service_packages`, dikelola admin |
+| F7 | Dropdown paket layanan berkelompok (8 opsi dalam 4 grup) | 1596–1619 | Pindah ke tabel `service_packages`, dikelola admin |
 | F8 | "Cek Service" — cari status via plat nomor | 1756–1802, 2533–2563 | Diganti tracking di akun customer + pencarian publik tetap ada |
 | F9 | Panel admin: tabel booking + kartu versi mobile | 1804–1892, 2720–2825 | Dipertahankan, jadi modul Manajemen Booking |
 | F10 | Filter admin (nama/plat, status, rentang tanggal) | 1828–1865, 2686–2708 | Dipertahankan, filter dijalankan di server |
@@ -123,14 +123,26 @@ Keunggulan     : Teknisi Bersertifikat, Peralatan Modern, Layanan Cepat, Garansi
 Ruang Tunggu Premium, Kids Play Area, Workshop Modern, Area Diskusi Santai, Ruang Konsultasi,
 Lounge Entertainment.
 
-**10 paket layanan lama** yang menjadi data awal `service_packages`:
+**8 paket layanan lama** yang menjadi data awal `service_packages`:
 
-| Kategori | Paket |
-|----------|-------|
-| First Maintenance ICE | First Maintenance (1.000 km/1 Bln)<br>First Maintenance (5.000 km/3 Bln) |
-| First Maintenance EV | First Maintenance EV (5.000 km/6 Bln) |
-| Free Maintenance | Tiggo 5X / Cross Series<br>Tiggo 8 Series<br>EV Series<br>CSH Series |
-| Lainnya | Other |
+> Dikoreksi 3 Agustus 2026 — dokumen ini sebelumnya menulis "10 paket". Penghitungan ulang
+> terhadap `index (1).html` baris 1596–1619 menemukan **8** `custom-option` di dalam
+> **4** `custom-optgroup`; angka 10 tidak cocok dengan keduanya. Yang berlaku adalah 8 baris
+> di bawah ini, dan `ServicePackageSeeder` mengikutinya.
+
+| Kategori | `code` | Paket |
+|----------|--------|-------|
+| First Maintenance ICE | `first_maintenance_1000` | First Maintenance (1.000 km/1 Bln) |
+| First Maintenance ICE | `first_maintenance_5000` | First Maintenance (5.000 km/3 Bln) |
+| First Maintenance EV | `first_maintenance_ev_5000` | First Maintenance EV (5.000 km/6 Bln) |
+| Free Maintenance | `Tiggo_5X_Cross_Free` | Tiggo 5X / Cross Series |
+| Free Maintenance | `Tiggo_8_Free` | Tiggo 8 Series |
+| Free Maintenance | `EV_Free` | EV Series |
+| Free Maintenance | `CSH_Free` | CSH Series |
+| Lainnya | `Other` | Other |
+
+Kolom `code` disalin persis, **termasuk campuran huruf besar-kecilnya** — `booking:import-firebase`
+memetakan data lama lewat nilai ini.
 
 **Slot waktu lama:** 08:00, 08:30, 09:00, 09:30, 10:00, 10:30, 11:00, 11:30, 13:00, 13:30, 14:00
 (istirahat 12:00–13:00 — terlihat dari tidak adanya slot 12:00/12:30).

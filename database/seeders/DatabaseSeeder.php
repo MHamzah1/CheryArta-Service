@@ -11,14 +11,22 @@ class DatabaseSeeder extends Seeder
     /**
      * Seeder dijalankan berurutan.
      *
-     * Seeder data master (paket layanan, katalog mobil, fasilitas, FAQ,
-     * template WA) ditambahkan pada Fase 1 dan 5 — lihat
-     * docs/04-skema-database.md §4.4.
+     * Seluruhnya idempoten (`updateOrCreate`), sehingga `db:seed` boleh
+     * dijalankan berkali-kali terhadap database yang sudah terisi tanpa
+     * menggandakan baris — .claude/rules/30-database.md.
+     *
+     * WhatsAppTemplateSeeder menyusul di F2.2, DemoBookingSeeder di F2.1 —
+     * lihat docs/04-skema-database.md §4.4.
      */
     public function run(): void
     {
         $this->call([
             UserSeeder::class,
+            ServicePackageSeeder::class,
+            CarModelSeeder::class,
+            FacilitySeeder::class,
+            FaqSeeder::class,
+            TestimonialSeeder::class,
         ]);
     }
 }

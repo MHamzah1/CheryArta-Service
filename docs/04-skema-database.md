@@ -97,7 +97,8 @@ terpisah akan memaksa dua guard, dua alur reset password, dan mempersulit `handl
 | short_description | varchar(255) | untuk kartu katalog |
 | description | text NULL | halaman detail |
 | specs | json NULL | `{"mesin":"1.6 TGDI","transmisi":"7DCT","kapasitas":"7 penumpang"}` |
-| brochure_path | varchar(255) NULL | PDF brosur |
+| brochure_public_id | varchar(255) NULL | PDF brosur di Cloudinary — dipakai untuk mengganti/menghapus berkas |
+| brochure_url | varchar(500) NULL | URL siap render, supaya halaman tidak memanggil API Cloudinary |
 | is_active, sort_order | | |
 | timestamps | | |
 
@@ -116,7 +117,8 @@ terpisah akan memaksa dua guard, dua alur reset password, dan mempersulit `handl
 | Kolom | Tipe | Ket. |
 |-------|------|------|
 | id, car_model_id FK cascade | | |
-| path | varchar(255) | relatif terhadap disk `public` |
+| public_id | varchar(255) | identitas berkas di Cloudinary |
+| url | varchar(500) | URL siap render |
 | alt | varchar(160) | wajib, untuk aksesibilitas & SEO |
 | is_primary | boolean | satu per model |
 | sort_order, timestamps | | |
@@ -255,7 +257,7 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 
 | Kolom | Tipe |
 |-------|------|
-| id, title (varchar 120), description (varchar 255), image_path (varchar 255), sort_order, is_active, timestamps |
+| id, title (varchar 120), description (varchar 255), image_public_id (varchar 255 NULL), image_url (varchar 500 NULL), sort_order, is_active, timestamps |
 
 ### `faqs`
 
@@ -273,9 +275,10 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 
 | Kolom | Tipe | Ket. |
 |-------|------|------|
-| id, name, email, phone, subject, message | | dari form kontak publik |
+| id, name, email, phone, subject, message | | dari form kontak publik; `phone` ternormalisasi 62… |
 | is_read | boolean | |
-| read_by | FK → users, nullable | |
+| read_by | FK → users, nullable, `nullOnDelete` | |
+| read_at | timestamp nullable | kapan pesan ditandai terbaca |
 | ip_address | varchar(45) | untuk penanganan spam |
 | timestamps | | |
 
@@ -312,7 +315,7 @@ bukan tahapan pekerjaan (temuan B10).
 | Seeder | Isi |
 |--------|-----|
 | `UserSeeder` | 1 Super Admin, 1 Service Advisor, 3 customer contoh (hanya di lokal) |
-| `ServicePackageSeeder` | 10 paket dari sistem lama, lengkap dengan `code` asli |
+| `ServicePackageSeeder` | 8 paket dari sistem lama, lengkap dengan `code` asli — lihat [01 §1.5](01-analisis-sistem-lama.md) |
 | `CarModelSeeder` | Tiggo 5X, Tiggo Cross, Tiggo 7 Pro, Tiggo 8 Pro, Omoda 5, Omoda E5 (EV), Jaecoo J7 — beserta varian & 1 gambar |
 | `FacilitySeeder` | 8 fasilitas + gambar dari `database/seeders/assets/` |
 | `FaqSeeder` | 8 pertanyaan umum (syarat booking, H-1, garansi, gratis servis berkala, cara batal, dsb.) |

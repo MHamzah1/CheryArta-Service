@@ -81,6 +81,30 @@ export interface User {
     [key: string]: unknown;
 }
 
+/** Ringkasan model katalog untuk dropdown. */
+export interface CarModelOption {
+    id: number;
+    name: string;
+}
+
+export interface Vehicle {
+    id: number;
+    car_model_id: number | null;
+    /** Terisi bila kendaraannya bukan Chery — lihat pertanyaan terbuka Q3. */
+    model_name_manual: string | null;
+    plate_prefix: string;
+    plate_number: string;
+    plate_suffix: string;
+    /** Bentuk gabungan `B-1234-ABC`, disusun server. */
+    plate_full: string;
+    year: number | null;
+    color: string | null;
+    vin: string | null;
+    last_odometer: number | null;
+    is_primary: boolean;
+    car_model?: CarModelOption | null;
+}
+
 /** Bentuk paginasi Laravel, dipakai seluruh tabel daftar. */
 export interface Paginated<T> {
     data: T[];
