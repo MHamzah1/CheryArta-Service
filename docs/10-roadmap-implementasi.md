@@ -78,28 +78,24 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ HAMPIR SELESAI
+## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ TERSISA SATU BUTIR
 
 Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
 semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
 langkah ada di [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
 
-> **Keadaan per 3 Agustus 2026.** Situs sudah hidup di Railway dan komputer developer sudah
-> memandang database yang sama.
+> **Keadaan per 3 Agustus 2026 (pemeriksaan kedua).** Situs hidup di Railway, kedua komputer
+> developer memandang database yang sama, dan seedernya sudah terbukti mengisi database itu.
 >
-> **Selesai:** 1.1.2 service MySQL + TCP proxy · 1.1.3 berkas build · 1.1.4 Variables ·
-> 1.1.5 `trustProxies` · 1.1.6 Cloudinary (akun + kredensial di Railway) · 1.1.7 `.env.example` ·
-> 1.1.8 panduan DBeaver · 1.1.9 batas `migrate:fresh` · 1.1.10 workflow CI ·
-> dan penautan Railway ↔ repo pada 1.1.1.
+> **Selesai:** seluruh 1.1.1–1.1.10, kecuali satu butir pembuktian di 1.1.6.
+> Sejak pemeriksaan pertama hari ini bertambah: proteksi branch `main` (menutup 1.1.1), seeder
+> terhadap DB Railway — keenam seeder terisi dan `db:seed` ulang terbukti idempoten — serta
+> verifikasi dari komputer kedua.
 >
-> **Belum selesai:**
-> 1. **Proteksi branch `main`** (sisa 1.1.1) — masih bisa push langsung ke `main`.
-> 2. **Seeder belum pernah dijalankan** terhadap DB Railway; tabel `users` masih 0 baris,
->    sehingga kriteria "sistem yang langsung bisa dipakai" belum terbukti.
-> 3. **`cloudinary:cek` belum hijau** — `CLOUDINARY_URL` ada di Variables Railway tetapi
->    belum diisi di `.env` lokal.
-> 4. **Baru satu komputer** yang diverifikasi; janji "dua komputer melihat hasil identik"
->    belum diuji.
+> **Belum selesai — tinggal satu:**
+> 1. **`cloudinary:cek` belum hijau.** `CLOUDINARY_URL` sudah ada di Variables Railway; di `.env`
+>    lokal kuncinya sudah ada tetapi masih kosong, sehingga `AppServiceProvider` melempar galat.
+>    Sifatnya menyalin kredensial, bukan menulis kode.
 >
 > Daftar periksa beserta buktinya di
 > [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11).

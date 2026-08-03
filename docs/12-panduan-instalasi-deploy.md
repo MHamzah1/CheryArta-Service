@@ -512,39 +512,46 @@ Push ke `main` memicu deploy Railway; pantau tab **Deployments** sampai hijau, l
 
 ## 12.8 Daftar Periksa Selesai (F1.1)
 
-Yang bertanda ✅ sudah terbukti; sisanya masih menunggu tindakan di panel Railway, GitHub, dan
-Cloudinary — tidak bisa dikerjakan dari dalam kode.
+Yang bertanda ✅ sudah terbukti; sisanya masih menunggu tindakan di panel Cloudinary — tidak bisa
+dikerjakan dari dalam kode.
 
-Diperiksa terakhir **3 Agustus 2026**, dari satu komputer developer.
+Diperiksa terakhir **3 Agustus 2026**, dari dua komputer developer (laptop + PC kantor).
 
 - [x] ✅ Repo GitHub tertaut ke Railway, push ke `main` memicu deploy otomatis
-- [ ] Branch `main` dilindungi (Settings → Branches → Require pull request + require `ci`)
+- [x] ✅ Branch `main` dilindungi (Settings → Branches → Require pull request + require `ci`)
 - [x] ✅ Service MySQL berjalan (MySQL 9.4.0), TCP proxy aktif
 - [x] ✅ `nixpacks.toml` + `railway.json` (pre-deploy `migrate --force`) ada di repo
-- [x] ✅ Deploy pertama membuktikan keduanya bekerja: ketiga migration tercatat batch 1 di tabel `migrations`
+- [x] ✅ Deploy membuktikan keduanya bekerja: 14 migration tercatat batch 1–3 di tabel `migrations`
 - [x] ✅ `trustProxies` terpasang di `bootstrap/app.php`, teruji di `tests/Feature/TrustedProxyTest.php`
 - [x] ✅ Situs Railway tampil ber-CSS lewat `https://` — seluruh aset Vite disajikan sebagai URL absolut `https://`
 - [x] ✅ `ImageUploader` + `CloudinaryImageUploader` + `FakeImageUploader` ada dan teruji
 - [ ] `php artisan cloudinary:cek` hijau memakai `CLOUDINARY_URL` sungguhan
-      (`CLOUDINARY_URL` sudah terisi di Variables Railway, tetapi **belum** di `.env` lokal —
-      selama itu kosong perintah ini melempar galat, lihat `AppServiceProvider`)
+      (`CLOUDINARY_URL` sudah terisi di Variables Railway; di `.env` lokal kuncinya **sudah ada
+      tetapi masih kosong** — selama itu kosong perintah ini melempar galat, lihat
+      `AppServiceProvider`. Ini satu-satunya butir F1.1 yang belum tercentang)
 - [x] ✅ `.env.example` mutakhir dan **tanpa** kredensial nyata
-- [ ] DBeaver tersambung dari minimal satu komputer, diberi nama `CheryArta — Railway (dev+deploy)`
-      (penandaan *Production* baru berlaku setelah F2.5.1 — lihat §12.4)
-- [ ] `php artisan migrate:fresh --seed` terhadap DB Railway berhasil dan menghasilkan sistem yang langsung bisa dipakai
-      (tabel `users` masih 0 baris — seeder belum pernah dijalankan terhadap DB ini)
-- [ ] Laptop dan PC kantor menampilkan hasil `migrate:status` dan jumlah user yang identik
-      (baru satu komputer yang diverifikasi)
+- [x] ✅ Koneksi MySQL lewat TCP proxy terbukti dari kedua komputer; profil DBeaver diberi nama
+      `CheryArta — Railway (dev+deploy)` (penandaan *Production* baru berlaku setelah F2.5.1 — lihat §12.4)
+- [x] ✅ Seeder terhadap DB Railway berhasil dan menghasilkan sistem yang langsung bisa dipakai —
+      keenam seeder terisi, dan `db:seed` ulang tidak menggandakan satu baris pun (idempoten)
+- [x] ✅ Laptop dan PC kantor menampilkan hasil `migrate:status` dan jumlah user yang identik
 - [x] ✅ Workflow `.github/workflows/ci.yml` menjalankan seluruh gerbang kualitas
 
 ### Bukti yang tercatat saat pemeriksaan
 
 | Yang diperiksa | Hasil |
 |----------------|-------|
-| `php artisan migrate:status` dari komputer developer | 3 migration, seluruhnya `[1] Ran` |
+| `php artisan migrate:status` dari komputer developer | 14 migration, seluruhnya `Ran` (batch 1–3) |
 | Database yang dilihat | `railway` di `<TCP_PROXY_DOMAIN>:<TCP_PROXY_PORT>`, MySQL 9.4.0 |
-| Jumlah tabel | 9 — `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` |
-| `sessions` | 1 baris — situs live menulis sesi ke database yang sama, jadi `SESSION_DRIVER=database` terbukti bekerja |
+| Jumlah tabel | 20 |
+| Isi seeder | `users` 3 · `service_packages` 8 · `car_models` 7 · `car_model_variants` 13 · `facilities` 8 · `faqs` 8 · `testimonials` 4 |
+| Idempotensi seeder | `db:seed` dijalankan ulang terhadap DB yang sudah terisi — seluruh jumlah baris di atas **tidak berubah** |
+| Tabel transaksional | `vehicles`, `bookings`, `contact_messages` sengaja 0 baris — belum ada seeder demo (menyusul di F2.1) |
+| `sessions` | terisi — situs live menulis sesi ke database yang sama, jadi `SESSION_DRIVER=database` terbukti bekerja |
 | `GET https://<subdomain>.up.railway.app` | HTTP 200, aset CSS & JS ber-skema `https://` |
 | `VITE_APP_NAME` di bundle produksi | terpanggang sebagai `Chery Arta`, bukan literal `${APP_NAME}` |
-| Gerbang kualitas | Pest 90 lulus · Pint bersih · PHPStan `No errors` · ESLint bersih · `tsc --noEmit` bersih · `npm run build` sukses |
+| Gerbang kualitas | Pest 418 lulus (1.961 asersi) · Pint bersih · PHPStan `No errors` · ESLint bersih · `tsc --noEmit` bersih · `npm run build` sukses |
+
+> **Catatan cara verifikasi.** Proteksi branch dikonfirmasi lewat panel GitHub oleh developer;
+> `gh` CLI tidak terpasang di mesin ini sehingga tidak bisa dibuktikan ulang dari baris perintah.
+> Butir lainnya dibuktikan dengan perintah `artisan` yang menembak DB Railway secara langsung.
