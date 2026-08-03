@@ -24,6 +24,7 @@
 | Rate limit | Login 5 percobaan/menit per (email + IP); registrasi 5/jam per IP; form kontak 5/jam per IP; pelacakan publik 10/menit per IP |
 | Akun nonaktif | `is_active = false` → login ditolak dengan pesan netral |
 | Reset password | Token 60 menit. **Catatan:** tanpa email notifikasi (keputusan #4), reset mandiri lewat email tetap memakai `mail` bawaan Laravel; bila SMTP tidak tersedia, alurnya adalah customer menghubungi bengkel lalu Super Admin mereset dari panel. Perlu dipastikan sebelum rilis. |
+| Password sementara | Akun yang dibuatkan atau direset admin (walk-in, reset customer, **akun staf baru**) ditandai `must_reset_password`. Sejak F1.7 kolom itu ditegakkan: pemiliknya dialihkan ke `settings/password` dan tidak bisa membuka halaman lain sampai menetapkan password sendiri — hanya rute ganti password dan logout yang dikecualikan |
 | Verifikasi email | **Tidak dipakai** — konsekuensi keputusan #4 |
 
 ## 9.3 Otorisasi

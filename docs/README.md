@@ -4,7 +4,9 @@ Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
 **Status:** Big Fase 1 · F1.0 ✅ · F1.1 ✅ · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
-F1.5 ✅ · **F1.6 ✅ selesai** — berikutnya **F1.7 Stabilisasi Big Fase 1**.
+F1.5 ✅ · **F1.6 ✅ selesai** — berikutnya **F1.7 Hak Akses & Pengguna Internal** (A11 ditarik
+maju, [R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)), lalu **F1.8
+Stabilisasi Big Fase 1**.
 Satu-satunya pertanyaan yang masih menghambat adalah
 [Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.2.
 **Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)

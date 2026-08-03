@@ -9,7 +9,7 @@ Dokumen ini adalah spesifikasi **lengkap** tiap modul. Urutan pengerjaannya diat
 
 | Big Fase 1 | Big Fase 2 |
 |------------|------------|
-| **A2** Booking · **A3** Jadwal · **A4** Katalog · **A5** Paket Layanan · **A6** Customer & Kendaraan | **A1** Dashboard · **A7** WhatsApp penuh · **A8** Invoice · **A9** Laporan · **A10** Konten · **A11** Pengguna · **A12** Activity Log |
+| **A2** Booking · **A3** Jadwal · **A4** Katalog · **A5** Paket Layanan · **A6** Customer & Kendaraan · **A11** Pengguna Internal | **A1** Dashboard · **A7** WhatsApp penuh · **A8** Invoice · **A9** Laporan · **A10** Konten · **A12** Activity Log |
 
 Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
 
@@ -17,8 +17,14 @@ Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
   Tabel template, CRUD template, dan log pengiriman menyusul.
 - **A10** → hanya tabel `facilities`, `faqs`, `testimonials`, `contact_messages` + seeder,
   supaya landing page punya sumber data. Layar CRUD-nya menyusul.
-- **A13/A14** → menu untuk A2–A6 saja. Tetapi **Policy dan pembatasan SA-saja wajib lengkap
-  sejak Big Fase 1** — otorisasi tidak pernah boleh ditunda (temuan S3).
+- **A13/A14** → menu untuk A2–A6 + Sistem → Pengguna Internal. Tetapi **Policy dan pembatasan
+  SA-saja wajib lengkap sejak Big Fase 1** — otorisasi tidak pernah boleh ditunda (temuan S3).
+
+**A11 ditarik maju ke Big Fase 1** (F1.7, keputusan
+[R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)) karena hak akses atas
+menu yang sudah ada baru berarti bila akunnya bisa dibuat, dicabut, dan direset dari panel —
+bukan dari DBeaver. Yang tersisa untuk Big Fase 2 hanyalah pencatatan perubahannya ke activity
+log (A12).
 
 ## A1 — Dashboard  `/admin`  (SA, ADV) — ⏳ Big Fase 2
 
@@ -175,15 +181,37 @@ Phone, Status — ditambah Kode Booking dan Advisor.
 | `/admin/testimoni` | Nama, model mobil, rating 1–5, isi, terbitkan/sembunyikan |
 | `/admin/pesan-masuk` | Pesan dari form kontak: tandai dibaca, balas via WA (klik-to-chat), hapus spam |
 
-## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ Big Fase 2
+## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ F1.7 (Big Fase 1)
 
-Daftar akun staf: nama, email, role, status aktif, login terakhir.
+Daftar akun staf: nama, email, role, status aktif, login terakhir. Saringan role & status,
+paginasi 25.
 Aksi: tambah advisor, ubah role, nonaktifkan, reset password.
 
+Kolomnya sama dengan A6, tetapi **daftarnya terpisah dan tidak boleh saling menembus**: A6
+hanya menampilkan akun ber-role `customer`, A11 hanya akun staf. Satu layar untuk keduanya
+akan membuat penonaktifan sesama staf lewat jalur A6 yang pengamannya lebih longgar.
+
+| Field | Aturan |
+|-------|--------|
+| `name` | wajib |
+| `email` | wajib, unik lintas seluruh akun |
+| `phone_wa` | wajib, dinormalisasi `62…`, unik |
+| `role` | `super_admin` \| `service_advisor` — **bukan** `customer` |
+| `is_active` | default aktif |
+| Password | **tidak diisi admin.** Server membuat password acak dan menandai `must_reset_password` — pemiliknya menetapkan sendiri saat login pertama |
+
 Pengaman:
-- Super Admin tidak bisa menurunkan role dirinya sendiri.
-- Super Admin terakhir tidak bisa dinonaktifkan.
-- Akun customer tidak dikelola di sini (ada di A6).
+- Super Admin tidak bisa menurunkan role **dirinya sendiri**, dan tidak bisa menonaktifkan
+  dirinya sendiri.
+- Super Admin **aktif terakhir** tidak bisa diturunkan maupun dinonaktifkan — dihitung di dalam
+  transaksi dengan barisnya terkunci, bukan dibaca lalu ditulis.
+- Akun customer tidak dikelola di sini (ada di A6); sasaran ber-role `customer` ditolak.
+- Akun tidak pernah dihapus permanen — nonaktifkan (soft delete tersedia, tetapi bukan aksi
+  layar ini).
+
+> **Big Fase 1 (F1.7)** membuat layar ini beserta seluruh pengamannya, ditambah penegakan
+> `must_reset_password` saat login. Yang menyusul di Big Fase 2: perubahan akun ikut tercatat di
+> activity log (A12, F2.4.4).
 
 ## A12 — Activity Log  `/admin/activity-log`  (SA saja) — ⏳ Big Fase 2
 
@@ -207,15 +235,17 @@ Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
 > **Big Fase 1** hanya merender menu yang modulnya sudah ada: Jadwal · Booking · Customer ·
-> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA). Menu lain tidak dirender — bukan
-> ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum ada karena `/admin` mengalihkan ke
-> `/admin/bookings`.
+> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA) · **Pengguna Internal (SA, sejak F1.7)**.
+> Menu lain tidak dirender — bukan ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum
+> ada karena `/admin` mengalihkan ke `/admin/bookings`.
 
 ## A14 — Ringkasan Matriks Hak Akses
 
-> Matriks ini diverifikasi lewat uji otomatis per baris di F2.4.5. Tetapi **baris yang menyangkut
-> A2–A6 wajib berlaku dan teruji sejak Big Fase 1** (F1.3.7 & F1.5.9) — menunda otorisasi berarti
-> mengulang temuan S3 sistem lama.
+> Baris yang menyangkut **modul yang sudah ada** — A2–A6, katalog, paket layanan, dan A11 —
+> berlaku dan teruji sejak Big Fase 1 (F1.3.7, F1.5.9), lalu disusun ulang sebagai satu uji per
+> baris di **F1.7.8** (`AccessMatrixTest`) supaya baris yang *hilang* ikut kelihatan. Baris untuk
+> modul yang belum dibangun (invoice, laporan, konten, template WA, activity log) menyusul di
+> F2.4.5. Menunda otorisasi berarti mengulang temuan S3 sistem lama.
 
 | Modul | Super Admin | Service Advisor |
 |-------|-------------|-----------------|

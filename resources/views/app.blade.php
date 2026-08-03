@@ -6,6 +6,11 @@
 
         <title inertia>{{ config('app.name', 'Chery Arta') }}</title>
 
+        {{-- Ikon tab: emblem Chery putih di atas kotak brand-700. SVG, bukan .ico,
+             supaya tajam di layar retina dan tetap satu berkas 3 KB. --}}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/favicon.svg">
+
         {{-- Font Inter di-self-host lewat @fontsource (lihat resources/css/app.css).
              Tidak ada permintaan ke host luar — sesuai kebijakan CSP docs/09 §9.5. --}}
 

@@ -4,7 +4,7 @@ Pengerjaan dibagi menjadi **dua Big Fase**:
 
 | Big Fase | Tujuan | Keadaan akhir |
 |----------|--------|---------------|
-| **Big Fase 1** | Sistem inti berjalan penuh dan hidup di Railway | Pelanggan bisa mendaftar → melihat katalog → memesan servis; advisor bisa mengelola booking, jadwal, customer, katalog, dan paket layanan. Dipakai **developer saja**, belum diumumkan ke pelanggan. |
+| **Big Fase 1** | Sistem inti berjalan penuh dan hidup di Railway | Pelanggan bisa mendaftar → melihat katalog → memesan servis; advisor bisa mengelola booking, jadwal, customer, katalog, dan paket layanan; Super Admin bisa membuat dan mencabut akun staf yang memegang menu-menu itu. Dipakai **developer saja**, belum diumumkan ke pelanggan. |
 | **Big Fase 2** | Pematangan operasional + go-live | Dashboard, invoice, laporan, notifikasi WA penuh, modul konten, activity log, pengerasan keamanan, pemisahan database produksi, rilis publik. |
 
 Estimasi memakai satuan **hari kerja untuk satu pengembang**.
@@ -13,7 +13,7 @@ Estimasi memakai satuan **hari kerja untuk satu pengembang**.
 
 ## Keputusan yang membentuk roadmap ini
 
-Delapan keputusan berikut diambil pada revisi 3 Agustus 2026 dan menjadi dasar pembagian fase.
+Sembilan keputusan berikut diambil pada revisi 3 Agustus 2026 dan menjadi dasar pembagian fase.
 Bila salah satunya berubah, roadmap ini ikut berubah.
 
 | # | Keputusan | Konsekuensi |
@@ -26,6 +26,7 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | R6 | **Notifikasi WA di Big Fase 1 = tombol manual sederhana** | Tombol "Chat via WhatsApp" di detail booking, teks dari `config`. Tanpa tabel template, tanpa log kirim — itu A7 di Big Fase 2. |
 | R7 | **Slot Sabtu berhenti di 13:00** — menutup [Q1](README.md#pertanyaan-terbuka) | `config/booking.php` memakai `slots_by_weekday` untuk hari Sabtu. Tidak ada perubahan kode `SlotService`. |
 | R8 | **`/admin` mengalihkan ke `/admin/bookings`** | A1 Dashboard ditunda utuh; `pages/admin/dashboard.tsx` dari Fase 0 dihapus, bukan diisi setengah. |
+| R9 | **A11 Pengguna Internal ditarik maju ke Big Fase 1** (F1.7), terbatas pada hak akses menu yang sudah ada | Akun staf tidak lagi lahir dari seeder saja; `must_reset_password` mulai ditegakkan; matriks A14 untuk A2–A6 + master data diverifikasi baris demi baris. **Tidak** membawa sistem izin dinamis — dua role tetap keputusan final #8. Big Fase 1 bertambah 2 hari (22 → 24). |
 
 ## Modul admin: yang masuk dan yang ditunda
 
@@ -41,15 +42,22 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | A8 — Invoice | ❌ | ✅ |
 | A9 — Laporan & Export | ❌ | ✅ |
 | A10 — Konten landing page | ⚠️ tabel + seeder saja (R4) | ✅ layar CRUD |
-| A11 — Pengguna Internal | ❌ | ✅ |
+| A11 — Pengguna Internal | ✅ F1.7 (**R9**) | ⚠️ sisa: jejaknya di activity log |
 | A12 — Activity Log | ❌ | ✅ |
-| A13 — Navigasi panel | ⚠️ menu untuk A2–A6 saja | ✅ menu penuh |
-| A14 — Matriks hak akses | ⚠️ **Policy untuk A2–A6 wajib ada** | ✅ matriks penuh |
+| A13 — Navigasi panel | ⚠️ menu untuk A2–A6 + Sistem → Pengguna | ✅ menu penuh |
+| A14 — Matriks hak akses | ⚠️ **Policy wajib ada untuk A2–A6, master data, A11** — diverifikasi per baris di F1.7 | ✅ matriks penuh |
 
 > **A13 dan A14 tidak bisa ditunda sepenuhnya.** A13 hanyalah spesifikasi menu — tanpa menu,
 > layar A2–A6 tidak bisa dicapai. A14 hanyalah ringkasan matriks — otorisasinya sendiri
 > (Policy tiap sumber daya, pembatasan SA-saja pada A4 & A5) **wajib** ikut Big Fase 1.
 > Menunda otorisasi berarti mengulang temuan S3 sistem lama.
+>
+> **A11 menyusul ke Big Fase 1 karena alasan yang sama, satu tingkat lebih jauh** (**R9**):
+> hak akses baru berarti bila akun yang memegangnya bisa dibuat, dicabut, dan direset dari
+> panel. Selama akun staf hanya lahir dari seeder, "advisor ditolak di rute SA" adalah aturan
+> yang benar terhadap satu akun contoh, bukan terhadap orang sungguhan. Yang ditarik maju
+> hanyalah pengelolaan akun untuk **menu yang sudah ada**; pencatatan perubahannya ke activity
+> log tetap menunggu A12 di F2.4.4.
 
 ---
 
@@ -345,9 +353,11 @@ dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan man
 > **Sisa yang belum terbukti:**
 > - **`must_reset_password` belum ditegakkan saat login.** Kolomnya diisi dengan benar (akun
 >   walk-in baru dan akun yang direset Super Admin), tetapi belum ada pemaksaan ganti password di
->   alur masuk. Selama Big Fase 1 dampaknya nihil — akun walk-in dibuat dengan password acak yang
->   tidak diketahui siapa pun, jadi pemiliknya memang harus lewat jalur reset. Penegakannya masuk
->   Big Fase 2 bersama A11.
+>   alur masuk. Selama isinya hanya akun customer dampaknya kecil — akun walk-in dibuat dengan
+>   password acak yang tidak diketahui siapa pun, jadi pemiliknya memang harus lewat jalur reset.
+>   **Penegakannya pindah ke [F1.7](#f17--hak-akses--pengguna-internal--2-hari) (butir 1.7.6)**,
+>   bukan lagi ke Big Fase 2: begitu password sementara bisa membuka panel internal, kolom itu
+>   harus benar-benar berlaku.
 > - **Password sementara hasil reset tampil di flash message.** Tanpa notifikasi email
 >   (keputusan #4) tidak ada jalur lain; nilainya tidak tersimpan di mana pun dalam bentuk
 >   terbaca, tetapi ia melewati session. Perlu ditinjau ulang bila SMTP kelak tersedia
@@ -408,7 +418,7 @@ untuk yang belum punya layar admin (fasilitas, FAQ, testimoni — **R4**).
 > **Sisa yang belum terbukti:** butir **1.6.6** (uji responsif 360/768/1280 + pemeriksaan
 > kontras) dikerjakan lewat kelas Tailwind mobile-first dan token warna yang kontrasnya sudah
 > ditetapkan di [06 §6.2](06-desain-ui-ux.md), tetapi **belum ada pembuktian manual di peramban
-> sungguhan**. Itu tetap harus dijalankan sebelum F1.7 ditutup.
+> sungguhan**. Itu tetap harus dijalankan sebelum Big Fase 1 ditutup — kini bernomor **1.8.7**.
 
 | # | Pekerjaan |
 |---|-----------|
@@ -428,20 +438,65 @@ dipakai penuh di layar 360px, dan CTA "Booking Servis" benar-benar mengantar ke 
 > dilihat lewat DBeaver. Ini konsekuensi langsung dari menunda A10, dan tercatat di
 > [tabel risiko](#risiko).
 
-## F1.7 — Stabilisasi Big Fase 1  (1 hari)
+## F1.7 — Hak Akses & Pengguna Internal  (2 hari)
+
+Melengkapi sisi hak akses untuk **menu yang sudah ada** — A2 Booking, A3 Jadwal, A4 Katalog,
+A5 Paket Layanan, A6 Customer & Kendaraan. Tidak ada layar operasional baru; yang ditambahkan
+adalah cara membuat, mencabut, dan mereset akun yang memegang kunci menu-menu itu (**R9**).
+
+Tiga hal yang menuntutnya sekarang, bukan di Big Fase 2:
+
+1. **Akun staf hanya lahir dari seeder.** Menambah advisor sungguhan hari ini berarti membuka
+   DBeaver atau `tinker` — persis yang dijanjikan tidak perlu di F1.5 ("tanpa menyentuh
+   database"). Begitu aplikasi didemokan ke pemilik bengkel, akun pertama yang bukan milik
+   pengembang harus bisa dibuat dari panel.
+2. **`must_reset_password` ditulis tetapi tidak pernah ditegakkan.** Dua jalur mengisinya
+   (akun walk-in 1.5.4, reset oleh Super Admin 1.5.6) dan tidak ada satu pun yang memaksanya.
+   Selama isinya hanya akun customer dampaknya kecil; begitu password sementara bisa membuka
+   **panel internal**, kolom itu harus benar-benar berlaku.
+3. **Matriks A14 berlaku, tetapi belum terbaca sebagai matriks.** Barisnya ditegakkan tersebar
+   di `AdminAccessTest`, `CustomerDirectoryTest`, dan uji katalog. Satu berkas yang menyusun
+   ulang baris-baris itu membuat baris yang **hilang** kelihatan — hari ini tidak ada yang
+   menjamin itu.
+
+> **Yang sengaja tidak masuk:** sistem izin dinamis (tabel `permissions`, role rakitan admin,
+> menu yang bisa dinyalakan per akun). Dua role internal adalah keputusan final #8 — matriks
+> A14 tetap hidup di kode, bukan di database. Menu yang modulnya belum ada tetap **tidak
+> dirender**; F1.7 tidak menambah satu pun menu selain "Pengguna Internal".
 
 | # | Pekerjaan |
 |---|-----------|
-| 1.7.1 | Seluruh gerbang kualitas hijau: `php artisan test`, Pint, PHPStan, ESLint, `tsc --noEmit`, `npm run build` |
-| 1.7.2 | Setiap migration baru diuji `migrate` **dan** `rollback` — `down()` yang tidak benar baru terasa sakitnya setelah ada data produksi |
-| 1.7.3 | Bersih dari `console.log`, `dd()`, `dump()`, data contoh yang tertinggal |
-| 1.7.4 | `/audit-paritas` terhadap prototipe lama untuk fitur yang masuk Big Fase 1 |
-| 1.7.5 | Dokumen `docs/` diperbarui bila ada perilaku atau skema yang berubah selama pengerjaan |
-| 1.7.6 | Satu putaran `migrate:fresh --seed` terhadap DB Railway, lalu telusuri alur penuh — membuktikan seeder masih lengkap dan kedua device bisa disamakan dengan satu perintah |
+| 1.7.1 | **A11** `/admin/users` (SA saja): daftar akun staf — nama, email, role, status aktif, login terakhir; saringan role & status; paginasi 25; kartu di `< md` |
+| 1.7.2 | A11 tambah & ubah akun staf: nama, email unik, nomor WA ternormalisasi (`62…`), role. Password **tidak** diisi admin — server membuatnya acak dan menandai `must_reset_password` |
+| 1.7.3 | A11 nonaktifkan / aktifkan kembali akun staf + reset password (pola sama seperti 1.5.6, sasarannya akun staf) |
+| 1.7.4 | Pengaman di `UserService`, di dalam transaksi: Super Admin tidak bisa menurunkan role atau menonaktifkan **dirinya sendiri**; **Super Admin aktif terakhir** tidak bisa diturunkan maupun dinonaktifkan (dihitung dengan baris terkunci, bukan dibaca lalu ditulis); akun ber-role `customer` ditolak di seluruh rute ini — pengelolaannya tetap milik A6 |
+| 1.7.5 | `UserPolicy` diperluas untuk sasaran staf; grup rute `role:super_admin`. Advisor ditolak **di server**, bukan sekadar tidak melihat menunya |
+| 1.7.6 | Penegakan `must_reset_password`: middleware pada rute ber-auth mengalihkan ke `settings/password` sampai password diganti — kecuali rute ganti password itu sendiri dan logout. Menutup sisa F1.5 |
+| 1.7.7 | **A13** grup menu "Sistem" → "Pengguna Internal" (SA saja) di `AdminLayout` |
+| 1.7.8 | **A14** `tests/Feature/Admin/AccessMatrixTest.php`: satu uji per baris matriks untuk modul yang **sudah ada** (A2–A6, master data, A11) — SA boleh, advisor ditolak pada baris SA-saja, customer & tamu ditolak di seluruhnya |
+| 1.7.9 | Uji tambahan: SA gagal menurunkan/menonaktifkan diri sendiri; SA aktif terakhir tidak bisa dijatuhkan; akun staf baru tidak bisa membuka menu apa pun sebelum menetapkan password; `UserSeeder` tetap idempoten dan tetap menghasilkan SA + advisor yang bisa dipakai masuk |
+
+**Selesai bila:** Super Admin dapat membuat satu akun Service Advisor baru dari panel, akun itu
+wajib menetapkan password sendiri sebelum bisa membuka menu apa pun, Super Admin terakhir tidak
+bisa dijatuhkan oleh siapa pun termasuk dirinya sendiri — dan setiap baris matriks A14 yang
+menyangkut menu yang sudah ada punya satu uji yang menegakkannya.
+
+## F1.8 — Stabilisasi Big Fase 1  (1 hari)
+
+| # | Pekerjaan |
+|---|-----------|
+| 1.8.1 | Seluruh gerbang kualitas hijau: `php artisan test`, Pint, PHPStan, ESLint, `tsc --noEmit`, `npm run build` |
+| 1.8.2 | Setiap migration baru diuji `migrate` **dan** `rollback` — `down()` yang tidak benar baru terasa sakitnya setelah ada data produksi |
+| 1.8.3 | Bersih dari `console.log`, `dd()`, `dump()`, data contoh yang tertinggal |
+| 1.8.4 | `/audit-paritas` terhadap prototipe lama untuk fitur yang masuk Big Fase 1 |
+| 1.8.5 | Dokumen `docs/` diperbarui bila ada perilaku atau skema yang berubah selama pengerjaan |
+| 1.8.6 | Satu putaran `migrate:fresh --seed` terhadap DB Railway, lalu telusuri alur penuh — membuktikan seeder masih lengkap dan kedua device bisa disamakan dengan satu perintah |
+| 1.8.7 | Uji responsif 360/768/1280 di peramban sungguhan — sisa yang belum terbukti dari F1.6.6 |
 
 **Big Fase 1 selesai bila:** satu alur penuh berhasil di lingkungan Railway — daftar → tambah
 kendaraan → pilih paket → pilih slot → booking dibuat → advisor mengonfirmasi → status berubah →
-customer melihatnya di riwayat.
+customer melihatnya di riwayat. Advisor yang dipakai pada alur itu adalah akun yang **dibuat dari
+panel** (F1.7), bukan akun bawaan seeder.
 
 ---
 
@@ -482,7 +537,7 @@ customer melihatnya di riwayat.
 |---|-----------|
 | 2.4.1 | **A10** layar CRUD `/admin/fasilitas`, `/admin/faq`, `/admin/testimoni` (tabelnya sudah ada sejak F1.2.2 — tidak ada migrasi data) |
 | 2.4.2 | **A10** `/admin/pesan-masuk`: tandai dibaca, balas via WA, hapus spam; lencana jumlah belum dibaca di `AdminLayout` |
-| 2.4.3 | **A11** pengguna internal + pengaman (SA tidak bisa menurunkan role sendiri; SA terakhir tidak bisa dinonaktifkan) |
+| 2.4.3 | **A11 — sisa saja:** perubahan akun staf ikut tercatat di activity log (butuh 2.4.4). Layar, pengaman, dan matriksnya sudah selesai di F1.7 (**R9**) |
 | 2.4.4 | **A12** activity log (`spatie/laravel-activitylog`), retensi 12 bulan |
 | 2.4.5 | **A13** navigasi panel lengkap + **A14** verifikasi matriks hak akses lewat uji otomatis per baris matriks |
 
@@ -514,21 +569,24 @@ customer melihatnya di riwayat.
 | **1** | F1.3 — Master admin (A4, A5) | 3 | 10 |
 | **1** | F1.4 — Booking end-to-end | 4 | 14 |
 | **1** | F1.5 — Admin operasional (A2, A3, A6) | 3 | 17 |
-| **1** | F1.6 — Landing page publik | 4 | 21 |
-| **1** | F1.7 — Stabilisasi | 1 | **22** |
-| **2** | F2.1 — Dashboard & laporan | 3 | 25 |
-| **2** | F2.2 — WhatsApp penuh | 2 | 27 |
-| **2** | F2.3 — Invoice | 3 | 30 |
-| **2** | F2.4 — Konten, pengguna, audit | 3 | 33 |
-| **2** | F2.5 — Pengerasan & go-live | 4 | **37** |
+| **1** | F1.6 — Landing page publik ✅ | 4 | 21 |
+| **1** | F1.7 — Hak akses & pengguna internal (A11, **R9**) | 2 | 23 |
+| **1** | F1.8 — Stabilisasi | 1 | **24** |
+| **2** | F2.1 — Dashboard & laporan | 3 | 27 |
+| **2** | F2.2 — WhatsApp penuh | 2 | 29 |
+| **2** | F2.3 — Invoice | 3 | 32 |
+| **2** | F2.4 — Konten, pengguna, audit | 3 | 35 |
+| **2** | F2.5 — Pengerasan & go-live | 4 | **39** |
 
-Big Fase 1 ≈ **4,5 minggu kerja** (2 hari sudah selesai → sisa 20 hari). Total ≈ 7,5 minggu untuk
-satu pengembang. Bila dikerjakan dua orang, F1.6 dapat berjalan paralel dengan F1.4–F1.5 sesudah
-F1.3 selesai.
+Big Fase 1 ≈ **5 minggu kerja** — F1.0 sampai F1.6 sudah selesai (21 hari), tersisa **3 hari**:
+F1.7 dan F1.8. Total ≈ 8 minggu untuk satu pengembang. Bila dikerjakan dua orang, F1.6 dapat
+berjalan paralel dengan F1.4–F1.5 sesudah F1.3 selesai.
 
-Angka ini **lebih besar dari roadmap versi sebelumnya (25 hari)** karena bertambah dua pekerjaan
-nyata yang dulu tidak ada: penyiapan Railway + Cloudinary + database bersama (F1.1, 2 hari) dan
-pemisahan database produksi menjelang rilis (F2.5.1, bagian dari 4 hari).
+Angka ini **lebih besar dari roadmap versi sebelumnya (25 hari)** karena bertambah tiga pekerjaan
+nyata yang dulu tidak ada: penyiapan Railway + Cloudinary + database bersama (F1.1, 2 hari),
+pengelolaan akun staf beserta verifikasi matriksnya (F1.7, 2 hari — **R9**), dan pemisahan
+database produksi menjelang rilis (F2.5.1, bagian dari 4 hari). Dua hari F1.7 tidak menambah
+lingkup Big Fase 2: sebagian besarnya dipindahkan dari F2.4.3, bukan ditemukan baru.
 
 ## Definition of Done (berlaku untuk setiap tugas)
 
@@ -556,4 +614,5 @@ pemisahan database produksi menjelang rilis (F2.5.1, bagian dari 4 hari).
 | Aturan slot lama (kuota 2/jam) ternyata tidak sesuai kapasitas bengkel | Slot penuh palsu atau bengkel kebanjiran | Nilai di `config/booking.php` — bisa diubah tanpa menyentuh kode; `SlotService` sudah membaca `slots_by_weekday` |
 | Notifikasi WA bergantung kedisiplinan advisor menekan kirim | Pelanggan tidak menerima kabar | F2.2.3 menampilkan penanda "belum dikirim" yang menonjol; dashboard F2.1 menampilkan hitungan draft |
 | Reset password tanpa SMTP ([09 §9.2](09-keamanan-hak-akses.md#92-autentikasi)) | Pelanggan terkunci dari akunnya | Pastikan SMTP tersedia, atau sediakan alur reset lewat admin sebelum go-live (F2.5) |
+| Password sementara akun **staf** ditampilkan di flash message (F1.7.2) | Kredensial yang membuka panel internal melintas lewat session dan layar admin — lebih berat daripada kasus customer di F1.5 | `must_reset_password` ditegakkan sejak login pertama (1.7.6), jadi masa berlakunya sependek satu kali masuk; nilainya tidak tersimpan terbaca di mana pun. Ditinjau ulang begitu SMTP tersedia (F2.5) |
 | Scope melebar (stok sparepart, penugasan mekanik) | Jadwal meleset | Sudah ditetapkan Won't do di [02 §2.6](02-kebutuhan-produk.md#26-batas-scope-wont-do--fase-ini) |

@@ -1,9 +1,10 @@
+import BrandLockup from '@/components/brand-lockup';
 import { FlashToaster } from '@/components/flash-toaster';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 import { type NavItem, type SharedData, type UserRole } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CalendarDays, CalendarRange, Car, LogOut, Menu, ScrollText, Users, Wrench, X } from 'lucide-react';
+import { CalendarDays, CalendarRange, Car, LogOut, Menu, Users, Wrench, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 /*
@@ -69,7 +70,7 @@ interface Props {
 
 export default function AdminLayout({ children, title, description, actions }: Props) {
     const { props, url } = usePage<SharedData>();
-    const { auth, company } = props;
+    const { auth } = props;
     const [sidebarTerbuka, setSidebarTerbuka] = useState(false);
 
     const role = auth.user?.role;
@@ -85,9 +86,7 @@ export default function AdminLayout({ children, title, description, actions }: P
                 return (
                     <div key={grup.title || `grup-${i}`}>
                         {grup.title && (
-                            <p className="text-sidebar-foreground/60 mb-2 px-3 text-xs font-semibold tracking-wider uppercase">
-                                {grup.title}
-                            </p>
+                            <p className="text-sidebar-foreground/60 mb-2 px-3 text-xs font-semibold tracking-wider uppercase">{grup.title}</p>
                         )}
                         <ul className="space-y-1">
                             {items.map((item) => (
@@ -118,12 +117,9 @@ export default function AdminLayout({ children, title, description, actions }: P
         <div className="bg-canvas text-ink min-h-dvh">
             {/* Sidebar tetap — layar besar */}
             <aside className="bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-40 hidden w-64 flex-col overflow-y-auto border-r lg:flex">
-                <div className="border-sidebar-border flex items-center gap-2 border-b px-5 py-4">
-                    <ScrollText className="text-sidebar-primary h-6 w-6" aria-hidden="true" />
-                    <div>
-                        <p className="text-sm leading-tight font-extrabold text-white">{company.name}</p>
-                        <p className="text-sidebar-foreground/70 text-xs">Panel Internal</p>
-                    </div>
+                <div className="border-sidebar-border border-b px-5 py-4">
+                    <BrandLockup size="sm" className="text-white" />
+                    <p className="text-sidebar-foreground/70 mt-1 text-xs">Panel Internal</p>
                 </div>
                 {sidebar}
             </aside>
@@ -131,14 +127,10 @@ export default function AdminLayout({ children, title, description, actions }: P
             {/* Drawer — layar kecil */}
             {sidebarTerbuka && (
                 <>
-                    <div
-                        className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-                        onClick={() => setSidebarTerbuka(false)}
-                        aria-hidden="true"
-                    />
+                    <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarTerbuka(false)} aria-hidden="true" />
                     <aside className="bg-sidebar fixed inset-y-0 left-0 z-50 w-64 overflow-y-auto lg:hidden">
                         <div className="border-sidebar-border flex items-center justify-between border-b px-5 py-4">
-                            <p className="text-sm font-extrabold text-white">{company.name}</p>
+                            <BrandLockup size="sm" className="text-white" />
                             <button
                                 type="button"
                                 onClick={() => setSidebarTerbuka(false)}
@@ -168,9 +160,7 @@ export default function AdminLayout({ children, title, description, actions }: P
                         <div className="ml-auto flex items-center gap-3">
                             <div className="text-right">
                                 <p className="text-sm font-semibold">{auth.user?.name}</p>
-                                <p className="text-ink-muted text-xs">
-                                    {role === 'super_admin' ? 'Super Admin' : 'Service Advisor'}
-                                </p>
+                                <p className="text-ink-muted text-xs">{role === 'super_admin' ? 'Super Admin' : 'Service Advisor'}</p>
                             </div>
                             <button
                                 type="button"

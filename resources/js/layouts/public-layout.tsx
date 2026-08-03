@@ -1,3 +1,4 @@
+import BrandLockup from '@/components/brand-lockup';
 import { FlashToaster } from '@/components/flash-toaster';
 import { Toaster } from '@/components/ui/sonner';
 import { WhatsAppFloat } from '@/components/whatsapp-float';
@@ -56,12 +57,16 @@ export default function PublicLayout({ children, transparentHeader = false, waMe
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:py-4">
                     <Link
                         href={route('home')}
+                        aria-label={`${company.name} — ke beranda`}
                         className={cn(
-                            'text-xl font-extrabold tracking-tight',
+                            'rounded-btn focus-visible:ring-brand-600 transition focus-visible:ring-2',
                             headerSolid ? 'text-brand-700' : 'text-white',
                         )}
                     >
-                        {company.name}
+                        {/* Emblem & teks mewarisi warna dari Link ini lewat
+                            `currentColor`, sehingga pergantian header
+                            transparan → putih tidak butuh berkas logo kedua. */}
+                        <BrandLockup size="lg" />
                     </Link>
 
                     <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
@@ -115,10 +120,7 @@ export default function PublicLayout({ children, transparentHeader = false, waMe
                         onClick={() => setMenuTerbuka((v) => !v)}
                         aria-label={menuTerbuka ? 'Tutup menu' : 'Buka menu'}
                         aria-expanded={menuTerbuka}
-                        className={cn(
-                            'rounded-btn p-2 lg:hidden',
-                            headerSolid ? 'text-ink' : 'text-white',
-                        )}
+                        className={cn('rounded-btn p-2 lg:hidden', headerSolid ? 'text-ink' : 'text-white')}
                     >
                         {menuTerbuka ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
                     </button>
@@ -172,7 +174,7 @@ export default function PublicLayout({ children, transparentHeader = false, waMe
             <footer className="bg-brand-900 text-brand-100">
                 <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                        <p className="text-lg font-extrabold text-white">{company.name}</p>
+                        <BrandLockup size="md" className="text-white" />
                         <p className="mt-2 text-sm">{company.tagline}</p>
                     </div>
 

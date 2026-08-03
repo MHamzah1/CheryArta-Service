@@ -1,3 +1,4 @@
+import BrandLockup from '@/components/brand-lockup';
 import { FlashToaster } from '@/components/flash-toaster';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
@@ -33,8 +34,12 @@ export default function CustomerLayout({ children, title, description }: Props) 
         <div className="bg-canvas text-ink flex min-h-dvh flex-col">
             <header className="bg-surface border-line sticky top-0 z-40 border-b">
                 <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-                    <Link href="/" className="text-brand-700 text-lg font-extrabold">
-                        {company.name}
+                    <Link
+                        href="/"
+                        aria-label={`${company.name} — ke beranda`}
+                        className="text-brand-700 rounded-btn focus-visible:ring-brand-600 focus-visible:ring-2"
+                    >
+                        <BrandLockup size="md" />
                     </Link>
 
                     <nav aria-label="Navigasi akun" className="hidden items-center gap-1 md:flex">
@@ -44,9 +49,7 @@ export default function CustomerLayout({ children, title, description }: Props) 
                                 href={item.href}
                                 className={cn(
                                     'rounded-btn flex items-center gap-2 px-3 py-2 text-sm font-medium transition',
-                                    aktif(item.href)
-                                        ? 'bg-brand-50 text-brand-700'
-                                        : 'text-ink-soft hover:bg-brand-50 hover:text-brand-700',
+                                    aktif(item.href) ? 'bg-brand-50 text-brand-700' : 'text-ink-soft hover:bg-brand-50 hover:text-brand-700',
                                 )}
                             >
                                 <item.icon className="h-4 w-4" aria-hidden="true" />
