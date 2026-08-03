@@ -3,12 +3,10 @@
 Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML tunggal
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
-**Status:** Big Fase 1 · F1.0 ✅ · F1.1 ⚠️ tersisa satu butir · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
+**Status:** Big Fase 1 · F1.0 ✅ · F1.1 ✅ · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
 F1.5 ✅ · **F1.6 ✅ selesai** — berikutnya **F1.7 Stabilisasi Big Fase 1**.
 Satu-satunya pertanyaan yang masih menghambat adalah
 [Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.2.
-Sisa F1.1 tinggal `cloudinary:cek` — `CLOUDINARY_URL` perlu disalin dari Variables Railway ke
-`.env` lokal; daftarnya di [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11)
 **Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)
 **Tanggal:** 3 Agustus 2026
 
@@ -57,7 +55,7 @@ Dibuat oleh `UserSeeder`, password semuanya `password`:
 |-----|---------|----------|
 | MySQL Railway (bersama) | ✅ Berjalan (MySQL 9.4.0), 14 migration + seluruh seeder terpasang, terpakai dari dua komputer | Menjadi satu-satunya database untuk development **dan** deployment sampai F2.5.1 |
 | MariaDB 10.4 (XAMPP) | ✅ Berjalan, `cheryarta_dev` termigrasi | Dipertahankan **hanya** untuk menguji `migrate`/`rollback` — bukan untuk pengembangan sehari-hari |
-| Cloudinary | ⚠️ Akun ada, `CLOUDINARY_URL` terisi di Railway; di `.env` lokal masih kosong | Penyimpanan seluruh gambar katalog, fasilitas, testimoni, dan brosur PDF. Salin `CLOUDINARY_URL` lalu buktikan dengan `php artisan cloudinary:cek`; untuk bekerja tanpa jaringan setel `CLOUDINARY_FAKE=true` |
+| Cloudinary | ✅ Terhubung, `cloudinary:cek` hijau; 15 gambar bawaan sudah terunggah | Penyimpanan seluruh gambar katalog, fasilitas, testimoni, dan brosur PDF. Untuk bekerja tanpa jaringan setel `CLOUDINARY_FAKE=true` |
 | Ekstensi PHP `gd` | ✅ Tidak lagi dibutuhkan | Pemrosesan ulang gambar diserahkan ke transformasi URL Cloudinary (`f_auto,q_auto,w_…`) |
 | Ekstensi PHP `intl` | Belum aktif | Aktifkan bila kelak dibutuhkan pemformatan lokal di sisi server. Saat ini pemformatan dilakukan di `resources/js/lib/format.ts`. |
 

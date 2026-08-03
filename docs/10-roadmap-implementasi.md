@@ -78,24 +78,15 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ TERSISA SATU BUTIR
+## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ✅ SELESAI
 
 Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
 semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
 langkah ada di [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
 
-> **Keadaan per 3 Agustus 2026 (pemeriksaan kedua).** Situs hidup di Railway, kedua komputer
-> developer memandang database yang sama, dan seedernya sudah terbukti mengisi database itu.
->
-> **Selesai:** seluruh 1.1.1–1.1.10, kecuali satu butir pembuktian di 1.1.6.
-> Sejak pemeriksaan pertama hari ini bertambah: proteksi branch `main` (menutup 1.1.1), seeder
-> terhadap DB Railway — keenam seeder terisi dan `db:seed` ulang terbukti idempoten — serta
-> verifikasi dari komputer kedua.
->
-> **Belum selesai — tinggal satu:**
-> 1. **`cloudinary:cek` belum hijau.** `CLOUDINARY_URL` sudah ada di Variables Railway; di `.env`
->    lokal kuncinya sudah ada tetapi masih kosong, sehingga `AppServiceProvider` melempar galat.
->    Sifatnya menyalin kredensial, bukan menulis kode.
+> **Selesai 3 Agustus 2026.** Seluruh 1.1.1–1.1.10 tercentang: situs hidup di Railway, kedua
+> komputer developer memandang database yang sama, seeder terbukti mengisi database itu dan
+> idempoten saat diulang, serta `cloudinary:cek` hijau memakai kredensial sungguhan.
 >
 > Daftar periksa beserta buktinya di
 > [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11).

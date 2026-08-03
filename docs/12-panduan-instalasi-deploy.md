@@ -512,10 +512,9 @@ Push ke `main` memicu deploy Railway; pantau tab **Deployments** sampai hijau, l
 
 ## 12.8 Daftar Periksa Selesai (F1.1)
 
-Yang bertanda ✅ sudah terbukti; sisanya masih menunggu tindakan di panel Cloudinary — tidak bisa
-dikerjakan dari dalam kode.
+**Seluruh butir tercentang per 3 Agustus 2026.** F1.1 selesai.
 
-Diperiksa terakhir **3 Agustus 2026**, dari dua komputer developer (laptop + PC kantor).
+Diperiksa dari dua komputer developer (laptop + PC kantor).
 
 - [x] ✅ Repo GitHub tertaut ke Railway, push ke `main` memicu deploy otomatis
 - [x] ✅ Branch `main` dilindungi (Settings → Branches → Require pull request + require `ci`)
@@ -525,10 +524,8 @@ Diperiksa terakhir **3 Agustus 2026**, dari dua komputer developer (laptop + PC 
 - [x] ✅ `trustProxies` terpasang di `bootstrap/app.php`, teruji di `tests/Feature/TrustedProxyTest.php`
 - [x] ✅ Situs Railway tampil ber-CSS lewat `https://` — seluruh aset Vite disajikan sebagai URL absolut `https://`
 - [x] ✅ `ImageUploader` + `CloudinaryImageUploader` + `FakeImageUploader` ada dan teruji
-- [ ] `php artisan cloudinary:cek` hijau memakai `CLOUDINARY_URL` sungguhan
-      (`CLOUDINARY_URL` sudah terisi di Variables Railway; di `.env` lokal kuncinya **sudah ada
-      tetapi masih kosong** — selama itu kosong perintah ini melempar galat, lihat
-      `AppServiceProvider`. Ini satu-satunya butir F1.1 yang belum tercentang)
+- [x] ✅ `php artisan cloudinary:cek` hijau memakai `CLOUDINARY_URL` sungguhan — unggah, tampilkan
+      URL transformasi, lalu hapus kembali; seluruhnya berhasil
 - [x] ✅ `.env.example` mutakhir dan **tanpa** kredensial nyata
 - [x] ✅ Koneksi MySQL lewat TCP proxy terbukti dari kedua komputer; profil DBeaver diberi nama
       `CheryArta — Railway (dev+deploy)` (penandaan *Production* baru berlaku setelah F2.5.1 — lihat §12.4)
@@ -545,6 +542,8 @@ Diperiksa terakhir **3 Agustus 2026**, dari dua komputer developer (laptop + PC 
 | Database yang dilihat | `railway` di `<TCP_PROXY_DOMAIN>:<TCP_PROXY_PORT>`, MySQL 9.4.0 |
 | Jumlah tabel | 20 |
 | Isi seeder | `users` 3 · `service_packages` 8 · `car_models` 7 · `car_model_variants` 13 · `facilities` 8 · `faqs` 8 · `testimonials` 4 |
+| Gambar terunggah | `car_model_images` 7 (seluruh model) · `facilities` bergambar 8/8 — lihat §12.9 |
+| Transformasi Cloudinary | `f_auto,q_auto,w_400` terbukti bekerja: berkas 264 KB disajikan 24,7 KB sebagai thumbnail |
 | Idempotensi seeder | `db:seed` dijalankan ulang terhadap DB yang sudah terisi — seluruh jumlah baris di atas **tidak berubah** |
 | Tabel transaksional | `vehicles`, `bookings`, `contact_messages` sengaja 0 baris — belum ada seeder demo (menyusul di F2.1) |
 | `sessions` | terisi — situs live menulis sesi ke database yang sama, jadi `SESSION_DRIVER=database` terbukti bekerja |
