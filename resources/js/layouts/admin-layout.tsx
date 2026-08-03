@@ -4,20 +4,20 @@ import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 import { type NavItem, type SharedData, type UserRole } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CalendarDays, CalendarRange, Car, LogOut, Menu, Users, Wrench, X } from 'lucide-react';
+import { BarChart3, CalendarDays, CalendarRange, Car, LayoutDashboard, LogOut, Menu, Users, Wrench, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 /*
  * Struktur menu mengikuti docs/07-modul-admin.md §A13.
  *
- * BIG FASE 1 hanya merender menu yang modulnya SUDAH ADA: Jadwal, Booking,
- * Customer, Kendaraan, dan dua master data khusus Super Admin. Dashboard,
- * Invoice, Laporan, Konten, dan Sistem sengaja tidak dirender sama sekali —
+ * Hanya menu yang modulnya SUDAH ADA yang dirender: Dashboard, Jadwal,
+ * Booking, Laporan, Customer, Kendaraan, dan dua master data khusus Super
+ * Admin. Invoice, Konten, dan Sistem sengaja tidak dirender sama sekali —
  * bukan ditampilkan lalu dinonaktifkan. Menu yang mengantar ke halaman 404
  * membuat orang menyangka aplikasinya rusak.
  *
- * Item "Dashboard" pun tidak ada: `/admin` mengalihkan ke `/admin/bookings`
- * sampai A1 dibangun di F2.1 (keputusan R8).
+ * Dashboard dan Laporan masuk di F2.1; keputusan R8 yang mengalihkan `/admin`
+ * ke `/admin/bookings` sudah dicabut bersamanya.
  *
  * `roles` hanya menyembunyikan menu — otorisasi sesungguhnya ada di
  * middleware + Policy di server (.claude/rules/50-keamanan.md).
@@ -38,10 +38,18 @@ function menuAdmin(): { title: string; items: NavItem[] }[] {
 
     return [
         {
+            title: '',
+            items: [{ title: 'Dashboard', url: path('admin.dashboard'), icon: LayoutDashboard, roles: SEMUA_STAF }],
+        },
+        {
             title: 'Operasional',
             items: [
                 { title: 'Jadwal', url: path('admin.schedule.index'), icon: CalendarRange, roles: SEMUA_STAF },
                 { title: 'Booking', url: path('admin.bookings.index'), icon: CalendarDays, roles: SEMUA_STAF },
+                // Laporan pendapatan khusus Super Admin, tetapi halamannya
+                // sendiri terbuka untuk kedua role — tab pendapatan baru lahir
+                // di F2.4 (docs/09 §9.3).
+                { title: 'Laporan', url: path('admin.reports.index'), icon: BarChart3, roles: SEMUA_STAF },
             ],
         },
         {

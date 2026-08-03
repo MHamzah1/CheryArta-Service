@@ -4,13 +4,16 @@ Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
 **Status:** Big Fase 1 · F1.0 ✅ · F1.1 ✅ · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
-F1.5 ✅ · **F1.6 ✅ selesai** — berikutnya **F1.7 Hak Akses & Pengguna Internal** (A11 ditarik
-maju, [R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)), lalu **F1.8
-Stabilisasi Big Fase 1**.
+F1.5 ✅ · **F1.6 ✅ — Big Fase 1 selesai di 21 hari.** F1.7 dan F1.8 dicabut: A11 Pengguna
+Internal kembali ke Big Fase 2 ([R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)),
+dan sub-fase stabilisasi tersendiri dihapus karena isinya menduplikasi Definition of Done.
+Berikutnya **F2.1 Dashboard & Laporan**. Big Fase 2 diurutkan panel admin dulu — dashboard,
+lalu konten & pengguna — dengan WhatsApp penuh dan invoice menyusul di F2.3 dan F2.4.
 Satu-satunya pertanyaan yang masih menghambat adalah
-[Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.2.
-**Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)
-**Tanggal:** 3 Agustus 2026
+[Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.3 — kini satu sub-fase lebih
+jauh sesudah WhatsApp diurutkan mundur.
+**Versi:** 2.1 — F1.7 & F1.8 dicabut, Big Fase 2 diurutkan ulang (panel admin didahulukan)
+**Tanggal:** 4 Agustus 2026
 
 ## Menjalankan Proyek
 

@@ -594,6 +594,97 @@ export interface WalkInSelectedCustomer {
     vehicles: BookingVehicleOption[];
 }
 
+/* ---------------------------------------------------------------------------
+ * Dashboard & Laporan — F2.1 (docs/07 §A1, §A9)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Aksi cepat yang sah pada satu baris dashboard.
+ *
+ * Daftarnya DIHITUNG SERVER dari App\Enums\BookingStatus. Jangan pernah
+ * menyusunnya di React — peta transisi hanya boleh hidup di satu tempat.
+ */
+export interface QuickAction {
+    value: string;
+    label: string;
+}
+
+/** Baris tabel dashboard: baris admin biasa + aksi cepat yang boleh ditekan. */
+export interface DashboardBookingRow extends AdminBookingRow {
+    quick_actions: QuickAction[];
+}
+
+export interface DashboardKpi {
+    booking_hari_ini: number;
+    perlu_konfirmasi: number;
+    sedang_dikerjakan: number;
+    selesai_bulan_ini: number;
+}
+
+/** Satu titik pada grafik garis; `date` bentuk `YYYY-MM-DD`. */
+export interface TrendPoint {
+    date: string;
+    count: number;
+}
+
+/** Okupansi ringkas di dashboard — baca-saja, tanpa daftar booking per slot. */
+export interface DashboardOccupancy {
+    quota_per_slot: number;
+    /** Terisi bila bengkel tutup hari ini; `slots` kosong bila begitu. */
+    closed_reason: string | null;
+    slots: SlotAvailability[];
+}
+
+/** Keadaan pemilih periode laporan, dikembalikan server apa adanya. */
+export interface ReportPeriodState {
+    periode: string;
+    dari: string;
+    sampai: string;
+    jumlah_hari: number;
+}
+
+export interface ReportStatusCount {
+    value: string;
+    label: string;
+    tone: string;
+    jumlah: number;
+}
+
+export interface ReportLabelCount {
+    label: string;
+    jumlah: number;
+}
+
+export interface ReportRecap {
+    total: number;
+    total_selesai: number;
+    per_status: ReportStatusCount[];
+    per_paket: ReportLabelCount[];
+    per_model: ReportLabelCount[];
+}
+
+export interface ReportOccupancyHour {
+    time: string;
+    total: number;
+    rata_rata: number;
+    persen: number;
+}
+
+export interface ReportOccupancy {
+    quota_per_slot: number;
+    hari_beroperasi: number;
+    total_terisi: number;
+    rata_rata_per_hari: number;
+    per_jam: ReportOccupancyHour[];
+    jam_tersibuk: string | null;
+}
+
+export interface ReportNewCustomers {
+    total: number;
+    rata_rata_per_hari: number;
+    per_hari: TrendPoint[];
+}
+
 /** Bentuk paginasi Laravel, dipakai seluruh tabel daftar. */
 export interface Paginated<T> {
     data: T[];

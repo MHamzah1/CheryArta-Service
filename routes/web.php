@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BookingExportController;
 use App\Http\Controllers\Admin\BookingStatusController;
 use App\Http\Controllers\Admin\CarModelController;
 use App\Http\Controllers\Admin\CarModelImageController;
 use App\Http\Controllers\Admin\CarModelVariantController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServicePackageController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
@@ -103,10 +106,24 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        // Dashboard (A1) ditunda utuh ke Big Fase 2 — keputusan R8. `/admin`
-        // mengalihkan ke daftar booking alih-alih menampilkan dashboard
-        // setengah jadi yang nanti disunting ulang.
-        Route::get('/', fn () => redirect()->route('admin.bookings.index'))->name('dashboard');
+        // --- A1 Dashboard ----------------------------------------------------
+        // Redirect ke /admin/bookings dari F1.5.1 DICABUT di sini (roadmap
+        // 2.1.3): dashboardnya kini ada, jadi keputusan R8 sudah selesai
+        // masa berlakunya.
+        Route::get('/', DashboardController::class)->name('dashboard');
+
+        // --- A9 Laporan ------------------------------------------------------
+        // Satu rute dengan tab di dalamnya; periode dan tab aktif hidup di
+        // query string supaya tautannya bisa dibagikan.
+        Route::get('laporan', ReportController::class)->name('reports.index');
+
+        // Export dibatasi 10 per menit: satu berkas bisa memuat ribuan baris
+        // berisi nama, telepon, dan plat pelanggan (docs/09 §9.7). Batasnya
+        // menahan pengambilan berulang, bukan pemakaian wajar.
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::get('laporan/export', [BookingExportController::class, 'reports'])->name('reports.export');
+            Route::get('bookings/export', [BookingExportController::class, 'bookings'])->name('bookings.export');
+        });
 
         // --- A3 Jadwal harian -----------------------------------------------
         Route::get('jadwal', ScheduleController::class)->name('schedule.index');

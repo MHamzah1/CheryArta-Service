@@ -39,6 +39,12 @@ function ruteAdminOperasional(Booking $booking, User $customer): array
         ['put', route('admin.customers.toggle-active', $customer)],
         ['put', route('admin.customers.reset-password', $customer)],
         ['get', route('admin.vehicles.index')],
+        // F2.1 — dashboard, laporan, dan kedua rute export. Berkas export
+        // memuat nama, telepon, dan plat pelanggan, jadi ia harus ikut
+        // terjaga di sini, bukan hanya di ujinya sendiri (docs/09 §9.7).
+        ['get', route('admin.reports.index')],
+        ['get', route('admin.reports.export')],
+        ['get', route('admin.bookings.export')],
     ];
 }
 
@@ -165,12 +171,14 @@ it('tidak menampilkan kendaraan pelanggan lain sebagai milik pelanggan terpilih 
     expect($orangLain->vehicles()->count())->toBe(1);
 });
 
-it('mengalihkan /admin ke daftar booking selama dashboard belum ada', function () {
-    // Keputusan R8: A1 ditunda utuh ke Big Fase 2, dan `/admin` tidak
-    // menampilkan dashboard setengah jadi.
+it('menampilkan dashboard di /admin sejak F2.1', function () {
+    // Menggantikan uji lama yang menjaga redirect ke /admin/bookings.
+    // Keputusan R8 sudah selesai masa berlakunya: A1 kini ada, dan redirect
+    // F1.5.1 dicabut oleh roadmap 2.1.3.
     $this->actingAs(serviceAdvisor())
         ->get(route('admin.dashboard'))
-        ->assertRedirect(route('admin.bookings.index'));
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('admin/dashboard'));
 });
 
 it('menolak customer membuka kendaraan lewat daftar admin', function () {

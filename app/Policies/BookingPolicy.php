@@ -41,6 +41,22 @@ class BookingPolicy
     }
 
     /**
+     * Dashboard admin (A1) dan halaman laporan (A9).
+     *
+     * Kedua role staf boleh melihat keduanya — dashboard yang dilihat advisor
+     * identik dengan yang dilihat Super Admin, karena tidak satu pun elemennya
+     * menyentuh pendapatan (docs/09 §9.3, PRD F2.1).
+     *
+     * Laporan **pendapatan** adalah satu-satunya yang khusus Super Admin, dan
+     * ia belum ada: tabel `invoices` baru lahir di F2.4. Kemampuannya
+     * ditambahkan bersama laporannya, bukan disiapkan kosong di sini.
+     */
+    public function viewReports(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
+    /**
      * Boleh mengubah status. Status TUJUAN mana yang sah ditentukan
      * App\Enums\BookingStatus, sengaja BUKAN di sini — policy menjawab
      * "siapa", state machine menjawab "boleh ke mana".

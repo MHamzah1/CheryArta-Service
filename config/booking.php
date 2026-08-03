@@ -88,4 +88,32 @@ return [
     */
     'code_prefix' => 'CA',
 
+    /*
+    | Dashboard & laporan (A1, A9 — docs/07-modul-admin.md).
+    |
+    | Angka di bawah ikut tinggal di berkas ini karena alasan yang sama dengan
+    | aturan slot: "30 hari" muncul di kueri server DAN di label antarmuka.
+    | Ditulis di dua tempat, keduanya akan berbeda cepat atau lambat (temuan B2).
+    */
+    'reports' => [
+
+        /*
+        | Panjang jendela grafik tren di dashboard, dalam hari.
+        | Dihitung mundur dari hari ini dan MENYERTAKAN hari ini.
+        */
+        'trend_days' => 30,
+
+        /*
+        | Batas terpanjang rentang kustom di halaman laporan.
+        | Tanpa batas, satu klik bisa memindai seluruh tabel bookings.
+        */
+        'max_range_days' => 366,
+
+        /*
+        | Periode bawaan saat /admin/laporan dibuka tanpa query string.
+        | Harus salah satu kunci di App\Support\ReportPeriod::PRESETS.
+        */
+        'default_preset' => '30_hari',
+    ],
+
 ];

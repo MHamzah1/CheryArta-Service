@@ -9,7 +9,7 @@ Dokumen ini adalah spesifikasi **lengkap** tiap modul. Urutan pengerjaannya diat
 
 | Big Fase 1 | Big Fase 2 |
 |------------|------------|
-| **A2** Booking · **A3** Jadwal · **A4** Katalog · **A5** Paket Layanan · **A6** Customer & Kendaraan · **A11** Pengguna Internal | **A1** Dashboard · **A7** WhatsApp penuh · **A8** Invoice · **A9** Laporan · **A10** Konten · **A12** Activity Log |
+| **A2** Booking · **A3** Jadwal · **A4** Katalog · **A5** Paket Layanan · **A6** Customer & Kendaraan | **A1** Dashboard · **A7** WhatsApp penuh · **A8** Invoice · **A9** Laporan · **A10** Konten · **A11** Pengguna Internal · **A12** Activity Log |
 
 Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
 
@@ -17,14 +17,14 @@ Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
   Tabel template, CRUD template, dan log pengiriman menyusul.
 - **A10** → hanya tabel `facilities`, `faqs`, `testimonials`, `contact_messages` + seeder,
   supaya landing page punya sumber data. Layar CRUD-nya menyusul.
-- **A13/A14** → menu untuk A2–A6 + Sistem → Pengguna Internal. Tetapi **Policy dan pembatasan
-  SA-saja wajib lengkap sejak Big Fase 1** — otorisasi tidak pernah boleh ditunda (temuan S3).
+- **A13/A14** → menu untuk A2–A6 saja. Tetapi **Policy dan pembatasan SA-saja wajib lengkap
+  sejak Big Fase 1** — otorisasi tidak pernah boleh ditunda (temuan S3).
 
-**A11 ditarik maju ke Big Fase 1** (F1.7, keputusan
-[R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)) karena hak akses atas
-menu yang sudah ada baru berarti bila akunnya bisa dibuat, dicabut, dan direset dari panel —
-bukan dari DBeaver. Yang tersisa untuk Big Fase 2 hanyalah pencatatan perubahannya ke activity
-log (A12).
+**A11 tetap di Big Fase 2** (F2.2.3, keputusan
+[R9](10-roadmap-implementasi.md#keputusan-yang-membentuk-roadmap-ini)). Sepanjang Big Fase 1
+akun staf hanya lahir dari `UserSeeder`; menambah advisor sungguhan berarti membuka `tinker`
+atau DBeaver. Itu diterima selama sistemnya dipakai developer saja — konsekuensinya adalah
+matriks hak akses teruji terhadap akun contoh, bukan terhadap orang sungguhan.
 
 ## A1 — Dashboard  `/admin`  (SA, ADV) — ⏳ Big Fase 2
 
@@ -127,7 +127,7 @@ teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-what
 
 > **Big Fase 1 hanya membuat tombol "Chat via WhatsApp"** di detail booking — membuka `wa.me`
 > dengan teks dari `config/company.php`. Tabel `whatsapp_templates` & `whatsapp_messages`, panel
-> draft, penanda "belum dikirim", dan CRUD template menyusul di F2.2.
+> draft, penanda "belum dikirim", dan CRUD template menyusul di F2.3.
 >
 > Terpasang di F1.5: `App\Services\WhatsAppNotifier::draft()` menyusun tautan dan teksnya di
 > server (nomor selalu bentuk ternormalisasi `62…`, `rawurlencode`), lalu mengirimkannya ke
@@ -167,7 +167,7 @@ Phone, Status — ditambah Kode Booking dan Advisor.
 
 > **Big Fase 1 hanya membuat tabelnya** (`facilities`, `faqs`, `testimonials`,
 > `contact_messages`) beserta seeder idempoten, supaya landing page F1.6 punya sumber data yang
-> nyata sejak awal. Keempat layar di bawah dibangun di F2.4 — tanpa migrasi data, karena tabelnya
+> nyata sejak awal. Keempat layar di bawah dibangun di F2.2 — tanpa migrasi data, karena tabelnya
 > sudah terisi.
 >
 > Akibatnya selama Big Fase 1: **pesan dari form kontak masuk ke database tetapi belum bisa
@@ -181,7 +181,7 @@ Phone, Status — ditambah Kode Booking dan Advisor.
 | `/admin/testimoni` | Nama, model mobil, rating 1–5, isi, terbitkan/sembunyikan |
 | `/admin/pesan-masuk` | Pesan dari form kontak: tandai dibaca, balas via WA (klik-to-chat), hapus spam |
 
-## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ F1.7 (Big Fase 1)
+## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ Big Fase 2 (F2.2.3)
 
 Daftar akun staf: nama, email, role, status aktif, login terakhir. Saringan role & status,
 paginasi 25.
@@ -209,9 +209,13 @@ Pengaman:
 - Akun tidak pernah dihapus permanen — nonaktifkan (soft delete tersedia, tetapi bukan aksi
   layar ini).
 
-> **Big Fase 1 (F1.7)** membuat layar ini beserta seluruh pengamannya, ditambah penegakan
-> `must_reset_password` saat login. Yang menyusul di Big Fase 2: perubahan akun ikut tercatat di
-> activity log (A12, F2.4.4).
+> **Seluruhnya di Big Fase 2** (**R9**): layar dan pengamannya di F2.2.3–F2.2.4, penegakan
+> `must_reset_password` saat login di F2.2.5, pencatatan perubahan akun ke activity log di
+> F2.2.6. F2.2 adalah sub-fase **kedua** Big Fase 2 — sesudah dashboard, sebelum WhatsApp dan
+> invoice.
+>
+> Selama Big Fase 1 layar ini **tidak ada**, dan `/admin/users` tidak terdaftar sebagai rute.
+> Akun staf lahir dari `UserSeeder` saja.
 
 ## A12 — Activity Log  `/admin/activity-log`  (SA saja) — ⏳ Big Fase 2
 
@@ -235,17 +239,17 @@ Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
 > **Big Fase 1** hanya merender menu yang modulnya sudah ada: Jadwal · Booking · Customer ·
-> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA) · **Pengguna Internal (SA, sejak F1.7)**.
-> Menu lain tidak dirender — bukan ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum
-> ada karena `/admin` mengalihkan ke `/admin/bookings`.
+> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA). Menu lain tidak dirender — bukan
+> ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum ada karena `/admin` mengalihkan
+> ke `/admin/bookings`, dan grup "Sistem" belum ada karena A11 mundur ke Big Fase 2 (**R9**).
 
 ## A14 — Ringkasan Matriks Hak Akses
 
-> Baris yang menyangkut **modul yang sudah ada** — A2–A6, katalog, paket layanan, dan A11 —
-> berlaku dan teruji sejak Big Fase 1 (F1.3.7, F1.5.9), lalu disusun ulang sebagai satu uji per
-> baris di **F1.7.8** (`AccessMatrixTest`) supaya baris yang *hilang* ikut kelihatan. Baris untuk
-> modul yang belum dibangun (invoice, laporan, konten, template WA, activity log) menyusul di
-> F2.4.5. Menunda otorisasi berarti mengulang temuan S3 sistem lama.
+> Baris yang menyangkut **modul yang sudah ada** — A2–A6, katalog, dan paket layanan — berlaku
+> dan teruji sejak Big Fase 1 (F1.3.7, F1.5.9), lalu disusun ulang sebagai satu uji per baris di
+> **F2.2.7** (`AccessMatrixTest`) supaya baris yang *hilang* ikut kelihatan — berkasnya dibuat
+> sekaligus lengkap dengan baris konten dan pengguna internal. Baris template WA menyusul di
+> F2.3.6, baris invoice di F2.4.6. Menunda otorisasi berarti mengulang temuan S3 sistem lama.
 
 | Modul | Super Admin | Service Advisor |
 |-------|-------------|-----------------|

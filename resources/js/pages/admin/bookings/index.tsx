@@ -1,4 +1,5 @@
 import BookingFilterBar from '@/components/admin/booking-filter-bar';
+import ExportButtons from '@/components/admin/export-buttons';
 import DataTable, { type Column } from '@/components/data-table';
 import EmptyState from '@/components/empty-state';
 import Pagination from '@/components/pagination';
@@ -69,17 +70,29 @@ export default function AdminBookingIndex({ bookings, filters, statusOptions, pa
 
     const adaSaringan = Object.entries(filters).some(([kunci, nilai]) => kunci !== 'urutan' && nilai !== null);
 
+    // Nilai null dibuang supaya URL export tidak memuat `status=` kosong yang
+    // ditolak validasi Form Request-nya.
+    const filterAktif = Object.fromEntries(Object.entries(filters).filter(([, nilai]) => nilai !== null && nilai !== ''));
+
     return (
         <AdminLayout
             title="Booking"
             description="Seluruh pesanan servis, dari pemesanan online maupun pelanggan yang datang langsung."
             actions={
-                <Button asChild>
-                    <Link href={route('admin.bookings.create')}>
-                        <Plus className="h-4 w-4" aria-hidden="true" />
-                        Booking Walk-in
-                    </Link>
-                </Button>
+                <>
+                    {/* Export mengikuti saringan DI LAYAR INI — advisor yang
+                        sudah menyaring mencari tombolnya di sini, bukan
+                        berpindah ke Laporan lalu menyaring ulang
+                        (keputusan grill #9). */}
+                    <ExportButtons baseUrl={route('admin.bookings.export', filterAktif)} />
+
+                    <Button asChild>
+                        <Link href={route('admin.bookings.create')}>
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            Booking Walk-in
+                        </Link>
+                    </Button>
+                </>
             }
         >
             <Head title="Booking" />

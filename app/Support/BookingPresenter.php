@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Enums\BookingSource;
+use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\BookingStatusHistory;
 use App\Models\ServicePackage;
@@ -184,6 +185,57 @@ final class BookingPresenter
                 'booking_time' => SlotTime::short($booking->rescheduledFrom->booking_time),
             ],
         ];
+    }
+
+    /**
+     * Baris tabel dashboard (docs/07 §A1, PRD F2.1 §D dan §E).
+     *
+     * Bedanya dari `adminRow()` hanya satu: daftar aksi cepat yang boleh
+     * ditekan pada baris itu, DIHITUNG SERVER dari state machine.
+     *
+     * @return array<string, mixed>
+     */
+    public static function dashboardRow(Booking $booking): array
+    {
+        return [
+            ...self::adminRow($booking),
+            'quick_actions' => self::quickActions($booking),
+        ];
+    }
+
+    /**
+     * Aksi cepat yang sah dari status baris ini.
+     *
+     * Sumbernya `BookingStatus::allowedTransitions()` — peta transisi tidak
+     * boleh disalin ke sini, apalagi ke React. Sistem lama menuliskan aturan
+     * yang sama di tiga tempat sampai saling bertabrakan (temuan B2).
+     *
+     * `cancelled` sengaja TIDAK pernah muncul sebagai aksi cepat: pembatalan
+     * wajib menyertakan alasan (docs/05 §5.4), dan alasan tidak bisa diketik
+     * pada tombol satu ketukan. Untuk itu ada panel di halaman detail.
+     *
+     * @return list<array{value: string, label: string}>
+     */
+    private static function quickActions(Booking $booking): array
+    {
+        $label = [
+            BookingStatus::Confirmed->value => 'Konfirmasi',
+            BookingStatus::InProgress->value => 'Mulai',
+            BookingStatus::Completed->value => 'Selesai',
+            BookingStatus::NoShow->value => 'Tidak Hadir',
+        ];
+
+        $aksi = [];
+
+        foreach ($booking->status->allowedTransitions() as $tujuan) {
+            if (! isset($label[$tujuan->value])) {
+                continue;
+            }
+
+            $aksi[] = ['value' => $tujuan->value, 'label' => $label[$tujuan->value]];
+        }
+
+        return $aksi;
     }
 
     /**

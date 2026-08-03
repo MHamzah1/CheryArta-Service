@@ -1,77 +1,114 @@
-# Grill Me
+---
+description: Wawancarai saya sampai satu fitur benar-benar dipahami bersama, lalu catat setiap keputusan ke dokumen grill
+argument-hint: <topik fitur, mis. "invoice servis" atau "dashboard admin">
+---
 
-Before we build anything, we need to be on the same wavelength.
+Wawancarai saya tentang: **$ARGUMENTS**
 
-## Your Job
+Sebelum ada kode, kita harus sepaham dulu.
 
-Interview about this feature or task until we reach shared understanding.
+**Jangan** membuat PRD atau menulis kode sampai saya bilang selesai (`selesai`, `cukup`,
+`tulis PRD`).
 
-Do **NOT** produce a PRD or code until the user explicitly says we are done (`done`, `that's enough`, `write the PRD`).
+## Keluaran: selalu ditulis ke dokumen (WAJIB)
 
-## Output: Always Write to a Doc (CRITICAL)
+**Jangan mengandalkan percakapan sebagai sumber kebenaran.** Percakapan bisa terpangkas; dokumen
+bertahan.
 
-**Do not rely on chat as the source of truth.** Chat compacts; docs persist.
-
-1. **Create or update** a grill doc at the start of the session:
-   - Path: `docs/grills/grill-[short-topic].md` (kebab-case, e.g. `docs/grills/grill-articles-silent.md`)
-2. **Every question and recommended answer** goes in that file — not only in the reply.
-3. Structure each item with:
+1. **Buat atau perbarui** dokumen grill di awal sesi:
+   `docs/grills/grill-[topik-pendek].md` (kebab-case, mis. `docs/grills/grill-invoice-servis.md`)
+2. **Setiap pertanyaan beserta rekomendasi jawabannya** masuk ke berkas itu — bukan hanya ke balasan chat.
+3. Susun tiap butir dengan:
    - **Pertanyaan**
-   - **Rekomendasi** (with brief reasoning)
-   - **Keputusan user** (`[ ]` pending · `[x]` confirmed · `[~]` skipped)
-   - **Catatan** (optional)
-4. **Chat reply** stays short: status + link to the doc + what needs confirmation (1–3 bullets max).
-5. After each user answer, **update the doc immediately** (check decisions, add notes).
-6. When the session ends, add a **Log Keputusan** table and point to the next doc (`docs/prds/prd-[topic].md` via `/write-prd`).
+   - **Rekomendasi** (beserta alasan singkat)
+   - **Keputusan saya** (`[ ]` belum · `[x]` disetujui · `[~]` dilewati)
+   - **Catatan** (opsional)
+4. **Balasan chat tetap pendek**: status + tautan ke dokumen + apa yang perlu saya konfirmasi
+   (maksimal 1–3 poin).
+5. Setelah setiap jawaban saya, **perbarui dokumennya saat itu juga**.
+6. Saat sesi ditutup, tambahkan tabel **Log Keputusan** dan tunjuk dokumen berikutnya
+   (`docs/prds/prd-[topik].md` lewat `/write-prd`).
 
-If the user asks to **"drop all questions"** or **"langsung semua pertanyaan"**: put the full Q&A list in the grill doc in one pass; chat only links to the file.
+Bila saya minta **"semua pertanyaan sekaligus"**: tuang seluruh daftar tanya-jawab ke dokumen
+grill dalam satu tarikan; chat cukup menautkannya.
 
-## How To Do It
+## Cara mengerjakannya
 
-1. First, explore the codebase:
-   - existing patterns relevant to this feature
-   - current implementation of anything related
-   - constraints from the stack or architecture
-   - `AGENTS.md`, `CLAUDE.md`, and relevant `docs/`
+### 1. Telusuri dulu, jangan langsung bertanya
 
-2. Then interview:
-   - **Default:** one **critical** question at a time — recommended answer first, wait for response, **update doc**, then next question.
-   - **On user request:** all questions + recommendations in the grill doc at once; still no PRD/code until done.
+Baca sebelum menyusun pertanyaan:
 
-3. **Question quality — ask only what matters:**
-   - Skip questions already answered by repo, schema, prior grill/PRD, or project rules.
-   - Record those in a **Keputusan implisit** section (table or bullets) instead of asking.
-   - Do not ask obvious or low-stakes questions unless the user asks for full coverage.
+- `CLAUDE.md` dan seluruh `.claude/rules/00-…` sampai `60-…`
+- Rancangan yang relevan di `docs/` — gunakan tabel penunjuk di `.claude/rules/00-konteks-proyek.md`
+- Kode yang sudah ada untuk hal serupa (model, service, halaman, uji)
+- `docs/10-roadmap-implementasi.md` — apakah fitur ini sudah punya nomor sub-fase dan estimasi
 
-4. Cover these areas **as needed** (not necessarily every area, not necessarily in this order):
-   - **Scope**: what is in and out
-   - **Users**: who uses this and what they need
-   - **Data**: source, shape, lifecycle
-   - **Behavior**: main, alternate, and failure paths
-   - **Edge cases**: empty states, permissions, concurrency, stale/partial data
-   - **Dependencies**: APIs, schemas, roles, integrations
-   - **Definition of done**: human-checkable acceptance criteria
-   - **Constraints**: security, performance, compatibility, deployment
-   - **Non-goals**: what this work intentionally does not solve
+### 2. Jangan tanyakan yang sudah dijawab rancangan
 
-## Rules
+Ini yang paling sering membuang waktu. **Tujuh keputusan final** di
+`.claude/rules/00-konteks-proyek.md` tidak boleh dibuka ulang tanpa persetujuan saya — jangan
+menjadikannya pertanyaan:
 
-- **Doc is canonical** — if chat and doc disagree, the doc wins after user confirms.
-- Always give your recommendation first, then ask if they agree (or record recommendation in doc when batching).
-- Do not default to agreement — test the user's premise, name tradeoffs, say when you would not ship the proposed path.
-- If user says **"skip"** or **"next"**, move on; note `[~]` skipped in the doc.
-- If answer is vague, one concise follow-up; record clarification in **Catatan**.
-- Keep going until user says **"done"**, **"that's enough"**, or **"write the PRD"**.
-- Flag future risks in the doc:
+tanpa Firebase · Inertia bukan API terpisah · aturan slot (2 per jam, H-1, Minggu tutup,
+08:00–14:00) · WhatsApp klik-to-chat manual · login email + password dengan nomor WA wajib ·
+dua role internal + customer · antarmuka Bahasa Indonesia, `Asia/Jakarta`, IDR.
 
-  `⚠️ Potential issue: [what] → [why it matters] → [suggested fix]`
+Hal yang sudah ditentukan oleh skema (`docs/04`), alur bisnis (`docs/05`), matriks hak akses
+(`docs/09`), atau aturan proyek juga **tidak perlu ditanyakan**. Catat di bagian
+**Keputusan implisit** (tabel atau poin) berikut sumbernya, lalu lanjut.
 
-- Respect project-local rules in `AGENTS.md` and `.cursor/rules/` over generic advice.
+Sisanya: tanyakan hanya yang benar-benar mengubah bentuk pekerjaan. Pertanyaan sepele dilewati
+kecuali saya minta cakupan penuh.
 
-## Related
+### 3. Wawancarai
 
-| After grill | Rule / output |
-|-------------|----------------|
-| Requirements doc | `/write-prd` → `docs/prds/prd-[topic].md` |
-| Backlog | `/prd-to-issues` |
-| Implementation standards | `.cursor/rules/`, `CLAUDE.md` |
+- **Bawaan:** satu pertanyaan **kritis** setiap kali — rekomendasi Anda dulu, tunggu jawaban,
+  **perbarui dokumen**, baru pertanyaan berikutnya.
+- **Bila saya minta:** seluruh pertanyaan + rekomendasi sekaligus di dokumen grill. Tetap tidak
+  ada PRD atau kode sampai saya bilang selesai.
+
+### 4. Wilayah yang perlu digali (seperlunya, tidak harus semua)
+
+| Wilayah | Yang khas di proyek ini |
+|---------|-------------------------|
+| **Lingkup** | Masuk Big Fase 1 atau 2? Sudah ada nomornya di `docs/10`? |
+| **Pengguna** | `customer`, `service_advisor`, `super_admin` — mana yang menyentuh fitur ini? |
+| **Data** | Tabel baru atau kolom baru? Sesuai `docs/04-skema-database.md`? Butuh soft delete? |
+| **Perilaku** | Jalur utama, jalur alternatif, jalur gagal — bandingkan dengan `docs/05-alur-bisnis.md` |
+| **Kasus tepi** | Daftar kosong, slot penuh, dua permintaan bersamaan, data sebagian, tanggal lewat |
+| **Hak akses** | Baris mana di matriks `docs/09 §9.3`? Perlu Policy baru? Advisor boleh atau tidak? |
+| **Uang & waktu** | `decimal:2`, dihitung di server. Tanggal `Asia/Jakarta`, bukan UTC |
+| **Antarmuka** | Layout mana (`PublicLayout`/`CustomerLayout`/`AdminLayout`)? Komponen bersama yang sudah ada? |
+| **Selesai bila** | Kriteria yang bisa diperiksa manusia di bawah 5 menit |
+| **Non-goal** | Apa yang sengaja **tidak** diselesaikan pekerjaan ini |
+
+### 5. Bila fitur ini bertabrakan dengan rancangan
+
+`CLAUDE.md` menetapkan: bila kode dan dokumen bertentangan, **dokumen yang benar**. Jadi kalau
+yang saya minta menyimpang dari `docs/`, jangan diam-diam mengikutinya. Katakan dokumen mana yang
+dilanggar, lalu tanyakan: kita ikuti dokumennya, atau dokumennya yang diperbarui? Catat
+jawabannya di dokumen grill — nanti PRD-nya menyalin itu.
+
+## Aturan
+
+- **Dokumen yang berlaku** — bila chat dan dokumen berbeda, dokumen menang setelah saya konfirmasi.
+- Selalu beri rekomendasi Anda dulu, baru tanya apakah saya setuju.
+- **Jangan asal setuju.** Uji premis saya, sebutkan konsekuensinya, katakan bila Anda tidak akan
+  merilis jalur yang saya usulkan.
+- Bila saya bilang **"lewati"** atau **"berikutnya"**, lanjut; tandai `[~]` di dokumen.
+- Bila jawaban saya kabur, satu pertanyaan susulan yang ringkas; hasilnya masuk **Catatan**.
+- Teruskan sampai saya bilang **"selesai"**, **"cukup"**, atau **"tulis PRD"**.
+- Tandai risiko di dokumen dengan format:
+
+  `⚠️ Potensi masalah: [apa] → [kenapa penting] → [usulan penanganan]`
+
+- Cacat sistem lama di `docs/01 §1.3` adalah bahan pertanyaan yang bagus — bila fitur ini
+  berpeluang mengulanginya, tanyakan sebelum dibangun, jangan sesudah.
+
+## Berikutnya
+
+| Sesudah grill | Perintah / keluaran |
+|---------------|---------------------|
+| Dokumen kebutuhan | `/write-prd` → `docs/prds/prd-[topik].md` |
+| Daftar pekerjaan | `/prd-to-issues` → `docs/issues/issue-XX-[nama].md` |
+| Standar penulisan kode | `.claude/rules/`, `CLAUDE.md` |
