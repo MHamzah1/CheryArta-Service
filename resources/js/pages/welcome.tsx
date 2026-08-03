@@ -67,8 +67,18 @@ export default function Welcome({
             />
 
             {/* --- Hero ------------------------------------------------------ */}
-            <section className="from-brand-900 to-brand-700 bg-gradient-to-br">
-                <div className="mx-auto max-w-7xl px-4 pt-28 pb-16 md:pt-40 md:pb-24">
+            <section className="from-brand-900 to-brand-700 relative overflow-hidden bg-gradient-to-br">
+                {/* Latar dekoratif, bukan isi: alt kosong + aria-hidden supaya
+                    pembaca layar melewatinya. Disembunyikan di bawah lg agar
+                    tidak berebut ruang dengan kartu slot di layar sempit. */}
+                <img
+                    src="/images/hero-car.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-16 bottom-0 hidden w-[52rem] max-w-none opacity-20 select-none lg:block"
+                />
+
+                <div className="relative mx-auto max-w-7xl px-4 pt-28 pb-16 md:pt-40 md:pb-24">
                     <div className="grid items-center gap-10 lg:grid-cols-2">
                         <div>
                             <p className="text-gold-400 mb-3 text-sm font-semibold tracking-wide uppercase">

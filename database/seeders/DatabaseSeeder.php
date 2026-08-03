@@ -27,6 +27,11 @@ class DatabaseSeeder extends Seeder
             FacilitySeeder::class,
             FaqSeeder::class,
             TestimonialSeeder::class,
+
+            // Paling akhir: bergantung pada baris yang dibuat CarModelSeeder
+            // dan FacilitySeeder. Menyerah dengan tenang bila Cloudinary
+            // belum disetel, sehingga urutan ini tetap aman di CI.
+            AssetImageSeeder::class,
         ]);
     }
 }

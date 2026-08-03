@@ -11,11 +11,12 @@ use Illuminate\Database\Seeder;
  * 8 fasilitas, judul dan deskripsi dibawa APA ADANYA dari prototipe lama
  * (`index (1).html`, `facilityData` baris 2025–2067).
  *
- * Gambarnya sengaja belum diisi. Berkasnya sudah ada di
+ * Gambarnya tidak diunggah di sini. Berkasnya ada di
  * `database/seeders/assets/fasilitas-*`, tetapi mengunggahnya menuntut
  * `CLOUDINARY_URL` terisi — dan seeder yang gagal tanpa kredensial membuat
  * `migrate:fresh --seed` tidak bisa dijalankan di CI maupun di komputer yang
- * belum disetel. Gambar dipasang lewat layar admin di F1.3.
+ * belum disetel. Pekerjaan itu dipisahkan ke AssetImageSeeder, yang menyerah
+ * dengan tenang bila kredensialnya belum ada.
  *
  * Seeder produksi — idempoten, aman dijalankan ulang.
  */

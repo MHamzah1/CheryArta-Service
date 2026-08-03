@@ -555,3 +555,59 @@ Diperiksa terakhir **3 Agustus 2026**, dari dua komputer developer (laptop + PC 
 > **Catatan cara verifikasi.** Proteksi branch dikonfirmasi lewat panel GitHub oleh developer;
 > `gh` CLI tidak terpasang di mesin ini sehingga tidak bisa dibuktikan ulang dari baris perintah.
 > Butir lainnya dibuktikan dengan perintah `artisan` yang menembak DB Railway secara langsung.
+
+## 12.9 Gambar Bawaan (`database/seeders/assets`)
+
+`AssetImageSeeder` mengunggah berkas di folder ini ke Cloudinary lalu mencatat `public_id` + `url`
+ke database. Berkasnya **ikut masuk repo** — tanpa itu `migrate:fresh --seed` di komputer lain
+menghasilkan katalog tanpa gambar.
+
+### Asal setiap berkas
+
+| Berkas | Asal | Catatan |
+|--------|------|---------|
+| `fasilitas-1…8-*` | Prototipe lama `index (1).html` | Diunduh saat F1.0 tugas 0.7 |
+| `hero-car.png` | Prototipe lama | Dipakai sebagai latar dekoratif hero, **bukan** lewat Cloudinary — lihat di bawah |
+| `mobil-tiggo-5x.png` | [chery.co.id](https://chery.co.id/en/models/ice/types/tiggo-5x) | Varian Champion, Red Ruby |
+| `mobil-tiggo-cross.png` | [chery.co.id](https://chery.co.id/en/models/ice/types/tiggo-cross) | Gambar utama katalog |
+| `mobil-tiggo-7-pro.png` | [chery.co.id](https://chery.co.id/en/models/ice/types/tiggo-7-pro) | Varian Comfort, White Howlite |
+| `mobil-tiggo-8-pro.png` | [chery.co.id](https://chery.co.id/en/models/ice/types/tiggo-8-pro) | White Howlite |
+| `mobil-omoda-5.png` | [chery.co.id](https://chery.co.id/en/models/ice/types/omoda-5) | Varian 5Z, White Howlite |
+| `mobil-omoda-e5.png` | [chery.co.id](https://chery.co.id/en/models/bev/types/chery-e5) | Kini dipasarkan sebagai **Chery E5** — mobil yang sama |
+| `mobil-jaecoo-j7.webp` | [jaecoo.id](https://jaecoo.id/en/model/jaecoo-j7-shs) | Versi SHS; satu-satunya foto J7 yang disediakan situs resmi |
+
+Seluruh gambar mobil adalah **materi resmi principal** (Chery Indonesia dan Jaecoo Indonesia),
+bukan stok generik. Ini disengaja: memasang foto SUV merek lain di bawah nama Tiggo berarti
+menyesatkan calon pembeli soal produk yang mereka lihat.
+
+> **Berkas diunduh dari host origin, bukan alias CDN.** Situs resmi menulis
+> `cheryidn.sgp1.cdn.digitaloceanspaces.com`, yang tidak selalu bisa di-resolve dari luar. Host
+> origin `cheryidn.sgp1.digitaloceanspaces.com` menyajikan berkas yang sama. Catatan ini ada agar
+> penggantian gambar kelak tidak buntu di langkah yang sama.
+>
+> Beberapa berkas disajikan sebagai PNG meski URL-nya berakhiran `.webp`. Ekstensinya sudah
+> diselaraskan dengan isi berkasnya — validasi unggahan memeriksa isi, bukan nama.
+
+### Katalog seeder tertinggal dari lineup Chery
+
+Diperiksa 3 Agustus 2026: **Tiggo 5X dan Tiggo 7 Pro tidak lagi ada di daftar model
+chery.co.id**, dan **Omoda E5 sudah berganti nama menjadi Chery E5**. Halaman detail model
+lamanya masih hidup — dari situlah gambarnya diambil — tetapi lineup yang dijual sekarang
+berisi Tiggo 8 Pro Max, Tiggo Cross Sport, Chery C5, Omoda 5 GT, Chery Q, J6, dan sederet varian
+CSH yang belum ada di `CarModelSeeder`. Memutakhirkan katalog adalah keputusan produk, bukan
+perbaikan teknis, jadi dibiarkan apa adanya sampai diputuskan.
+
+### Hero tidak lewat Cloudinary
+
+`hero-car.png` disalin ke `public/images/` dan dirujuk sebagai `/images/hero-car.png`. Ia aset
+merek yang tidak disunting admin, jadi menaruhnya di Cloudinary hanya menambah ketergantungan
+jaringan untuk berkas yang toh ikut ter-deploy bersama kode.
+
+### Menambah atau mengganti gambar
+
+1. Taruh berkasnya di `database/seeders/assets`.
+2. Daftarkan di konstanta `CAR_MODEL_IMAGES` atau `FACILITY_IMAGES` di `AssetImageSeeder`.
+3. `php artisan db:seed --class=AssetImageSeeder`
+
+Seeder melewati model/fasilitas yang gambarnya **sudah** terpasang. Untuk benar-benar mengganti,
+hapus dulu gambar lamanya lewat layar admin (A4) atau kosongkan kolomnya.

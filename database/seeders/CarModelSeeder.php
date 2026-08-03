@@ -21,8 +21,9 @@ use Illuminate\Database\Seeder;
  *    Free Maintenance sistem lama (tiggo_5x_cross, tiggo_8, ev, csh). Model
  *    lain dibiarkan null agar tidak salah mengaitkan paket gratis.
  *
- * Gambar tidak ikut dibuat: `car_model_images` mewajibkan public_id dan url,
- * yang baru ada setelah unggahan Cloudinary di F1.3.
+ * Gambar tidak ikut dibuat di sini: `car_model_images` mewajibkan public_id
+ * dan url, yang baru ada setelah berkasnya diunggah. AssetImageSeeder yang
+ * mengerjakannya, setelah seluruh model di bawah ini terbentuk.
  *
  * Seeder produksi — idempoten, aman dijalankan ulang.
  */
