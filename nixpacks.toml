@@ -1,0 +1,30 @@
+# Build Railway — rujukan: docs/12-panduan-instalasi-deploy.md §12.3.3
+#
+# Perintah pre-deploy (`php artisan migrate --force`) TIDAK ada di berkas ini.
+# Tempatnya di railway.json / Settings → Pre-deploy Command, karena ia berjalan
+# setelah build selesai dan sebelum kontainer baru menerima trafik.
+
+[phases.setup]
+# Menuliskan nixPkgs berarti MENGGANTI daftar bawaan Nixpacks, bukan menambahnya.
+# Karena itu Composer harus ikut disebut — tanpa itu fase install gagal di baris
+# pertama. `php82` sudah membawa pdo_mysql, mbstring, openssl, dan tokenizer.
+nixPkgs = ["php82", "php82Packages.composer", "nodejs_20"]
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist",
+  "npm ci",
+]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+# Dua hal yang disengaja:
+#
+# 1. `config:cache` dijalankan saat START, bukan saat build. Variabel Railway
+#    baru dijamin tersedia pada runtime; men-cache config saat build berisiko
+#    membekukan nilai kosong.
+# 2. `--host=0.0.0.0 --port=$PORT` — Railway menyuntikkan $PORT. Mengabaikannya
+#    membuat health check `/up` gagal dan deploy ditandai merah.
+cmd = "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"

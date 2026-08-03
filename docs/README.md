@@ -3,7 +3,9 @@
 Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML tunggal
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
-**Status:** Big Fase 1 · F1.0 (Fondasi) selesai — berikutnya **F1.1 Instalasi & Deploy Railway**
+**Status:** Big Fase 1 · F1.0 selesai · **F1.1 sisi kode selesai** — tersisa penyiapan akun
+(Railway, MySQL, Cloudinary, proteksi branch) yang hanya bisa dikerjakan lewat panel masing-masing;
+daftarnya di [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11)
 **Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)
 **Tanggal:** 3 Agustus 2026
 
@@ -52,7 +54,7 @@ Dibuat oleh `UserSeeder`, password semuanya `password`:
 |-----|---------|----------|
 | MySQL Railway (bersama) | ⏳ Dibuat di F1.1 | Menjadi satu-satunya database untuk development **dan** deployment sampai F2.5.1 |
 | MariaDB 10.4 (XAMPP) | ✅ Berjalan, `cheryarta_dev` termigrasi | Dipertahankan **hanya** untuk menguji `migrate`/`rollback` — bukan untuk pengembangan sehari-hari |
-| Cloudinary | ⏳ Dibuat di F1.1 | Penyimpanan seluruh gambar katalog, fasilitas, testimoni, dan brosur PDF |
+| Cloudinary | ⏳ Akun belum dibuat; kodenya siap | Penyimpanan seluruh gambar katalog, fasilitas, testimoni, dan brosur PDF. Sementara belum ada akun, setel `CLOUDINARY_FAKE=true` di `.env` |
 | Ekstensi PHP `gd` | ✅ Tidak lagi dibutuhkan | Pemrosesan ulang gambar diserahkan ke transformasi URL Cloudinary (`f_auto,q_auto,w_…`) |
 | Ekstensi PHP `intl` | Belum aktif | Aktifkan bila kelak dibutuhkan pemformatan lokal di sisi server. Saat ini pemformatan dilakukan di `resources/js/lib/format.ts`. |
 

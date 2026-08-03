@@ -78,11 +78,27 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari)
+## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ⚠️ SISI KODE SELESAI
 
 Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
 semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
 langkah ada di [12-panduan-instalasi-deploy.md](12-panduan-instalasi-deploy.md).
+
+> **Sisi kode selesai:** 1.1.3, 1.1.5, 1.1.6, 1.1.7, 1.1.8, 1.1.9, 1.1.10.
+> **Menunggu tindakan di panel** (tidak bisa dikerjakan dari dalam repo): 1.1.1 proteksi branch
+> `main` + penautan Railway ↔ repo, 1.1.2 service MySQL + TCP proxy, 1.1.4 pengisian Variables,
+> dan pembuatan akun Cloudinary pada 1.1.6. Daftar periksanya di
+> [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11).
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **`App\Services\ImageUploader` menjadi interface**, bukan kelas konkret seperti tertulis di
+>    1.1.6. Tanpa itu `FakeImageUploader` tidak bisa menggantikannya di uji. Implementasi
+>    sungguhannya `CloudinaryImageUploader`. Polanya sama dengan `WhatsAppNotifier` di F2.2.2.
+> 2. **`railway.json` ditambahkan** di samping `nixpacks.toml`, agar pre-deploy command ikut
+>    ter-review lewat git alih-alih hanya hidup di panel.
+> 3. **Perintah `cloudinary:cek` ditambahkan.** Layar unggah baru ada di F1.3, sehingga tanpa
+>    perintah ini kriteria "unggah gambar percobaan muncul di Cloudinary" hanya bisa dibuktikan
+>    dengan kode sekali pakai.
 
 | # | Pekerjaan |
 |---|-----------|

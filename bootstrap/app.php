@@ -15,7 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Tanpa baris ini perintah di app/Console/Commands tidak ditemukan sama
+    // sekali — withRouting(commands: …) hanya memuat routes/console.php.
+    ->withCommands()
     ->withMiddleware(function (Middleware $middleware) {
+        // Railway menaruh aplikasi di balik reverse proxy. Tanpa ini Laravel
+        // menyangka koneksinya http://, sehingga URL aset Vite dan seluruh
+        // redirect memakai skema yang salah — lihat docs/12 §12.3.4.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

@@ -73,13 +73,20 @@ CACHE_STORE=database
 QUEUE_CONNECTION=database
 
 CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
+CLOUDINARY_FAKE=false
 ```
+
+> Belum punya akses Cloudinary? Setel `CLOUDINARY_FAKE=true`. Seluruh unggahan dialihkan ke
+> `FakeImageUploader` sehingga aplikasi tetap jalan tanpa satu pun panggilan jaringan. Yang
+> **tidak** dilakukan: diam-diam mundur ke Fake saat `CLOUDINARY_URL` kosong — unggahan yang
+> "berhasil" tetapi tidak sampai ke mana pun jauh lebih sulit disadari daripada galat terang.
 
 Verifikasi — **tanpa** menjalankan migration apa pun:
 
 ```bash
 php artisan migrate:status     # harus menampilkan daftar migration beserta status "Ran"
 php artisan tinker --execute="echo \App\Models\User::count();"
+php artisan cloudinary:cek     # unggah 1 gambar uji ke Cloudinary, lalu hapus lagi
 ```
 
 Bila dua komputer memberi angka yang sama, database bersama sudah bekerja. Jalankan:
@@ -134,6 +141,8 @@ SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 LOG_CHANNEL=stderr
+FILESYSTEM_DISK=local
+PHP_CLI_SERVER_WORKERS=4
 
 CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
 COMPANY_WA_NUMBER=62xxxxxxxxxx
@@ -146,18 +155,24 @@ Catatan yang mudah terlewat:
 - **`LOG_CHANNEL=stderr`** — log ke stdout container, bukan ke `storage/logs` yang akan hilang.
 - **`SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION` harus `database`**, bukan `file`.
   Driver `file` di filesystem ephemeral akan membuat pengguna ter-logout acak setiap redeploy.
+- **`PHP_CLI_SERVER_WORKERS=4`** — start command memakai `php artisan serve`, dan server bawaan
+  PHP hanya melayani satu permintaan pada satu waktu tanpa variabel ini. Cukup untuk Big Fase 1
+  yang dipakai developer saja (**R5**); bila kelak ada trafik nyata, ganti ke Nginx + PHP-FPM
+  lewat `Dockerfile` sendiri.
+- **`CLOUDINARY_FAKE` tidak diisi di Railway.** Nilainya harus `false`/absen agar unggahan benar
+  benar sampai ke Cloudinary.
 
 ### 12.3.3 Build & start
 
-Tambahkan `nixpacks.toml` di akar repo:
+Dua berkas di akar repo, keduanya sudah ada. `nixpacks.toml` mengatur **bagaimana image dibangun**:
 
 ```toml
 [phases.setup]
-nixPkgs = ["php82", "nodejs_20"]
+nixPkgs = ["php82", "php82Packages.composer", "nodejs_20"]
 
 [phases.install]
 cmds = [
-  "composer install --no-dev --optimize-autoloader --no-interaction",
+  "composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist",
   "npm ci",
 ]
 
@@ -168,20 +183,36 @@ cmds = ["npm run build"]
 cmd = "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"
 ```
 
-Dua hal yang disengaja:
+Tiga hal yang disengaja:
 
+- **`php82Packages.composer` ikut disebut.** Menuliskan `nixPkgs` berarti *mengganti* daftar
+  bawaan Nixpacks, bukan menambahnya — tanpa baris itu fase install gagal di perintah pertama.
 - **`config:cache` dijalankan di start, bukan di build.** Variabel Railway baru pasti tersedia
   saat runtime; men-cache config saat build berisiko membekukan nilai kosong.
 - **`--host=0.0.0.0 --port=$PORT`** — Railway menyuntikkan `$PORT`; mengabaikannya membuat
   health check gagal.
 
-Lalu di **Settings service `web`** → **Pre-deploy Command**:
+`railway.json` mengatur **apa yang terjadi saat deploy**, termasuk pre-deploy command sebagai
+config-as-code sehingga ikut ter-review lewat git:
 
-```
-php artisan migrate --force
+```json
+{
+    "$schema": "https://railway.com/railway.schema.json",
+    "build": { "builder": "NIXPACKS" },
+    "deploy": {
+        "preDeployCommand": "php artisan migrate --force",
+        "healthcheckPath": "/up",
+        "healthcheckTimeout": 120,
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 5
+    }
+}
 ```
 
-Migration berjalan sekali per deploy, sebelum kontainer baru menerima trafik.
+Migration berjalan sekali per deploy, sebelum kontainer baru menerima trafik. Nilai yang sama
+dapat diisi lewat **Settings service `web` → Pre-deploy Command**; bila keduanya terisi, panel
+Railway yang menang. Periksa sekali di log deploy pertama bahwa migration memang berjalan —
+kalau tidak, isi manual lewat panel.
 
 > Bila skema Nixpacks bawaan ternyata tidak melayani direktori `public/` dengan benar, jalur
 > cadangannya adalah `Dockerfile` sendiri (PHP-FPM + Nginx). Coba nixpacks lebih dulu — lebih
@@ -268,16 +299,35 @@ bukan pengaman:
 1. Buat akun Cloudinary → **Dashboard** → salin **API Environment variable**, bentuknya
    `cloudinary://<api_key>:<api_secret>@<cloud_name>`.
 2. Pasang sebagai `CLOUDINARY_URL` di `.env` lokal **dan** di Variables Railway.
-3. Dependensi: SDK resmi, dibungkus service sendiri.
+3. Dependensi: SDK resmi (`cloudinary/cloudinary_php`, sudah terpasang), dibungkus service sendiri.
+
+   `App\Services\ImageUploader` adalah **interface** — itulah tipe yang di-inject ke controller
+   dan service. Ada dua implementasi:
+
+   | Berkas | Guna |
+   |--------|------|
+   | `app/Services/ImageUploader.php` | Kontrak: `upload`, `delete`, `transformedUrl` |
+   | `app/Services/CloudinaryImageUploader.php` | Implementasi sungguhan; **satu-satunya** berkas yang memanggil SDK |
+   | `app/Services/FakeImageUploader.php` | Dipakai uji Pest — mencatat unggahan & penghapusan, nol panggilan jaringan |
+   | `app/Support/UploadedAsset.php` | Hasil unggahan (`publicId`, `url`) + `toColumns('brochure_')` |
+   | `app/Support/CloudinaryUrl.php` | Penyusun URL transformasi — murni teks, karena itu bisa diuji sendiri |
+   | `app/Support/UploadRules.php` | Aturan validasi unggahan, dibaca dari `config/cloudinary.php` |
+   | `config/cloudinary.php` | Kredensial, daftar folder, batas ukuran, lebar transformasi |
+
+   **Tidak ada** pemanggilan SDK Cloudinary di controller atau model. Alasannya sama dengan
+   `WhatsAppNotifier`: ganti penyedia kelak cukup menyentuh `CloudinaryImageUploader`.
+
+   Pemilihan implementasi terjadi di `AppServiceProvider::register()`: `FakeImageUploader` bila
+   sedang menjalankan uji atau `CLOUDINARY_FAKE=true`, selain itu `CloudinaryImageUploader`.
+   Bila `CLOUDINARY_URL` kosong sementara `CLOUDINARY_FAKE` tidak diaktifkan, container
+   **melempar galat** — bukan diam-diam memakai Fake.
+
+   Verifikasi kredensial tanpa perlu layar unggah (baru ada di F1.3):
 
    ```bash
-   composer require cloudinary/cloudinary_php
+   php artisan cloudinary:cek            # unggah 1 gambar uji, tampilkan URL, lalu hapus
+   php artisan cloudinary:cek --simpan   # biarkan berkas ujinya ada di Media Library
    ```
-
-   Pembungkusnya `app/Services/ImageUploader.php` — **tidak ada** pemanggilan SDK Cloudinary di
-   controller atau model. Alasannya sama dengan `WhatsAppNotifier`: ganti penyedia kelak cukup
-   menyentuh satu berkas. Untuk pengujian dipakai `FakeImageUploader` agar uji Pest tidak
-   menembak jaringan.
 
 4. **Konsekuensi skema** — kolom penyimpanan berkas menyimpan identitas Cloudinary, bukan path:
 
@@ -307,8 +357,17 @@ bukan pengaman:
    Efek sampingnya menyenangkan: **ekstensi PHP `gd` tidak lagi dibutuhkan** — peringatan di
    [README](README.md#keadaan-lingkungan) gugur dengan sendirinya.
 
-6. Validasi unggahan **tetap di server** dan tidak berubah: `jpg|jpeg|png|webp` maks 2 MB
-   (brosur `pdf` maks 5 MB), diperiksa lewat MIME sungguhan, nama berkas di-generate ulang.
+   Lebar bakunya hidup di `config('cloudinary.widths')`, dan URL-nya disusun lewat
+   `ImageUploader::transformedUrl($url, $width)` — bukan dengan menyambung teks di JSX.
+
+6. **Brosur PDF diunggah sebagai `raw`**, bukan `image`. Akun Cloudinary gratis mematikan
+   *PDF and ZIP files delivery* secara bawaan; mengunggah PDF sebagai `image` membuat berkasnya
+   tersimpan tetapi tidak bisa diunduh. `AssetType::Document` sudah memetakannya.
+
+7. Validasi unggahan **tetap di server** dan tidak berubah: `jpg|jpeg|png|webp` maks 2 MB
+   (brosur `pdf` maks 5 MB), diperiksa lewat MIME sungguhan, nama berkas di-generate ulang
+   (`Str::uuid()`, nama asli dibuang seluruhnya). Angkanya hanya hidup di
+   `config('cloudinary.uploads')` dan dibaca lewat `UploadRules::for(AssetType::Image)`.
    Cloudinary bukan pengganti validasi.
 
 ---
@@ -421,25 +480,46 @@ npm run dev & php artisan serve
 Sebelum push:
 
 ```bash
-php artisan test
-./vendor/bin/pint
+./vendor/bin/pint            # tambahkan --test untuk memeriksa tanpa mengubah berkas
 ./vendor/bin/phpstan analyse
-npm run lint && npx tsc --noEmit
+npm run lint                 # atau lint:check
+npm run types
 npm run build
+php artisan test
 ```
 
-Semua harus lulus — sama seperti [aturan 60](../.claude/rules/60-testing-dan-git.md). Push ke
-`main` memicu deploy Railway; pantau tab **Deployments** sampai hijau, lalu buka domainnya.
+Semua harus lulus — sama seperti [aturan 60](../.claude/rules/60-testing-dan-git.md).
+`npm run format` (Prettier) belum menjadi gerbang: 12 berkas warisan F1.0 masih belum terformat,
+dan merapikannya layak jadi commit tersendiri agar tidak tercampur dengan perubahan perilaku.
+
+Urutannya bukan selera: `npm run build` **wajib mendahului** `php artisan test`, karena
+`resources/views/app.blade.php` memanggil `@vite`, sehingga tanpa `public/build/manifest.json`
+setiap uji yang me-render halaman Inertia gagal dengan *Vite manifest not found*.
+
+Workflow `.github/workflows/ci.yml` menjalankan gerbang yang sama pada setiap push ke `main` dan
+setiap pull request — dalam **mode periksa** (`pint --test`, `lint:check`, `format:check`).
+Workflow yang diam-diam memformat ulang kode selalu hijau dan karena itu tidak menjaga apa pun.
+Basis data ujinya SQLite in-memory (`phpunit.xml`); MySQL tidak dibutuhkan di CI.
+
+Push ke `main` memicu deploy Railway; pantau tab **Deployments** sampai hijau, lalu buka domainnya.
 
 ## 12.8 Daftar Periksa Selesai (F1.1)
 
+Yang bertanda ✅ sudah ada di repo; sisanya menunggu tindakan di panel Railway, GitHub, dan
+Cloudinary — tidak bisa dikerjakan dari dalam kode.
+
 - [ ] Repo GitHub tertaut ke Railway, push ke `main` memicu deploy otomatis
+- [ ] Branch `main` dilindungi (Settings → Branches → Require pull request + require `ci`)
 - [ ] Service MySQL berjalan, TCP proxy aktif
-- [ ] `nixpacks.toml` + pre-deploy `migrate --force` bekerja
-- [ ] `trustProxies` terpasang; situs Railway tampil ber-CSS lewat `https://`
-- [ ] Cloudinary tersambung, `ImageUploader` + `FakeImageUploader` ada dan teruji
-- [ ] `.env.example` mutakhir dan **tanpa** kredensial nyata
-- [ ] DBeaver tersambung dari minimal satu komputer, ditandai *Production*
+- [x] ✅ `nixpacks.toml` + `railway.json` (pre-deploy `migrate --force`) ada di repo
+- [ ] Deploy pertama membuktikan keduanya bekerja: log menampilkan migration berjalan
+- [x] ✅ `trustProxies` terpasang di `bootstrap/app.php`, teruji di `tests/Feature/TrustedProxyTest.php`
+- [ ] Situs Railway tampil ber-CSS lewat `https://`
+- [x] ✅ `ImageUploader` + `CloudinaryImageUploader` + `FakeImageUploader` ada dan teruji
+- [ ] `php artisan cloudinary:cek` hijau memakai `CLOUDINARY_URL` sungguhan
+- [x] ✅ `.env.example` mutakhir dan **tanpa** kredensial nyata
+- [ ] DBeaver tersambung dari minimal satu komputer, diberi nama `CheryArta — Railway (dev+deploy)`
+      (penandaan *Production* baru berlaku setelah F2.5.1 — lihat §12.4)
 - [ ] `php artisan migrate:fresh --seed` terhadap DB Railway berhasil dan menghasilkan sistem yang langsung bisa dipakai
 - [ ] Laptop dan PC kantor menampilkan hasil `migrate:status` dan jumlah user yang identik
-- [ ] Workflow GitHub Actions menjalankan seluruh gerbang kualitas
+- [x] ✅ Workflow `.github/workflows/ci.yml` menjalankan seluruh gerbang kualitas

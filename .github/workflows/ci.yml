@@ -1,0 +1,84 @@
+name: ci
+
+# Enam gerbang kualitas dari .claude/rules/60-testing-dan-git.md, dijalankan
+# dalam mode PERIKSA — bukan mode perbaiki. Workflow yang diam-diam memformat
+# ulang kode selalu hijau dan karena itu tidak menjaga apa pun.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Gerbang kualitas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Versi PHP & Node disamakan dengan nixpacks.toml supaya CI menguji
+      # runtime yang sama dengan yang dipakai Railway.
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_sqlite, intl, zip, curl
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Cache dependensi Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-php8.2-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php8.2-
+
+      - name: Pasang dependensi PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Pasang dependensi Node
+        run: npm ci
+
+      - name: Siapkan .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+      # Prettier sengaja TIDAK dijadikan gerbang: .claude/rules/60 menetapkan
+      # enam gerbang dan Prettier bukan salah satunya, sementara 12 berkas
+      # warisan F1.0 masih belum terformat. Jadikan gerbang di commit
+      # perapian tersendiri, bukan diselundupkan lewat F1.1.
+      - name: ESLint
+        run: npm run lint:check
+
+      - name: TypeScript
+        run: npm run types
+
+      # Build wajib mendahului uji: resources/views/app.blade.php memanggil
+      # @vite, sehingga tanpa public/build/manifest.json setiap uji yang
+      # me-render halaman Inertia gagal dengan "Vite manifest not found".
+      - name: Build aset
+        run: npm run build
+
+      # Basis data uji: SQLite in-memory (phpunit.xml). MySQL lokal sengaja
+      # tidak dibutuhkan — lihat docs/12 §12.2.
+      - name: Pest
+        run: php artisan test
