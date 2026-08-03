@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Public\SlotAvailabilityRequest;
 use App\Services\SlotService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 /**
  * `GET /booking/slots?date=YYYY-MM-DD` — satu-satunya endpoint JSON di alur
@@ -18,18 +18,18 @@ use Illuminate\Http\Request;
  *
  * Yang dikembalikan hanya jumlah sisa kuota per jam — tidak ada satu pun data
  * pribadi pemesan (temuan S8).
+ *
+ * Dipakai dua pemanggil dengan aturan tanggal berbeda: form booking customer
+ * (H-1 berlaku) dan form walk-in advisor (H-1 dilewati, docs/07 §A2). Bedanya
+ * ditentukan `SlotAvailabilityRequest::source()`, yang memeriksa peran
+ * pemanggil di server alih-alih mempercayai parameternya.
  */
 class SlotAvailabilityController extends Controller
 {
-    public function __invoke(Request $request, SlotService $slots): JsonResponse
+    public function __invoke(SlotAvailabilityRequest $request, SlotService $slots): JsonResponse
     {
-        $validated = $request->validate(
-            ['date' => ['required', 'date_format:Y-m-d']],
-            ['date.required' => 'Tanggal wajib diisi.', 'date.date_format' => 'Format tanggal harus YYYY-MM-DD.'],
-        );
-
-        $date = $slots->parseDate($validated['date']);
-        $alasan = $slots->dateRejectionReason($date);
+        $date = $slots->parseDate((string) $request->validated('date'));
+        $alasan = $slots->dateRejectionReason($date, $request->source());
 
         return response()->json([
             'date' => $date->toDateString(),

@@ -80,9 +80,9 @@ function cairkanWaktuUji(): void
 }
 
 /** Pelanggan lengkap dengan satu kendaraan — bahan dasar hampir semua uji booking. */
-function pelangganSiapBooking(): User
+function pelangganSiapBooking(array $attributes = []): User
 {
-    $user = User::factory()->create();
+    $user = User::factory()->create($attributes);
     Vehicle::factory()->create(['user_id' => $user->id]);
 
     return $user;

@@ -11,6 +11,12 @@ interface Props {
     onChange: (time: string) => void;
     /** Booking yang sedang dijadwal ulang — slotnya sendiri tidak dihitung penuh. */
     ignoreBookingId?: number;
+    /**
+     * `web` (bawaan) atau `walk_in`. Walk-in melewati aturan H-1 sehingga
+     * hari ini pun punya slot. Server memeriksa peran pemanggil sebelum
+     * menghormatinya — nilai ini tidak memberi hak apa pun sendiri.
+     */
+    source?: string;
 }
 
 /**
@@ -24,7 +30,7 @@ interface Props {
  * Perbedaan penting dari sistem lama: slot penuh TERLIHAT sebelum dipilih,
  * bukan ditolak lewat alert() setelah tombol ditekan (docs/05 §5.2).
  */
-export default function SlotPicker({ date, value, onChange, ignoreBookingId }: Props) {
+export default function SlotPicker({ date, value, onChange, ignoreBookingId, source }: Props) {
     const [slots, setSlots] = useState<SlotAvailability[]>([]);
     const [alasan, setAlasan] = useState<string | null>(null);
     const [memuat, setMemuat] = useState(false);
@@ -45,7 +51,7 @@ export default function SlotPicker({ date, value, onChange, ignoreBookingId }: P
         setMemuat(true);
         setGagal(false);
 
-        fetch(route('booking.slots', { date }), {
+        fetch(route('booking.slots', source ? { date, sumber: source } : { date }), {
             headers: { Accept: 'application/json' },
             signal: kontrol.signal,
         })
@@ -61,7 +67,7 @@ export default function SlotPicker({ date, value, onChange, ignoreBookingId }: P
             .finally(() => setMemuat(false));
 
         return () => kontrol.abort();
-    }, [date, ignoreBookingId]);
+    }, [date, ignoreBookingId, source]);
 
     if (!date) {
         return <p className="text-ink-soft text-sm">Pilih tanggal lebih dulu untuk melihat jam yang tersedia.</p>;

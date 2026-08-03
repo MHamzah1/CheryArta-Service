@@ -122,6 +122,12 @@ teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-what
 > **Big Fase 1 hanya membuat tombol "Chat via WhatsApp"** di detail booking — membuka `wa.me`
 > dengan teks dari `config/company.php`. Tabel `whatsapp_templates` & `whatsapp_messages`, panel
 > draft, penanda "belum dikirim", dan CRUD template menyusul di F2.2.
+>
+> Terpasang di F1.5: `App\Services\WhatsAppNotifier::draft()` menyusun tautan dan teksnya di
+> server (nomor selalu bentuk ternormalisasi `62…`, `rawurlencode`), lalu mengirimkannya ke
+> React sebagai prop `whatsapp`. Teks per status ada di `config('company.wa_messages')` dan
+> memakai placeholder yang sama dengan [08 §8.4](08-notifikasi-whatsapp.md). Bernilai `null`
+> bila pelanggan tidak punya nomor WhatsApp — tombolnya tidak dirender sama sekali.
 
 ## A8 — Invoice  `/admin/invoices`  (SA, ADV) — ⏳ Big Fase 2
 

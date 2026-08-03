@@ -308,7 +308,65 @@ tanpa menyentuh database, dan gambarnya tampil dari Cloudinary.
 **Selesai bila:** pelanggan dapat memesan, melihat status, menjadwal ulang, dan membatalkan —
 dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan manual.
 
-## F1.5 — Admin Operasional: A2, A3, A6  (3 hari)
+## F1.5 — Admin Operasional: A2, A3, A6  (3 hari) — ✅ SELESAI
+
+> **Selesai 3 Agustus 2026.** 363 uji Pest hijau — 91 di antaranya baru di
+> `tests/Feature/Admin/` (`AdminAccessTest`, `BookingListTest`, `BookingStatusTest`,
+> `WalkInBookingTest`, `ScheduleTest`, `CustomerDirectoryTest`). Pint, PHPStan, ESLint,
+> `tsc --noEmit`, dan `npm run build` bersih. Tidak ada migration baru — seluruh kolomnya
+> (`admin_note`, `handled_by`, `started_at`, `completed_at`) sudah lahir di F1.4.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **Transisi status ditegakkan di Service, bukan di Policy maupun Form Request.**
+>    `BookingPolicy::updateStatus` hanya menjawab "siapa" (staf); "boleh ke mana" dijawab
+>    `App\Enums\BookingStatus::canTransitionTo()` yang diperiksa `BookingService::changeStatus()`
+>    **di dalam transaksi dengan barisnya terkunci**. Percobaan transisi tidak sah berujung
+>    `App\Exceptions\InvalidStatusTransitionException` — ditangani terpusat di `bootstrap/app.php`
+>    menjadi **422**, polanya sama dengan `SlotUnavailableException` di F1.4. Sengaja 422 dan bukan
+>    403: advisornya memang berhak, perpindahannyalah yang tidak ada. Konsekuensinya, booking yang
+>    sudah berakhir tetap mengirim `canUpdateStatus: true` dengan `statusOptions` kosong; panelnya
+>    yang menjelaskan, bukan otorisasinya yang menolak.
+> 2. **Tiga service baru** — `WalkInBookingService`, `CustomerAccountService`, `WhatsAppNotifier`.
+>    Yang terakhir sudah memakai nama dari [03 §3.6](03-arsitektur-teknis.md) supaya F2.2 cukup
+>    mengubah isinya menjadi implementasi interface tanpa menyentuh satu pun controller.
+>    `WalkInBookingService` membungkus akun + kendaraan + booking dalam **satu** transaksi: slot
+>    yang ternyata penuh tidak boleh meninggalkan akun setengah jadi di daftar pelanggan (diuji).
+> 3. **`App\Support\BookingFilters`** — objek nilai yang dipakai untuk tiga hal sekaligus tanpa
+>    ditulis ulang: menyusun kueri, mengisi kembali form saringan di React, dan menempel di query
+>    string agar tautannya bisa dibagikan.
+> 4. **`GET /booking/slots` menerima `?sumber=walk_in`.** Form walk-in butuh slot **hari ini**,
+>    sedangkan endpoint itu semula selalu memakai aturan H-1. `SlotAvailabilityRequest::source()`
+>    hanya menghormati `walk_in` bila pemanggilnya staf yang login — pengunjung yang mengetiknya
+>    di URL tetap mendapat aturan web. Sekalian, `$request->validate()` di controllernya diganti
+>    Form Request sesuai `.claude/rules/10`.
+> 5. **Pencarian pelanggan di form walk-in memakai kunjungan Inertia parsial**, bukan endpoint
+>    JSON baru. [Aturan 20](../.claude/rules/20-frontend-react-inertia.md) hanya mengecualikan
+>    ketersediaan slot, dan daftar pelanggan justru data yang paling tidak boleh punya endpoint
+>    terbuka sendiri (temuan S8).
+> 6. **`BookingPolicy::view` kini mengizinkan staf**, sesuai contoh di
+>    [09 §9.3](09-keamanan-hak-akses.md). `reschedule`/`cancel` tetap milik pemiliknya saja.
+> 7. **A6 hanya menampilkan akun ber-role `customer`.** Akun staf ditolak 403 di
+>    `/admin/customers/{id}` — pengelolaannya milik A11 di Big Fase 2, yang punya pengaman
+>    berbeda (Super Admin terakhir tidak boleh dinonaktifkan).
+> 8. **Total nilai invoice di detail customer belum ada**, meski disebut [07 §A6](07-modul-admin.md).
+>    Tabel invoice baru lahir di F2.3; menampilkan "Rp 0" untuk sesuatu yang belum dihitung lebih
+>    menyesatkan daripada tidak menampilkannya.
+> 9. **Teks WhatsApp ada di `config/company.php` (`wa_messages`), berkunci status booking.**
+>    Sementara, sesuai R6 — tabel `whatsapp_templates` yang bisa disunting Super Admin, log
+>    pengiriman, dan penanda "sudah dikirim" menyusul di F2.2.
+>
+> **Sisa yang belum terbukti:**
+> - **`must_reset_password` belum ditegakkan saat login.** Kolomnya diisi dengan benar (akun
+>   walk-in baru dan akun yang direset Super Admin), tetapi belum ada pemaksaan ganti password di
+>   alur masuk. Selama Big Fase 1 dampaknya nihil — akun walk-in dibuat dengan password acak yang
+>   tidak diketahui siapa pun, jadi pemiliknya memang harus lewat jalur reset. Penegakannya masuk
+>   Big Fase 2 bersama A11.
+> - **Password sementara hasil reset tampil di flash message.** Tanpa notifikasi email
+>   (keputusan #4) tidak ada jalur lain; nilainya tidak tersimpan di mana pun dalam bentuk
+>   terbaca, tetapi ia melewati session. Perlu ditinjau ulang bila SMTP kelak tersedia
+>   ([09 §9.2](09-keamanan-hak-akses.md)).
+> - **Penguncian baris pada `changeStatus`** memakai `lockForUpdate`, yang hanya berlaku nyata di
+>   MySQL — sama seperti catatan F1.4. Yang terbukti otomatis adalah keatomikannya.
 
 | # | Pekerjaan |
 |---|-----------|

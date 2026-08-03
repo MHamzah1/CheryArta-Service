@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $changed_by
  * @property string|null $note
  * @property \Illuminate\Support\Carbon|null $created_at
+ * @property-read Booking $booking
+ * @property-read User|null $changedBy
  */
 class BookingStatusHistory extends Model
 {

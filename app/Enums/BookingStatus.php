@@ -88,6 +88,43 @@ enum BookingStatus: string
         return in_array($this, [self::Cancelled, self::NoShow], true);
     }
 
+    /**
+     * Pembatalan selalu wajib menyertakan alasan (docs/05 §5.4), sehingga
+     * form ubah status perlu tahu kapan kolom catatan berubah menjadi wajib.
+     */
+    public function requiresNote(): bool
+    {
+        return $this === self::Cancelled;
+    }
+
+    /**
+     * Pilihan status tujuan yang sah dari status ini, siap dikirim ke React.
+     *
+     * UI hanya menampilkan apa yang ada di sini; server tetap memeriksa ulang
+     * lewat canTransitionTo() — menyembunyikan pilihan bukan pengaman
+     * (.claude/rules/20-frontend-react-inertia.md).
+     *
+     * @return list<array{value: string, label: string, tone: string, requires_note: bool}>
+     */
+    public function transitionOptions(): array
+    {
+        return array_map(
+            fn (self $status) => [
+                'value' => $status->value,
+                'label' => $status->label(),
+                'tone' => $status->tone(),
+                'requires_note' => $status->requiresNote(),
+            ],
+            $this->allowedTransitions(),
+        );
+    }
+
+    /** @return list<string> */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+
     /** @return array<int, string> untuk whereNotIn saat menghitung kuota. */
     public static function quotaReleasingValues(): array
     {

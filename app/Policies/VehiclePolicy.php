@@ -18,11 +18,23 @@ use App\Models\Vehicle;
  */
 class VehiclePolicy
 {
-    public function view(User $user, Vehicle $vehicle): bool
+    /**
+     * Daftar seluruh unit terdaftar di panel admin (docs/07 §A6).
+     *
+     * Menjawab pertanyaan yang paling sering muncul di meja servis — "unit ini
+     * terakhir servis kapan?" — sehingga seluruh staf membutuhkannya.
+     */
+    public function viewAny(User $user): bool
     {
-        return $this->miliknya($user, $vehicle);
+        return $user->isStaff();
     }
 
+    public function view(User $user, Vehicle $vehicle): bool
+    {
+        return $user->isStaff() || $this->miliknya($user, $vehicle);
+    }
+
+    /** Menyunting kendaraan tetap milik pemiliknya; staf melihat, tidak mengubah. */
     public function update(User $user, Vehicle $vehicle): bool
     {
         return $this->miliknya($user, $vehicle);

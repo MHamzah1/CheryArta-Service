@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
+use App\Exceptions\InvalidStatusTransitionException;
 use App\Exceptions\SlotUnavailableException;
 use App\Models\Booking;
 use App\Models\ServicePackage;
@@ -47,6 +48,144 @@ class BookingService
 
             return $booking;
         });
+    }
+
+    /**
+     * Booking walk-in: pelanggan sudah berdiri di depan meja, advisor yang
+     * mengisikan (docs/07 §A2).
+     *
+     * Dua bedanya dari `create()`, keduanya disengaja:
+     * 1. Aturan H-1 dilewati — ditentukan `BookingSource::WalkIn`, bukan oleh
+     *    percabangan di sini. Kuota slot TETAP berlaku.
+     * 2. Statusnya langsung `confirmed`: tidak ada gunanya menunggu konfirmasi
+     *    advisor atas booking yang baru saja ia buat sendiri.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function createWalkIn(User $customer, array $data, User $actor): Booking
+    {
+        return $this->transaksiKodeUnik(function () use ($customer, $data, $actor): Booking {
+            $booking = $this->simpanBooking($customer, $data, BookingSource::WalkIn);
+
+            $booking->forceFill([
+                'status' => BookingStatus::Confirmed,
+                'confirmed_at' => now(),
+                'handled_by' => $actor->getKey(),
+            ])->save();
+
+            // Satu baris riwayat, bukan dua: bookingnya memang lahir dalam
+            // keadaan terkonfirmasi — mencatat "pending" yang tidak pernah
+            // benar-benar ada hanya membuat timeline berbohong.
+            $this->catatRiwayat(
+                $booking,
+                null,
+                BookingStatus::Confirmed,
+                $actor,
+                'Booking dibuat di bengkel dan langsung dikonfirmasi.',
+            );
+
+            return $booking;
+        });
+    }
+
+    /**
+     * Perpindahan status oleh advisor (docs/05 §5.3).
+     *
+     * Yang sah ditentukan App\Enums\BookingStatus — kelas ini tidak menyimpan
+     * satu pun aturan transisi sendiri. Pemeriksaannya berada di dalam
+     * transaksi supaya dua advisor yang menekan tombol bersamaan tidak
+     * dua-duanya lolos membaca status lama.
+     *
+     * @param  string|null  $note  Catatan advisor; wajib saat membatalkan, ikut terlihat customer.
+     */
+    public function changeStatus(
+        Booking $booking,
+        BookingStatus $target,
+        User $actor,
+        ?string $note = null,
+        ?int $odometer = null,
+    ): Booking {
+        return DB::transaction(function () use ($booking, $target, $actor, $note, $odometer): Booking {
+            // Barisnya dibaca ULANG dengan kunci, bukan dipercaya dari objek
+            // yang dibawa controller: dua advisor bisa membuka booking yang
+            // sama, dan yang kedua harus melihat hasil perubahan yang pertama.
+            /** @var Booking $terkini */
+            $terkini = Booking::query()->lockForUpdate()->findOrFail($booking->getKey());
+            $asal = $terkini->status;
+
+            if (! $asal->canTransitionTo($target)) {
+                throw InvalidStatusTransitionException::between($asal, $target);
+            }
+
+            if ($odometer !== null) {
+                $terkini->odometer = $odometer;
+            }
+
+            $terkini->forceFill([
+                'status' => $target,
+                'handled_by' => $terkini->handled_by ?? $actor->getKey(),
+                ...$this->efekSamping($terkini, $target, $note),
+            ])->save();
+
+            // Odometer kendaraan baru diperbarui saat pekerjaan selesai:
+            // angka yang dicatat saat kendaraan masuk masih bisa terkoreksi
+            // di meja servis (docs/05 §5.3).
+            if ($target === BookingStatus::Completed && $terkini->odometer !== null) {
+                $this->perbaruiOdometerKendaraan($terkini);
+            }
+
+            $this->catatRiwayat($terkini, $asal, $target, $actor, $note);
+
+            return $terkini;
+        });
+    }
+
+    /**
+     * Kolom penanda waktu yang ikut terisi pada tiap status (docs/05 §5.3).
+     *
+     * @return array<string, mixed>
+     */
+    private function efekSamping(Booking $booking, BookingStatus $target, ?string $note): array
+    {
+        return match ($target) {
+            BookingStatus::Confirmed => ['confirmed_at' => now()],
+
+            // Perkiraan selesai dihitung ULANG dari waktu kendaraan benar-benar
+            // masuk. Nilai yang dipasang saat booking dibuat berangkat dari jam
+            // slot, dan mobil yang masuk pukul 10.15 tidak selesai menurut
+            // jadwal 09:00 (janji yang ditinggalkan F1.4).
+            BookingStatus::InProgress => [
+                'started_at' => now(),
+                'estimated_finish_at' => $this->slots->estimatedFinishFrom(
+                    $this->slots->now(),
+                    $booking->servicePackage->estimated_duration_minutes,
+                ),
+            ],
+
+            BookingStatus::Completed => ['completed_at' => now()],
+
+            BookingStatus::Cancelled => [
+                'cancelled_at' => now(),
+                'cancel_reason' => Str::limit((string) $note, 255, ''),
+            ],
+
+            default => [],
+        };
+    }
+
+    /**
+     * Odometer kendaraan hanya boleh maju. Servis yang diinput belakangan
+     * dengan angka lebih kecil tidak boleh memundurkan catatan kendaraan.
+     */
+    private function perbaruiOdometerKendaraan(Booking $booking): void
+    {
+        $vehicle = $booking->vehicle;
+
+        if ($vehicle->last_odometer !== null && $vehicle->last_odometer >= $booking->odometer) {
+            return;
+        }
+
+        $vehicle->forceFill(['last_odometer' => $booking->odometer])->save();
     }
 
     /**

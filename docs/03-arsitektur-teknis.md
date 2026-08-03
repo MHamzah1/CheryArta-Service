@@ -104,9 +104,14 @@ Meski memakai Inertia, tiga kebutuhan tetap butuh JSON murni. Semuanya berada di
 
 | Method | URI | Guna | Akses |
 |--------|-----|------|-------|
-| GET | `/booking/slots?date=YYYY-MM-DD` | Ketersediaan & sisa kuota tiap slot untuk kalender booking | publik, throttle 60/menit |
+| GET | `/booking/slots?date=YYYY-MM-DD[&sumber=walk_in]` | Ketersediaan & sisa kuota tiap slot untuk kalender booking | publik, throttle 60/menit |
 | GET | `/admin/dashboard/chart?range=30` | Data grafik tren | staf |
 | POST | `/admin/bookings/{booking}/whatsapp/mark-sent` | Menandai draft WA sudah dikirim | staf |
+
+`sumber=walk_in` melewati aturan H-1 sehingga slot **hari ini** ikut tampil, dan **hanya
+dihormati bila pemanggilnya staf yang login** — pengunjung yang mengetiknya di URL tetap
+mendapat aturan web. Keputusannya dihitung di server (`SlotAvailabilityRequest::source()`),
+bukan diambil dari apa yang dikirim peramban (temuan S3).
 
 ## 3.5 Struktur Rute
 

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\InvalidStatusTransitionException;
 use App\Exceptions\MasterDataInUseException;
 use App\Exceptions\SlotUnavailableException;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -58,5 +59,16 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
                 : back()->withInput()->withErrors($errors);
+        });
+
+        // Transisi status yang tidak ada di state machine (docs/05 §5.3).
+        // Sengaja 422 dan bukan 403: yang ditolak adalah perpindahannya, bukan
+        // hak si advisor — ia memang boleh mengubah status booking ini.
+        $exceptions->render(function (InvalidStatusTransitionException $e, Request $request) {
+            $errors = [InvalidStatusTransitionException::FIELD => [$e->getMessage()]];
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
+                : back()->withErrors($errors);
         });
     })->create();

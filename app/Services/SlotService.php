@@ -178,6 +178,24 @@ class SlotService
     }
 
     /**
+     * Perkiraan selesai bila pekerjaan dimulai pada titik waktu tertentu.
+     *
+     * Dipakai saat kendaraan benar-benar masuk (`confirmed → in_progress`):
+     * mobil yang baru mulai dikerjakan pukul 10.15 tidak selesai menurut
+     * jadwal slot 09:00 (docs/05 §5.3).
+     */
+    public function estimatedFinishFrom(CarbonImmutable $start, int $durationMinutes): CarbonImmutable
+    {
+        return $start->setTimezone($this->timezone())->addMinutes($durationMinutes);
+    }
+
+    /** Titik waktu "sekarang" menurut zona bengkel. */
+    public function now(): CarbonImmutable
+    {
+        return CarbonImmutable::now($this->timezone());
+    }
+
+    /**
      * Jumlah booking yang menempati tiap slot pada satu tanggal.
      *
      * Booking `cancelled` dan `no_show` MELEPAS kuotanya — perilaku yang tidak

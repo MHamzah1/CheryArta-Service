@@ -44,8 +44,11 @@ it('mengarahkan tamu ke login saat membuka panel admin', function () {
 });
 
 it('menampilkan panel admin untuk staf', function () {
+    // `/admin` mengalihkan ke daftar booking selama A1 Dashboard ditunda ke
+    // Big Fase 2 (keputusan R8) — layar pertama panel adalah AdminLayout yang
+    // sama, hanya isinya yang berbeda.
     $this->actingAs(serviceAdvisor())
-        ->get('/admin')
+        ->get('/admin/bookings')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('admin/dashboard'));
+        ->assertInertia(fn ($page) => $page->component('admin/bookings/index'));
 });

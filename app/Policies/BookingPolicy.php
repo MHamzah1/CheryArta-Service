@@ -9,19 +9,64 @@ use App\Models\User;
 use Illuminate\Support\Facades\Config;
 
 /**
- * Booking hanya boleh disentuh pemiliknya — staf punya jalurnya sendiri di
- * `/admin` (F1.5), dengan policy yang berbeda aturannya.
+ * Dua audiens dengan aturan yang berbeda dalam satu policy.
  *
- * Controller tetap mengambil datanya lewat relasi
- * (`$user->bookings()->where(...)`), sehingga booking milik orang lain tidak
- * pernah sampai ke policy ini. Policy-nya ada sebagai lapis kedua
- * (.claude/rules/50-keamanan.md).
+ * **Customer** hanya boleh menyentuh bookingnya sendiri, dan hanya selama
+ * masih dalam batas H-1. Controller customer tetap mengambil datanya lewat
+ * relasi (`$user->bookings()->where(...)`), sehingga booking milik orang lain
+ * tidak pernah sampai ke sini; policy adalah lapis keduanya.
+ *
+ * **Staf** melihat seluruh booking — itu memang pekerjaannya (docs/09 §9.3).
+ * Yang tetap dibatasi: penghapusan hanya Super Admin (docs/07 §A14).
+ * Middleware `role` menjaga pintu masuk /admin, tetapi TIDAK menggantikan
+ * policy ini (.claude/rules/50-keamanan.md).
  */
 class BookingPolicy
 {
+    /** Daftar seluruh booking di panel admin. */
+    public function viewAny(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
     public function view(User $user, Booking $booking): bool
     {
-        return $this->miliknya($user, $booking);
+        return $user->isStaff() || $this->miliknya($user, $booking);
+    }
+
+    /** Booking walk-in atas nama pelanggan yang datang langsung (docs/07 §A2). */
+    public function createWalkIn(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
+    /**
+     * Boleh mengubah status. Status TUJUAN mana yang sah ditentukan
+     * App\Enums\BookingStatus, sengaja BUKAN di sini — policy menjawab
+     * "siapa", state machine menjawab "boleh ke mana".
+     *
+     * Pemisahan itu yang membuat percobaan transisi mustahil dijawab 403:
+     * advisornya memang berhak, perpindahannyalah yang tidak ada. Booking yang
+     * sudah berakhir karena itu tetap lolos di sini, lalu ditolak 422 oleh
+     * InvalidStatusTransitionException — dengan pesan yang menyebutkan status
+     * terkininya.
+     */
+    public function updateStatus(User $user, Booking $booking): bool
+    {
+        return $user->isStaff();
+    }
+
+    /**
+     * Penghapusan (soft delete) hanya Super Admin (docs/07 §A14).
+     *
+     * Advisor yang ingin membatalkan booking memakai transisi status
+     * `cancelled` beserta alasannya — jejaknya tetap ada, dan itu memang yang
+     * dibutuhkan bengkel. Menghapus baris dipakai untuk booking uji coba atau
+     * salah input, bukan untuk pembatalan.
+     */
+    public function delete(User $user, Booking $booking): bool
+    {
+        return $user->isSuperAdmin();
     }
 
     /**

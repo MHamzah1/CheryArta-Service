@@ -3,8 +3,8 @@
 Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML tunggal
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
-**Status:** Big Fase 1 · F1.0 ✅ · F1.1 ⚠️ hampir selesai · F1.2 ✅ · F1.3 ✅ ·
-**F1.4 ✅ selesai** — berikutnya **F1.5 Admin Operasional (A2, A3, A6)**.
+**Status:** Big Fase 1 · F1.0 ✅ · F1.1 ⚠️ hampir selesai · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
+**F1.5 ✅ selesai** — berikutnya **F1.6 Landing Page Publik**.
 Satu-satunya pertanyaan yang masih menghambat adalah
 [Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.2.
 Sisa F1.1: proteksi branch `main`, `cloudinary:cek`, dan verifikasi dari komputer kedua —

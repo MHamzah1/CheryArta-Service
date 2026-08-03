@@ -34,15 +34,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BookingSource $source
  * @property int|null $odometer
  * @property string|null $complaint
+ * @property string|null $admin_note
+ * @property int|null $handled_by
  * @property string|null $cancel_reason
  * @property int|null $rescheduled_from_id
  * @property CarbonImmutable|null $estimated_finish_at
  * @property CarbonImmutable|null $confirmed_at
+ * @property CarbonImmutable|null $started_at
+ * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $cancelled_at
  * @property-read CarbonImmutable $booking_datetime
  * @property-read User $user
  * @property-read Vehicle $vehicle
  * @property-read ServicePackage $servicePackage
+ * @property-read User|null $handledBy
  * @property-read Booking|null $rescheduledFrom
  * @property-read \Illuminate\Database\Eloquent\Collection<int, BookingStatusHistory> $statusHistories
  */

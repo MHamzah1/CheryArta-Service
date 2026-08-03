@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BookingStatusController;
 use App\Http\Controllers\Admin\CarModelController;
 use App\Http\Controllers\Admin\CarModelImageController;
 use App\Http\Controllers\Admin\CarModelVariantController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServicePackageController;
+use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
 use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\BookingHistoryController;
 use App\Http\Controllers\Customer\VehicleController;
@@ -75,7 +80,35 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/', fn () => Inertia::render('admin/dashboard'))->name('dashboard');
+        // Dashboard (A1) ditunda utuh ke Big Fase 2 — keputusan R8. `/admin`
+        // mengalihkan ke daftar booking alih-alih menampilkan dashboard
+        // setengah jadi yang nanti disunting ulang.
+        Route::get('/', fn () => redirect()->route('admin.bookings.index'))->name('dashboard');
+
+        // --- A3 Jadwal harian -----------------------------------------------
+        Route::get('jadwal', ScheduleController::class)->name('schedule.index');
+
+        // --- A2 Booking ------------------------------------------------------
+        // `walk-in` didaftarkan SEBELUM `{booking}` agar tidak dikira kode
+        // booking. `{booking}` diikat lewat kode (Booking::getRouteKeyName()).
+        Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/walk-in', [AdminBookingController::class, 'create'])->name('bookings.create');
+        Route::post('bookings', [AdminBookingController::class, 'store'])->name('bookings.store');
+        Route::get('bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
+        Route::put('bookings/{booking}/status', BookingStatusController::class)->name('bookings.status');
+        // Soft delete — ditolak untuk advisor oleh BookingPolicy (docs/07 §A14).
+        Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
+
+        // --- A6 Customer & Kendaraan ----------------------------------------
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+        // Dua aksi berikut khusus Super Admin. Penolakannya datang dari
+        // UserPolicy, bukan dari middleware: sasarannya satu baris tertentu,
+        // dan grup rute tidak bisa menilai itu (docs/09 §9.3).
+        Route::put('customers/{customer}/status-akun', [CustomerController::class, 'toggleActive'])->name('customers.toggle-active');
+        Route::put('customers/{customer}/reset-password', [CustomerController::class, 'resetPassword'])->name('customers.reset-password');
+
+        Route::get('vehicles', [AdminVehicleController::class, 'index'])->name('vehicles.index');
 
         // --- Master data — Super Admin saja (docs/07 §A14) ------------------
         // Advisor ditolak di sini, bukan sekadar tidak melihat menunya.
