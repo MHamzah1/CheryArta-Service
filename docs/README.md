@@ -3,8 +3,10 @@
 Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML tunggal
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
-**Status:** Big Fase 1 · F1.0 selesai · **F1.1 sisi kode selesai** — tersisa penyiapan akun
-(Railway, MySQL, Cloudinary, proteksi branch) yang hanya bisa dikerjakan lewat panel masing-masing;
+**Status:** Big Fase 1 · F1.0 ✅ · F1.1 ⚠️ hampir selesai · **F1.2 ✅ selesai** — berikutnya
+**F1.3 Master Admin: Katalog & Paket Layanan**, yang menunggu jawaban
+[pertanyaan terbuka Q2](#pertanyaan-terbuka).
+Sisa F1.1: proteksi branch `main`, `cloudinary:cek`, dan verifikasi dari komputer kedua —
 daftarnya di [12 §12.8](12-panduan-instalasi-deploy.md#128-daftar-periksa-selesai-f11)
 **Versi:** 2.0 — pengerjaan dibagi menjadi [dua Big Fase](10-roadmap-implementasi.md)
 **Tanggal:** 3 Agustus 2026
@@ -76,6 +78,7 @@ Dibuat oleh `UserSeeder`, password semuanya `password`:
 | 10 | [Roadmap Implementasi](10-roadmap-implementasi.md) | **2 Big Fase**, sub-fase, deliverable, definition of done, risiko |
 | 11 | [Struktur Folder Proyek](11-struktur-folder-proyek.md) | Pohon direktori Laravel & React, konvensi penamaan |
 | 12 | [Panduan Instalasi & Deploy](12-panduan-instalasi-deploy.md) | Railway, database bersama, DBeaver, Cloudinary, aturan main migration |
+| 13 | [Panduan Railway CLI](13-panduan-railway-cli.md) | Perintah CLI disusun per kebutuhan: log, variabel, database, SSH, deploy, dan yang tidak berlaku di proyek ini |
 
 ---
 
