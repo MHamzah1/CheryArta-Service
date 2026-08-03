@@ -44,6 +44,11 @@ class HandleInertiaRequests extends Middleware
 
             'name' => config('app.name'),
 
+            // Asal URL absolut untuk tag Open Graph (docs/06 §6.9). Diambil
+            // dari permintaan yang sedang berjalan, bukan dari window di
+            // peramban — meta tag harus sudah benar sebelum JavaScript jalan.
+            'appUrl' => fn (): string => rtrim(url('/'), '/'),
+
             'auth' => [
                 'user' => $request->user(),
             ],

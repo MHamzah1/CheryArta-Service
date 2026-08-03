@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $message
  * @property bool $is_read
  * @property int|null $read_by
+ * @property string|null $ip_address
  */
 class ContactMessage extends Model
 {

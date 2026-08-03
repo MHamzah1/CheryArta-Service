@@ -116,6 +116,29 @@ class SlotService
     }
 
     /**
+     * Tanggal buka pertama yang boleh dipesan, terhitung dari `earliestDate()`.
+     *
+     * Dipakai kartu ketersediaan di beranda (docs/06 §6.5): "besok" bukan
+     * jawaban yang benar bila besok jatuh pada hari tutup. Pencariannya
+     * dibatasi satu putaran minggu — daftar hari tutup tidak mungkin memuat
+     * seluruh tujuh hari tanpa membuat bengkel tidak pernah buka.
+     */
+    public function nextBookableDate(BookingSource $source = BookingSource::Web): CarbonImmutable
+    {
+        $date = $this->earliestDate($source);
+
+        for ($lompatan = 0; $lompatan < 7; $lompatan++) {
+            if (! $this->isClosedOn($date)) {
+                return $date;
+            }
+
+            $date = $date->addDay();
+        }
+
+        return $date;
+    }
+
+    /**
      * Ketersediaan setiap slot pada satu tanggal.
      *
      * Dihitung lewat SATU kueri beragregasi, bukan satu kueri per slot —

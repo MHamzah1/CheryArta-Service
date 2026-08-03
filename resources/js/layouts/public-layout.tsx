@@ -7,29 +7,30 @@ import { Link, usePage } from '@inertiajs/react';
 import { Clock, Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 
-/*
- * CATATAN FASE 0: tautan navigasi masih memakai path literal karena rutenya
- * baru dibuat di Fase 2 (landing page). Setelah rute bernama tersedia,
- * ganti menjadi route('public.katalog.index') dst.
- * Lihat docs/10-roadmap-implementasi.md.
- */
+/** Navigasi publik. Urutannya juga dipakai footer (kolom "Navigasi"). */
 const NAV = [
-    { title: 'Beranda', href: '/' },
-    { title: 'Katalog', href: '/katalog' },
-    { title: 'Layanan', href: '/layanan' },
-    { title: 'Fasilitas', href: '/fasilitas' },
-    { title: 'Tentang', href: '/tentang' },
-    { title: 'Kontak', href: '/kontak' },
-    { title: 'Cek Servis', href: '/cek-service' },
+    { title: 'Beranda', route: 'home' },
+    { title: 'Katalog', route: 'public.catalog.index' },
+    { title: 'Layanan', route: 'public.services' },
+    { title: 'Fasilitas', route: 'public.facilities' },
+    { title: 'Tentang', route: 'public.about' },
+    { title: 'FAQ', route: 'public.faq' },
+    { title: 'Kontak', route: 'public.contact.show' },
+    { title: 'Cek Servis', route: 'public.tracking' },
 ];
 
 interface Props {
     children: ReactNode;
     /** Header transparan di atas hero, menjadi solid saat digulir. */
     transparentHeader?: boolean;
+    /**
+     * Pesan awal tombol WhatsApp mengambang. Halaman detail model mengisinya
+     * dengan nama modelnya supaya advisor tahu konteksnya tanpa bertanya.
+     */
+    waMessage?: string;
 }
 
-export default function PublicLayout({ children, transparentHeader = false }: Props) {
+export default function PublicLayout({ children, transparentHeader = false, waMessage }: Props) {
     const { auth, company } = usePage<SharedData>().props;
     const [menuTerbuka, setMenuTerbuka] = useState(false);
     const [tergulir, setTergulir] = useState(false);
@@ -54,7 +55,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
             >
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:py-4">
                     <Link
-                        href="/"
+                        href={route('home')}
                         className={cn(
                             'text-xl font-extrabold tracking-tight',
                             headerSolid ? 'text-brand-700' : 'text-white',
@@ -66,8 +67,8 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                     <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
                         {NAV.map((item) => (
                             <Link
-                                key={item.href}
-                                href={item.href}
+                                key={item.route}
+                                href={route(item.route)}
                                 className={cn(
                                     'rounded-btn px-3 py-2 text-sm font-medium transition',
                                     headerSolid
@@ -83,7 +84,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                     <div className="hidden items-center gap-2 lg:flex">
                         {auth.user ? (
                             <Link
-                                href="/dashboard"
+                                href={route('dashboard')}
                                 className="bg-brand-700 rounded-btn hover:bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition"
                             >
                                 Dashboard
@@ -91,7 +92,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                         ) : (
                             <>
                                 <Link
-                                    href="/login"
+                                    href={route('login')}
                                     className={cn(
                                         'rounded-btn px-4 py-2 text-sm font-medium transition',
                                         headerSolid ? 'text-ink-soft hover:text-brand-700' : 'text-white/90 hover:text-white',
@@ -100,7 +101,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                                     Masuk
                                 </Link>
                                 <Link
-                                    href="/register"
+                                    href={route('register')}
                                     className="bg-gold-400 rounded-btn text-ink hover:bg-gold-300 px-4 py-2 text-sm font-semibold transition"
                                 >
                                     Daftar
@@ -128,8 +129,8 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                         <nav aria-label="Navigasi seluler" className="mx-auto max-w-7xl px-4 py-2">
                             {NAV.map((item) => (
                                 <Link
-                                    key={item.href}
-                                    href={item.href}
+                                    key={item.route}
+                                    href={route(item.route)}
                                     onClick={() => setMenuTerbuka(false)}
                                     className="text-ink border-line hover:bg-brand-50 hover:text-brand-700 block border-b py-3 text-base font-medium last:border-0"
                                 >
@@ -139,7 +140,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                             <div className="flex gap-2 py-4">
                                 {auth.user ? (
                                     <Link
-                                        href="/dashboard"
+                                        href={route('dashboard')}
                                         className="bg-brand-700 rounded-btn flex-1 px-4 py-3 text-center text-sm font-semibold text-white"
                                     >
                                         Dashboard
@@ -147,13 +148,13 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                                 ) : (
                                     <>
                                         <Link
-                                            href="/login"
+                                            href={route('login')}
                                             className="border-line rounded-btn text-ink flex-1 border px-4 py-3 text-center text-sm font-medium"
                                         >
                                             Masuk
                                         </Link>
                                         <Link
-                                            href="/register"
+                                            href={route('register')}
                                             className="bg-gold-400 rounded-btn text-ink flex-1 px-4 py-3 text-center text-sm font-semibold"
                                         >
                                             Daftar
@@ -178,9 +179,9 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                     <div>
                         <p className="mb-3 text-sm font-semibold text-white">Navigasi</p>
                         <ul className="space-y-2 text-sm">
-                            {NAV.slice(1, 5).map((item) => (
-                                <li key={item.href}>
-                                    <Link href={item.href} className="transition hover:text-white">
+                            {NAV.slice(1).map((item) => (
+                                <li key={item.route}>
+                                    <Link href={route(item.route)} className="transition hover:text-white">
                                         {item.title}
                                     </Link>
                                 </li>
@@ -228,7 +229,7 @@ export default function PublicLayout({ children, transparentHeader = false }: Pr
                 </div>
             </footer>
 
-            <WhatsAppFloat />
+            <WhatsAppFloat message={waMessage} />
             <FlashToaster />
             <Toaster />
         </div>

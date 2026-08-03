@@ -383,10 +383,45 @@ dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan man
 **Selesai bila:** advisor dapat menjalankan satu hari kerja penuh — menerima booking telepon,
 mengubah status, mencari riwayat unit — tanpa menyentuh database.
 
-## F1.6 — Landing Page Publik  (4 hari)
+## F1.6 — Landing Page Publik  (4 hari) — ✅ SELESAI
 
 Menampilkan data yang sudah dikelola admin di F1.3 (katalog, paket layanan) dan data seeder
 untuk yang belum punya layar admin (fasilitas, FAQ, testimoni — **R4**).
+
+> **Selesai 3 Agustus 2026.** 418 uji Pest hijau — 55 di antaranya baru di
+> `tests/Feature/Public/` (`LandingPageTest`, `CatalogTest`, `ContentPageTest`,
+> `ContactFormTest`, `PublicPrivacyTest`, `SitemapTest`). Pint, PHPStan, ESLint,
+> `tsc --noEmit`, dan `npm run build` bersih. Tidak ada migration baru — seluruh tabelnya
+> (`facilities`, `faqs`, `testimonials`, `contact_messages`) sudah lahir di F1.2 sesuai **R4**.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **JSON-LD `schema.org/AutoRepair` disusun server di `resources/views/app.blade.php`**,
+>    bukan di komponen React. Menyisipkan `<script type="application/ld+json">` dari React
+>    menuntut `dangerouslySetInnerHTML`, yang dilarang keras di proyek ini
+>    ([aturan 20](../.claude/rules/20-frontend-react-inertia.md)). Isinya dibentuk
+>    `App\Support\StructuredData` dari `config/company.php`.
+> 2. **Peta lokasi berupa tautan Google Maps, bukan `iframe`.** Embed pihak ketiga menabrak
+>    kebijakan CSP yang dikerjakan di F2.5, dan di ponsel tautan justru membuka aplikasi peta
+>    yang lebih berguna. URL-nya dari `config('company.social.maps_url')`.
+> 3. **`SlotService::nextBookableDate()` ditambahkan** untuk kartu ketersediaan di hero.
+>    "Besok" bukan jawaban yang benar bila besok jatuh pada hari tutup, dan menghitungnya di
+>    React akan menyalin aturan H-1 ke tempat kedua (temuan B2).
+> 4. **Shared prop `appUrl` ditambahkan** di `HandleInertiaRequests`. Tag `og:url` dan
+>    `<link rel="canonical">` butuh URL absolut yang sudah benar sebelum JavaScript jalan,
+>    jadi asalnya diambil dari permintaan yang sedang berjalan — bukan dari `window`.
+> 5. **Katalog dipaginasi 12 per halaman** meski isinya masih sedikit. Aturan
+>    [30-database](../.claude/rules/30-database.md) melarang daftar tanpa paginasi, dan
+>    memasangnya sekarang lebih murah daripada menambahkannya setelah katalog membesar.
+> 6. **FAQ accordion ditulis tangan**, tidak memakai `@radix-ui/react-accordion` (paketnya
+>    memang belum terpasang). Pasangan `aria-expanded` + `aria-controls` sudah cukup; tidak
+>    ada penguncian fokus yang menuntut Radix di sini.
+> 7. **Halaman `/cek-service` ikut memakai `<Seo>`** meski lahir di F1.4 — ia ada di
+>    `sitemap.xml`, jadi meninggalkannya tanpa deskripsi dan Open Graph tidak konsisten.
+>
+> **Sisa yang belum terbukti:** butir **1.6.6** (uji responsif 360/768/1280 + pemeriksaan
+> kontras) dikerjakan lewat kelas Tailwind mobile-first dan token warna yang kontrasnya sudah
+> ditetapkan di [06 §6.2](06-desain-ui-ux.md), tetapi **belum ada pembuktian manual di peramban
+> sungguhan**. Itu tetap harus dijalankan sebelum F1.7 ditutup.
 
 | # | Pekerjaan |
 |---|-----------|

@@ -15,6 +15,11 @@ use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\BookingHistoryController;
 use App\Http\Controllers\Customer\VehicleController;
 use App\Http\Controllers\Public\BookingTrackingController;
+use App\Http\Controllers\Public\CatalogController;
+use App\Http\Controllers\Public\ContactController;
+use App\Http\Controllers\Public\ContentPageController;
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\SitemapController;
 use App\Http\Controllers\Public\SlotAvailabilityController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -28,12 +33,30 @@ use Inertia\Inertia;
 | URL berbahasa Indonesia (/kendaraan, /jadwal, /riwayat) agar sejalan dengan
 | antarmukanya; nama rutenya tetap Inggris (customer.vehicles.index).
 |
-| Rute booking (F1.4) dan katalog publik (F1.6) menyusul.
-|
 */
 
 // --- Publik -----------------------------------------------------------
-Route::get('/', fn () => Inertia::render('welcome'))->name('home');
+Route::get('/', HomeController::class)->name('home');
+
+// Katalog. `{slug}` diikat manual di controller agar scope `active()` ikut ke
+// dalam pencariannya — model nonaktif berujung 404, bukan halaman yang
+// terlanjur tersusun lalu diperiksa belakangan.
+Route::get('katalog', [CatalogController::class, 'index'])->name('public.catalog.index');
+Route::get('katalog/{slug}', [CatalogController::class, 'show'])->name('public.catalog.show');
+
+Route::get('layanan', [ContentPageController::class, 'services'])->name('public.services');
+Route::get('fasilitas', [ContentPageController::class, 'facilities'])->name('public.facilities');
+Route::get('tentang', [ContentPageController::class, 'about'])->name('public.about');
+Route::get('faq', [ContentPageController::class, 'faq'])->name('public.faq');
+
+// Form kontak: 5 kirim per jam per IP (docs/09 §9.6). Halaman GET-nya tidak
+// dibatasi — yang perlu direm adalah pengirimannya, bukan membacanya.
+Route::get('kontak', [ContactController::class, 'show'])->name('public.contact.show');
+Route::post('kontak', [ContactController::class, 'store'])
+    ->middleware('throttle:5,60')
+    ->name('public.contact.store');
+
+Route::get('sitemap.xml', SitemapController::class)->name('public.sitemap');
 
 // Ketersediaan slot: satu-satunya endpoint JSON di alur booking (docs/03 §3.4).
 // Didaftarkan SEBELUM `booking/{booking}` agar "slots" tidak dikira kode booking.

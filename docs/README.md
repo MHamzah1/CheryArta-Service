@@ -4,7 +4,7 @@ Dokumen perancangan untuk membangun ulang website Chery Arta dari prototipe HTML
 berbasis Firebase menjadi aplikasi web ber-arsitektur **Laravel + Inertia.js + React + MySQL**.
 
 **Status:** Big Fase 1 · F1.0 ✅ · F1.1 ⚠️ hampir selesai · F1.2 ✅ · F1.3 ✅ · F1.4 ✅ ·
-**F1.5 ✅ selesai** — berikutnya **F1.6 Landing Page Publik**.
+F1.5 ✅ · **F1.6 ✅ selesai** — berikutnya **F1.7 Stabilisasi Big Fase 1**.
 Satu-satunya pertanyaan yang masih menghambat adalah
 [Q4](#pertanyaan-terbuka), dan itu pun baru dibutuhkan penuh di F2.2.
 Sisa F1.1: proteksi branch `main`, `cloudinary:cek`, dan verifikasi dari komputer kedua —
@@ -121,6 +121,6 @@ Hal-hal berikut belum punya jawaban dan **perlu keputusan sebelum F1.4 (Booking)
 | # | Pertanyaan | Dampak bila salah |
 |---|------------|-------------------|
 | ~~Q1~~ | ~~Slot 14:00 di hari **Sabtu** bertabrakan dengan jam tutup Sabtu (14:00).~~ **✅ Diputuskan 3 Agustus 2026: slot Sabtu berhenti di 13:00**, lewat `slots_by_weekday` di `config/booking.php`. Detail: [05-alur-bisnis.md](05-alur-bisnis.md#catatan-konflik-jam-sabtu) | — |
-| Q2 | ~~Harga paket layanan berbayar (kategori *Other*) — siapa yang menentukan?~~ **✅ Terjawab 3 Agustus 2026 oleh F1.3: Super Admin mengisinya sendiri lewat `/admin/paket-layanan`.** Yang **masih terbuka**: apakah harga itu ditampilkan publik di landing page | Menentukan apakah section "Harga Layanan" muncul di landing page. **Dibutuhkan sebelum F1.6.** |
+| ~~Q2~~ | ~~Harga paket layanan berbayar (kategori *Other*) — siapa yang menentukan, dan apakah ditampilkan publik?~~ **✅ Tuntas 3 Agustus 2026.** Bagian pertama dijawab F1.3: Super Admin mengisinya lewat `/admin/paket-layanan`. Bagian kedua dijawab F1.6 mengikuti wireframe [06 §6.5](06-desain-ui-ux.md#beranda-mobile-360px--desktop) yang memang menuliskan "kartu paket + durasi + harga": **harga tampil publik**, paket gratis tertulis "Gratis" (`formatHargaPaket`). Perhitungannya tetap di server. | — |
 | ~~Q3~~ | ~~Apakah customer boleh booking untuk kendaraan **non-Chery**?~~ **✅ Terjawab 3 Agustus 2026 oleh F1.4: boleh.** Booking memvalidasi kepemilikan kendaraan, bukan asal modelnya; `vehicles.car_model_id` tetap nullable dan nama model manual dipakai apa adanya. | — |
 | Q4 | Berapa nomor WA bengkel yang dipakai untuk klik-to-chat, dan apakah satu nomor dipakai bersama semua advisor? | Menentukan apakah nomor pengirim disimpan per user atau per perusahaan. Saat ini dirancang **per perusahaan** (satu nomor resmi). |

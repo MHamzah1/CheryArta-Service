@@ -1,2 +1,13 @@
 User-agent: *
-Disallow:
+
+# Panel internal dan halaman milik pengguna yang sudah login tidak perlu
+# diindeks. Ini BUKAN pengaman — otorisasinya tetap dikerjakan server
+# (docs/09-keamanan-hak-akses.md).
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /booking
+Disallow: /riwayat
+Disallow: /kendaraan
+Disallow: /settings
+
+Sitemap: /sitemap.xml

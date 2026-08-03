@@ -61,6 +61,8 @@ export interface FlashMessages {
 
 export interface SharedData {
     name: string;
+    /** Asal URL absolut (tanpa garis miring akhir), untuk tag Open Graph. */
+    appUrl: string;
     auth: Auth;
     company: Company;
     flash: FlashMessages;
@@ -301,6 +303,119 @@ export interface PublicTracking {
     booking_time: string;
     status: string;
     estimated_finish_at: string | null;
+}
+
+/* ---------------------------------------------------------------------------
+ * Halaman publik — F1.6 (docs/06 §6.4)
+ *
+ * Seluruh bentuk di bawah disusun App\Support\PublicContent. Tidak satu pun
+ * memuat nama lengkap, telepon, email, atau plat pelanggan: nama pada
+ * testimoni adalah nama yang diketik admin, bukan `users.name` (docs/09 §9.4).
+ * ------------------------------------------------------------------------- */
+
+export interface PublicServicePackage {
+    id: number;
+    name: string;
+    category_label: string;
+    description: string | null;
+    estimated_duration_minutes: number;
+    price: string | number;
+    is_free: boolean;
+}
+
+export interface ServicePackageGroup {
+    label: string;
+    packages: PublicServicePackage[];
+}
+
+/** Kartu katalog di beranda dan di `/katalog`. */
+export interface CarModelCard {
+    name: string;
+    slug: string;
+    category: string;
+    category_label: string;
+    fuel_type: string;
+    fuel_type_label: string;
+    price_start: string | number | null;
+    short_description: string;
+    thumbnail_url: string | null;
+    thumbnail_alt: string | null;
+}
+
+/** Model katalog versi publik — tanpa kolom pengelolaan (is_active, sort_order). */
+export interface PublicCarModel {
+    name: string;
+    slug: string;
+    category_label: string;
+    fuel_type_label: string;
+    price_start: string | number | null;
+    short_description: string;
+    description: string | null;
+    specs: Record<string, string> | null;
+    brochure_url: string | null;
+}
+
+export interface PublicCarModelImage {
+    id: number;
+    thumbnail_url: string;
+    url: string;
+    alt: string;
+    is_primary: boolean;
+}
+
+export interface PublicCarModelVariant {
+    id: number;
+    name: string;
+    price: string | number | null;
+    specs: Record<string, string> | null;
+}
+
+export interface CatalogFilters {
+    kategori: string | null;
+    bahan_bakar: string | null;
+}
+
+export interface PublicFacility {
+    id: number;
+    title: string;
+    description: string;
+    thumbnail_url: string | null;
+    image_url: string | null;
+}
+
+export interface PublicFaq {
+    id: number;
+    question: string;
+    answer: string;
+    category: string | null;
+}
+
+export interface FaqGroup {
+    label: string;
+    faqs: PublicFaq[];
+}
+
+export interface PublicTestimonial {
+    id: number;
+    customer_name: string;
+    car_model: string | null;
+    rating: number;
+    content: string;
+}
+
+/**
+ * Ketersediaan hari buka terdekat untuk kartu di hero. Tanggalnya dihitung
+ * SlotService — jangan pernah menyimpulkan "besok" di React (temuan B2).
+ */
+export interface SlotPreview {
+    date: string;
+    slots: SlotAvailability[];
+}
+
+/** Keunggulan dari config/company.php; `icon` dipetakan di lib/icon-map.ts. */
+export interface CompanyAdvantage {
+    icon: string;
+    title: string;
 }
 
 /* ---------------------------------------------------------------------------

@@ -13,7 +13,10 @@ declare global {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    // Pemisah "|" mengikuti pola judul di docs/06 §6.9
+    // ("Tiggo 8 Pro — Katalog | Chery Arta"), dan membuat <title> sama persis
+    // dengan og:title yang disusun components/seo.tsx.
+    title: (title) => `${title} | ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);

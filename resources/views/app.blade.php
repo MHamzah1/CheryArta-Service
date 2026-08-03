@@ -9,6 +9,15 @@
         {{-- Font Inter di-self-host lewat @fontsource (lihat resources/css/app.css).
              Tidak ada permintaan ke host luar — sesuai kebijakan CSP docs/09 §9.5. --}}
 
+        {{-- Data terstruktur schema.org/AutoRepair untuk beranda (docs/06 §6.9).
+             Disusun di server, bukan di React: menyuntikkan <script> dari komponen
+             menuntut dangerouslySetInnerHTML yang dilarang di proyek ini. --}}
+        @if (($page['component'] ?? null) === 'welcome')
+            <script type="application/ld+json">
+                {!! json_encode(App\Support\StructuredData::autoRepair(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
+            </script>
+        @endif
+
         @routes
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

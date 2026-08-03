@@ -1,3 +1,4 @@
+import Seo from '@/components/seo';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import PublicLayout from '@/layouts/public-layout';
 import { formatJadwal, formatJamIso } from '@/lib/format';
 import { type PublicTracking } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { LogIn, SearchX } from 'lucide-react';
 import { useState, type FormEventHandler } from 'react';
 
@@ -33,7 +34,10 @@ export default function CekService({ kode, booking, sudahDicari }: Props) {
 
     return (
         <PublicLayout>
-            <Head title="Cek Status Servis" />
+            <Seo
+                title="Cek Status Servis"
+                description="Lacak status servis kendaraan Anda cukup dengan kode booking — tanpa perlu masuk ke akun."
+            />
 
             <section className="mx-auto w-full max-w-2xl px-4 py-16 md:py-24">
                 <h1 className="text-2xl font-bold md:text-3xl">Cek Status Servis</h1>
