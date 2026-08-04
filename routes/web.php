@@ -75,7 +75,12 @@ Route::get('cek-service', BookingTrackingController::class)
     ->name('public.tracking');
 
 // --- Customer ---------------------------------------------------------
-Route::middleware(['auth'])->group(function () {
+// `role:customer` menjaga grup ini sejajar dengan penjagaan grup admin di
+// bawah (roadmap 2.2.5). Sebelumnya hanya `auth`, sehingga staf yang login
+// sah membuka layar pelanggan — dan justru ke sanalah mereka diantar setelah
+// masuk. Jalur staf untuk memesankan servis adalah walk-in di
+// `admin.bookings.create`, bukan form customer ini.
+Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
 
     Route::name('customer.')->group(function () {

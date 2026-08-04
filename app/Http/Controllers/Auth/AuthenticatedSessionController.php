@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
+use App\Support\HomeRoute;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +46,11 @@ class AuthenticatedSessionController extends Controller
             $user->forceFill(['last_login_at' => now()])->save();
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Staf diantar ke panelnya, customer ke layarnya sendiri (roadmap
+        // 2.2.5). `intended()` tetap dipakai supaya tautan dalam yang memicu
+        // login tidak hilang — tujuan per peran hanya jadi bawaan bila tidak
+        // ada tujuan tersimpan.
+        return redirect()->intended(HomeRoute::for($user));
     }
 
     /**
