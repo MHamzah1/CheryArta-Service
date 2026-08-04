@@ -43,7 +43,7 @@ return [
     | Format ternormalisasi tanpa tanda baca: 62xxxxxxxxxx
     | Lihat pertanyaan terbuka Q4 di docs/README.md.
     */
-    'wa_number' => env('COMPANY_WA_NUMBER', '6289540454690'),
+    'wa_number' => env('COMPANY_WA_NUMBER', '6282123872515'),
 
     /*
     | Teks pesan WhatsApp klik-to-chat, berkunci status booking.

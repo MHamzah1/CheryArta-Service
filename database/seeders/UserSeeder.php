@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@cheryarta.test'],
             [
                 'name' => 'Super Admin',
-                'phone_wa' => '6289540454690',
+                'phone_wa' => '6282123872515',
                 'password' => Hash::make('password'),
                 'role' => UserRole::SuperAdmin,
                 'is_active' => true,
