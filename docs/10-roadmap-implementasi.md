@@ -513,7 +513,7 @@ menunggunya. Keduanya boleh menyusul.
 
 | Sub-fase | Isi | Hari |
 |----------|-----|-----:|
-| F2.1 | Dashboard & Laporan (A1, A9) | 3 |
+| F2.1 | Dashboard & Laporan (A1, A9) — ✅ selesai | 3 |
 | F2.2 | Konten, Pengguna & Audit (A10, A11, A12, A13, A14) | 3 |
 | F2.3 | Notifikasi WhatsApp penuh (A7) | 2 |
 | F2.4 | Invoice (A8) | 3 |
@@ -523,15 +523,42 @@ Satu ketergantungan yang harus dijaga: **F2.1 dashboard menampilkan hitungan dra
 padahal tabelnya baru lahir di F2.3. Kartu itu karena itu dibangun di F2.3.5, bukan di F2.1 —
 dashboard tidak boleh menampilkan "0 draft" untuk tabel yang belum ada.
 
-## F2.1 — Dashboard & Laporan  (3 hari)
+## F2.1 — Dashboard & Laporan  (3 hari) — ✅ SELESAI
 
 | # | Pekerjaan |
 |---|-----------|
 | 2.1.1 | **A1** Dashboard: KPI, grafik tren 30 hari (Recharts), okupansi slot hari ini, tabel booking hari ini, peringatan calon `no_show` |
 | 2.1.2 | A1 aksi cepat (Konfirmasi · Mulai · Selesai) lewat Inertia partial reload |
 | 2.1.3 | `/admin` dikembalikan ke dashboard, redirect F1.5.1 dicabut |
-| 2.1.4 | **A9** Laporan: rekap booking, okupansi, customer baru; pendapatan **SA saja** |
-| 2.1.5 | A9 Export Excel (`maatwebsite/excel`, mengikuti filter aktif) + Salin untuk Spreadsheet (TSV) |
+| 2.1.4 | **A9** Laporan: rekap booking, okupansi, customer baru (pendapatan menyusul di **2.4.7**) |
+| 2.1.5 | A9 export mengikuti filter aktif: unduh CSV dibuat server + Salin untuk Spreadsheet (TSV) |
+
+> **Selesai 4 Agustus 2026.** 475 uji Pest hijau — 60 di antaranya menyentuh F2.1
+> (`DashboardTest`, `ReportTest`, `BookingExportTest`, `AdminAccessTest`). Pint, PHPStan,
+> ESLint, `tsc --noEmit`, dan `npm run build` bersih. Tidak ada migration baru: kedua index
+> yang dibutuhkan agregasi — `bookings(status, booking_date)` dan
+> `(booking_date, booking_time)` — sudah ada sejak `2026_08_03_100010`.
+> Rancangannya di [`docs/prds/prd-dashboard-laporan.md`](prds/prd-dashboard-laporan.md).
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **Export menghasilkan CSV, bukan `.xlsx`; `maatwebsite/excel` tidak dipasang.** Paket itu
+>    menuntut PhpSpreadsheet beserta ekstensi PHP `zip`, yang ketersediaannya di runtime
+>    Railway belum terbukti — dan `composer install` yang gagal menjatuhkan seluruh deploy,
+>    bukan hanya export. CSV ber-BOM UTF-8 dibuka Excel secara langsung tanpa dependensi baru.
+>    Ini jalur cadangan yang sudah disepakati di PRD (Pertanyaan Terbuka #1).
+> 2. **Laporan Pendapatan dipisahkan keluar** menjadi butir **2.4.7**; tabel `invoices` baru
+>    lahir di F2.4.1. Tab-nya **tidak dirender**, bukan ditampilkan lalu dinonaktifkan.
+> 3. **`app/Support/ReportPeriod.php` ditambahkan** di luar daftar service semula. Definisi
+>    "30 hari" dan "bulan lalu" harus hidup di satu tempat, kalau tidak angkanya tertulis di
+>    service dan di label antarmuka sekaligus — persis pola cacat B2 sistem lama.
+> 4. **Recharts di-*code-split*** ke chunk `booking-trend-chart-*.js`; bundel `app.js` tidak
+>    memuatnya, sehingga halaman publik tidak ikut menanggung ±100 KB itu.
+>
+> **Utang yang tercatat, bukan bagian F2.1:** redirect setelah login masih mengarah ke
+> `/dashboard` milik customer tanpa memandang role, dan grup rute customer belum dijaga
+> `role:customer` — akibatnya staf yang login mendarat di layar customer. Keduanya cacat
+> warisan F1.2, di luar lingkup PRD ini — **diusulkan masuk F2.2**, keputusannya diambil di
+> sesi grill F2.2.
 
 ## F2.2 — Konten, Pengguna & Audit  (3 hari)
 
@@ -573,6 +600,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.4.4 | Halaman invoice untuk customer + unduh PDF |
 | 2.4.5 | Uji: total dihitung server, invoice `issued` tidak bisa disunting, advisor tidak bisa `void` |
 | 2.4.6 | **A14** baris invoice ditambahkan ke `AccessMatrixTest` (F2.2.7); total nilai invoice di detail customer (A6) yang tertunda sejak F1.5 ikut dilengkapi |
+| 2.4.7 | **A9** laporan **Pendapatan** (total invoice `issued`/`paid` per periode, **SA saja**) ditambahkan sebagai tab keempat di `/admin/laporan` — ditunda ke sini dari F2.1.4 karena tabel `invoices` baru lahir di 2.4.1 |
 
 ## F2.5 — Pengerasan & Go-Live  (5 hari)
 
@@ -607,14 +635,14 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | **1** | F1.6 — Landing page publik ✅ | 4 | 21 |
 | **1** | ~~F1.7 — Hak akses & pengguna internal~~ — dicabut (**R9**) | — | — |
 | **1** | ~~F1.8 — Stabilisasi~~ — dicabut, isinya ke DoD & F2.5 | — | — |
-| **2** | F2.1 — Dashboard & laporan (A1, A9) | 3 | 24 |
+| **2** | F2.1 — Dashboard & laporan (A1, A9) ✅ | 3 | 24 |
 | **2** | F2.2 — Konten, pengguna, audit (A10, A11, A12, A13, A14) | 3 | 27 |
 | **2** | F2.3 — WhatsApp penuh (A7) | 2 | 29 |
 | **2** | F2.4 — Invoice (A8) | 3 | 32 |
 | **2** | F2.5 — Pengerasan & go-live | 5 | **37** |
 
-**Big Fase 1 sudah selesai di angka 21 hari.** Dengan F1.7 dan F1.8 dicabut, tidak ada sub-fase
-Big Fase 1 yang tersisa — pekerjaan berikutnya adalah **F2.1 Dashboard**. Total ≈ 7,5 minggu
+**Big Fase 1 sudah selesai di angka 21 hari**, dan **F2.1 ditutup di angka 24**. Pekerjaan
+berikutnya adalah **F2.2 Konten, Pengguna & Audit**. Total ≈ 7,5 minggu
 untuk satu pengembang. Bila dikerjakan dua orang, F1.6 dapat berjalan paralel dengan F1.4–F1.5
 sesudah F1.3 selesai.
 

@@ -26,10 +26,14 @@ akun staf hanya lahir dari `UserSeeder`; menambah advisor sungguhan berarti memb
 atau DBeaver. Itu diterima selama sistemnya dipakai developer saja — konsekuensinya adalah
 matriks hak akses teruji terhadap akun contoh, bukan terhadap orang sungguhan.
 
-## A1 — Dashboard  `/admin`  (SA, ADV) — ⏳ Big Fase 2
+## A1 — Dashboard  `/admin`  (SA, ADV) — ✅ F2.1
 
-> Selama Big Fase 1, `/admin` **mengalihkan ke `/admin/bookings`**. Dashboard tidak dibuat
-> setengah jadi lalu disunting ulang.
+> Selama Big Fase 1, `/admin` **mengalihkan ke `/admin/bookings`** (**R8**). Redirect itu
+> dicabut di F2.1.3; `/admin` kini merender dashboard.
+>
+> Satu kartu masih menyusul: **hitungan draft WhatsApp belum dikirim**, karena tabel
+> `whatsapp_messages` baru lahir di F2.3.1. Kartunya dibangun di F2.3.5 — dashboard tidak
+> menampilkan "0 draft" untuk tabel yang belum ada.
 
 **Tujuan:** menjawab "apa yang harus dikerjakan hari ini" dalam satu layar.
 
@@ -146,19 +150,34 @@ teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-what
 Aturan: invoice `issued` tidak bisa disunting; hanya SA yang boleh mem-`void`. Seluruh perhitungan
 dilakukan di server ([05 §5.6](05-alur-bisnis.md#56-alur-estimasi-biaya--invoice)).
 
-## A9 — Laporan & Export  `/admin/laporan`  (SA, ADV melihat; export keduanya) — ⏳ Big Fase 2
+## A9 — Laporan & Export  `/admin/laporan`  (SA, ADV melihat; export keduanya) — ✅ F2.1
 
-| Laporan | Isi |
-|---------|-----|
-| Rekap booking | Per periode: total, per status, per paket, per model mobil |
-| Okupansi | Rata-rata pemakaian slot per hari & per jam — menunjukkan jam sibuk |
-| Pendapatan | Total invoice `issued`/`paid` per periode (SA saja) |
-| Customer baru | Jumlah registrasi per periode |
+Satu rute dengan tab, berbagi satu pemilih periode (7 hari · 30 hari · bulan ini · bulan lalu ·
+rentang kustom; bawaan 30 hari, batas 1 tahun dari `config('booking.reports')`).
+
+| Laporan | Isi | Kapan |
+|---------|-----|-------|
+| Rekap booking | Per periode: total, per status, per paket, per model mobil | ✅ F2.1 |
+| Okupansi | Rata-rata pemakaian slot per hari & per jam — menunjukkan jam sibuk | ✅ F2.1 |
+| Customer baru | Jumlah registrasi per periode | ✅ F2.1 |
+| Pendapatan | Total invoice `issued`/`paid` per periode (SA saja) | ⏳ **F2.4.7** |
+
+> **Kenapa Pendapatan menyusul.** Sumbernya tabel `invoices`, yang baru lahir di F2.4.1.
+> Tiga laporan lain tidak bergantung padanya, jadi A9 dibangun tanpa Pendapatan dan tab-nya
+> **tidak dirender sama sekali** — bukan ditampilkan lalu dinonaktifkan, karena tab mati
+> membuat orang menyangka fiturnya rusak.
 
 Export mempertahankan kedua fitur sistem lama:
-- **Export Excel** — `.xlsx` dibuat di server (`maatwebsite/excel`), mengikuti filter yang aktif.
+- **Unduh CSV** — dibuat di server, dialirkan baris demi baris, mengikuti filter yang aktif.
 - **Salin untuk Spreadsheet** — menyalin TSV ke clipboard agar bisa ditempel ke Google Sheets,
   sama seperti perilaku lama.
+
+> **Kenapa CSV, bukan `.xlsx`.** Rencana semula memakai `maatwebsite/excel`, yang menuntut
+> PhpSpreadsheet beserta ekstensi PHP `zip`. Ketersediaan ekstensi itu di runtime Railway
+> belum terbukti, dan `composer install` yang gagal menjatuhkan **seluruh deploy**, bukan
+> hanya fitur export. CSV ber-BOM UTF-8 dibuka Excel secara langsung — termasuk nama beraksen —
+> tanpa satu pun dependensi baru. Bila `.xlsx` sungguhan kelak dibutuhkan, yang berubah hanya
+> `BookingExportController`.
 
 Kolom export sama dengan sistem lama: Date, Time, Name, Model, Plat Nomor, Service, Keluhan,
 Phone, Status — ditambah Kode Booking dan Advisor.

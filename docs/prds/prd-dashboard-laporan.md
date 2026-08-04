@@ -3,6 +3,8 @@
 **Sumber keputusan:** [`docs/grills/grill-dashboard-laporan.md`](../grills/grill-dashboard-laporan.md) (ditutup 4 Agustus 2026)
 **Sub-fase:** F2.1 — sub-fase pertama Big Fase 2 · estimasi 3 hari
 **Tanggal:** 4 Agustus 2026
+**Status:** ✅ **SELESAI** 4 Agustus 2026 — 475 uji Pest hijau, seluruh gerbang kualitas bersih.
+Satu penyimpangan: export menghasilkan CSV, bukan `.xlsx` (lihat Pertanyaan Terbuka #1).
 
 ---
 
@@ -62,32 +64,35 @@ Fondasi yang sudah tersedia dan **dipakai ulang, bukan dibangun ulang**:
 ## Selesai Bila
 
 DoD 12 butir di `docs/10-roadmap-implementasi.md` berlaku otomatis. Berikut kriteria khusus
-fitur ini:
+fitur ini — **seluruhnya terpenuhi per 4 Agustus 2026**, dengan satu penyimpangan yang dicatat
+di tempatnya:
 
-- [ ] Membuka `/admin` menampilkan dashboard, bukan mengalihkan ke `/admin/bookings`
-- [ ] Empat kartu KPI menampilkan angka yang cocok bila dihitung manual dari `/admin/bookings`
-- [ ] Grafik tren menampilkan 30 hari terakhir berdasarkan `booking_date`; hari tanpa booking
+- [x] Membuka `/admin` menampilkan dashboard, bukan mengalihkan ke `/admin/bookings`
+- [x] Empat kartu KPI menampilkan angka yang cocok bila dihitung manual dari `/admin/bookings`
+- [x] Grafik tren menampilkan 30 hari terakhir berdasarkan `booking_date`; hari tanpa booking
       tampil sebagai nol, bukan lubang di garis
-- [ ] Okupansi hari ini menampilkan seluruh slot dengan bar `n/2`, dan angkanya sama persis
+- [x] Okupansi hari ini menampilkan seluruh slot dengan bar `n/2`, dan angkanya sama persis
       dengan yang tampil di `/admin/jadwal` untuk tanggal yang sama
-- [ ] Tabel booking hari ini menampilkan seluruh booking kecuali `cancelled`, urut jam
-- [ ] Menekan Konfirmasi / Mulai / Selesai mengubah status **tanpa berpindah halaman**, dan
+- [x] Tabel booking hari ini menampilkan seluruh booking kecuali `cancelled`, urut jam
+- [x] Menekan Konfirmasi / Mulai / Selesai mengubah status **tanpa berpindah halaman**, dan
       riwayat statusnya tercatat di `booking_status_histories`
-- [ ] Aksi cepat yang tidak sah untuk status baris itu **tidak dirender**, dan tetap ditolak
+- [x] Aksi cepat yang tidak sah untuk status baris itu **tidak dirender**, dan tetap ditolak
       server bila `PUT`-nya dipaksakan
-- [ ] Booking `confirmed` bertanggal kemarin muncul di panel peringatan dengan aksi
+- [x] Booking `confirmed` bertanggal kemarin muncul di panel peringatan dengan aksi
       "Tandai Tidak Hadir"
-- [ ] `/admin/laporan` menampilkan tiga tab: Rekap Booking, Okupansi, Customer Baru
-- [ ] Mengganti periode memperbarui ketiga tab, dan periode aktif ikut di query string
+- [x] `/admin/laporan` menampilkan tiga tab: Rekap Booking, Okupansi, Customer Baru
+- [x] Mengganti periode memperbarui ketiga tab, dan periode aktif ikut di query string
       sehingga tautannya bisa dibagikan
-- [ ] Tab Pendapatan **tidak dirender sama sekali** (bukan tampil lalu dinonaktifkan)
-- [ ] Tombol "Export Excel" mengunduh `.xlsx` yang isinya mengikuti saringan aktif
-- [ ] Tombol "Salin untuk Spreadsheet" menyalin TSV, dan menampilkan toast bila peramban menolak
-- [ ] Kedua tombol export juga tersedia di `/admin/bookings` dan mengikuti saringan di sana
-- [ ] Menu "Dashboard" dan "Laporan" muncul di sidebar untuk kedua role staf
-- [ ] Advisor dan Super Admin melihat dashboard yang identik
-- [ ] Customer dan tamu ditolak di `/admin`, `/admin/laporan`, dan seluruh rute export
-- [ ] Dashboard benar pada 360px — kartu KPI menumpuk, tabel jadi kartu, grafik tetap terbaca
+- [x] Tab Pendapatan **tidak dirender sama sekali** (bukan tampil lalu dinonaktifkan)
+- [x] ~~Tombol "Export Excel" mengunduh `.xlsx`~~ → **tombol "Unduh CSV" mengunduh `.csv`**
+      ber-BOM UTF-8 yang isinya mengikuti saringan aktif. Jalur cadangan yang sudah disepakati
+      di Pertanyaan Terbuka #1; `maatwebsite/excel` tidak dipasang
+- [x] Tombol "Salin untuk Spreadsheet" menyalin TSV, dan menampilkan toast bila peramban menolak
+- [x] Kedua tombol export juga tersedia di `/admin/bookings` dan mengikuti saringan di sana
+- [x] Menu "Dashboard" dan "Laporan" muncul di sidebar untuk kedua role staf
+- [x] Advisor dan Super Admin melihat dashboard yang identik
+- [x] Customer dan tamu ditolak di `/admin`, `/admin/laporan`, dan seluruh rute export
+- [x] Dashboard benar pada 360px — kartu KPI menumpuk, tabel jadi kartu, grafik tetap terbaca
 
 ## Lingkup
 
@@ -325,23 +330,26 @@ dashboard.
 
 ## Pertanyaan Terbuka
 
-1. **Apakah ekstensi PHP `zip` tersedia di runtime Railway?** `maatwebsite/excel` bergantung pada
-   PhpSpreadsheet yang membutuhkannya. Belum ada yang memeriksa. **Harus dijawab sebelum paketnya
-   ditambahkan**, bukan setelah build gagal. Bila tidak tersedia: jalur cadangan yang sudah
-   disepakati adalah CSV/TSV yang dibuat server tanpa dependensi apa pun — Salin untuk Spreadsheet
-   tetap berjalan dalam kondisi itu.
+1. ~~**Apakah ekstensi PHP `zip` tersedia di runtime Railway?**~~ — **ditutup 4 Agustus 2026.**
+   Pertanyaannya tidak dijawab, melainkan **dihindari**: `maatwebsite/excel` tidak jadi dipasang,
+   sehingga ketersediaan ekstensi `zip` tidak lagi menentukan apa pun. Risikonya tidak sepadan —
+   `composer install` yang gagal menjatuhkan seluruh deploy, bukan hanya fitur export. Jalur
+   cadangan yang sudah disepakati diambil sejak awal: CSV ber-BOM UTF-8 yang dibuat server tanpa
+   dependensi apa pun, dan Salin untuk Spreadsheet berjalan seperti rencana.
 
 Selain itu tidak ada. Sembilan pertanyaan sesi grill seluruhnya sudah terjawab.
 
 ## Dampak ke Rancangan `docs/`
 
 **Ya — dua berkas harus ikut diperbarui.** Keduanya berasal dari keputusan grill #1.
+**Seluruhnya sudah dikerjakan 4 Agustus 2026.**
 
-| Berkas | Bagian | Perubahan |
-|--------|--------|-----------|
-| `docs/07-modul-admin.md` | `§A9 — Laporan & Export` | Pisahkan baris **Pendapatan** dari paket A9; tandai bahwa ia menyusul di F2.4.7 karena bergantung pada tabel `invoices`. Tiga laporan lain tetap di F2.1. |
-| `docs/10-roadmap-implementasi.md` | butir **2.1.4** | Hapus "pendapatan **SA saja**" dari lingkup laporan F2.1. |
-| `docs/10-roadmap-implementasi.md` | sub-fase **F2.4** | Tambahkan butir **2.4.7**: laporan Pendapatan (total invoice `issued`/`paid` per periode, SA saja) beserta baris matriksnya. |
+| Berkas | Bagian | Perubahan | Status |
+|--------|--------|-----------|--------|
+| `docs/07-modul-admin.md` | `§A9 — Laporan & Export` | Pisahkan baris **Pendapatan** dari paket A9; tandai bahwa ia menyusul di F2.4.7 karena bergantung pada tabel `invoices`. Tiga laporan lain tetap di F2.1. | ✅ |
+| `docs/10-roadmap-implementasi.md` | butir **2.1.4** | Hapus "pendapatan **SA saja**" dari lingkup laporan F2.1. | ✅ |
+| `docs/10-roadmap-implementasi.md` | sub-fase **F2.4** | Tambahkan butir **2.4.7**: laporan Pendapatan (total invoice `issued`/`paid` per periode, SA saja) beserta baris matriksnya. | ✅ |
+| `docs/07-modul-admin.md` · `docs/10` butir **2.1.5** | Export | **Tambahan, tidak direncanakan:** `.xlsx`/`maatwebsite/excel` diganti CSV dibuat server. Ikut diperbarui supaya dokumen tidak menjanjikan paket yang tidak dipasang. | ✅ |
 
 Tidak ada perubahan pada skema database (`docs/04`), alur bisnis (`docs/05`), maupun matriks hak
 akses (`docs/09 §9.3`) — baris "Laporan pendapatan | SA saja" tetap berlaku apa adanya, hanya
