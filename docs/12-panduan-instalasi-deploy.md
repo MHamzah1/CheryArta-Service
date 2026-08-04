@@ -1,6 +1,6 @@
 # 12 — Panduan Instalasi, Database Bersama & Deploy Railway
 
-Dokumen ini menutup tugas **F1.1** di [roadmap](10-roadmap-implementasi.md#f11--instalasi-database-bersama--deploy-railway--2-hari).
+Dokumen ini menutup tugas **F1.1** di [roadmap](10-roadmap-implementasi.md#tahap-2--instalasi-database-bersama--deploy-railway--f11----selesai).
 Tujuannya satu: **siapa pun, di komputer mana pun, menjalankan proyek ini dan melihat data yang
 sama — dan setiap `git push` ke `main` langsung hidup di Railway.**
 

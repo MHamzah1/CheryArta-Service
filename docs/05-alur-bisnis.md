@@ -67,7 +67,7 @@ tidak mungkin dikerjakan. Kuota 2/jam, aturan H-1, dan Minggu tutup **tidak** be
 
 `SlotService` membaca kunci ini bila ada dan jatuh kembali ke `slots` untuk hari lain — tidak ada
 percabangan hari yang ditulis di kode. Uji wajib: **booking Sabtu 13:30 ditolak**
-([F1.4.10](10-roadmap-implementasi.md#f14--booking-end-to-end-customer--4-hari)).
+([F1.4.10](10-roadmap-implementasi.md#tahap-5--booking-end-to-end-customer--f14----selesai)).
 
 ## 5.2 Alur Booking Customer
 
