@@ -285,7 +285,26 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 ### `activity_log`
 
 Dibuat oleh `spatie/laravel-activitylog` (migration bawaan paket). Dicatat untuk model
-`Booking`, `Invoice`, `User`, `CarModel`, `ServicePackage`.
+`Booking`, `Invoice`, `User`, `CarModel`, `ServicePackage`, ditambah konten A10
+(`Facility`, `Faq`, `Testimonial`, `ContactMessage`).
+
+> **`activity_log` TIDAK mencatat perubahan status booking.** Riwayat transisi status adalah
+> milik `booking_status_histories` — tabel yang sudah dipakai detail booking sejak Tahap 6 dan
+> punya ujinya sendiri. Mencatatnya di dua tempat menciptakan dua sumber kebenaran untuk satu
+> fakta, dan keduanya pasti akan berbeda suatu hari (cacat B2 sistem lama).
+>
+> Yang dicatat dari `Booking` hanyalah perubahan **data**: jadwal, paket, kendaraan, keluhan,
+> catatan admin. Kolom `handled_by` juga dikecualikan meski terlihat seperti data — ia hanya
+> pernah berubah sebagai efek samping transisi status, jadi mencatatnya menghidupkan kembali
+> duplikasi yang sama lewat pintu belakang.
+>
+> **Pencatatan dimulai sejak Tahap 9; tidak ada pengisian mundur.** Perubahan sebelum itu tidak
+> punya jejak, dan mengarangnya akan membuat log audit yang isinya tebakan. Layar A12
+> menampilkan tanggal mulai pencatatan supaya kekosongan sebelumnya tidak dibaca sebagai "tidak
+> ada yang berubah".
+>
+> Atribut sensitif — `password`, `remember_token`, `must_reset_password` — dikecualikan di
+> `App\Models\Concerns\RecordsActivity` untuk seluruh model sekaligus, bukan per model.
 
 ## 4.3 Nilai Enum
 

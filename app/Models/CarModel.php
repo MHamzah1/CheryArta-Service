@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\CarCategory;
 use App\Enums\FuelType;
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +28,17 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class CarModel extends Model
 {
     /** @use HasFactory<\Database\Factories\CarModelFactory> */
-    use HasFactory;
+    use HasFactory, RecordsActivity;
+
+    /**
+     * Kolom katalog yang dicatat A12 (docs/07 §A12). Deskripsi panjang dan spesifikasi JSON tidak ikut: log audit menjawab "apa yang berubah", bukan menyimpan salinan isinya.
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['name', 'slug', 'category', 'fuel_type', 'series_code', 'price_start', 'is_active', 'sort_order'];
+    }
 
     /** @var list<string> */
     protected $fillable = [

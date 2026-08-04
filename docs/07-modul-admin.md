@@ -182,16 +182,15 @@ Export mempertahankan kedua fitur sistem lama:
 Kolom export sama dengan sistem lama: Date, Time, Name, Model, Plat Nomor, Service, Keluhan,
 Phone, Status — ditambah Kode Booking dan Advisor.
 
-## A10 — Konten Landing Page  (SA saja) — ⚠️ sebagian di Big Fase 1
+## A10 — Konten Landing Page  (SA saja) — ✅ Tahap 9
 
-> **Big Fase 1 hanya membuat tabelnya** (`facilities`, `faqs`, `testimonials`,
-> `contact_messages`) beserta seeder idempoten, supaya landing page F1.6 punya sumber data yang
-> nyata sejak awal. Keempat layar di bawah dibangun di F2.2 — tanpa migrasi data, karena tabelnya
-> sudah terisi.
+> Tabelnya (`facilities`, `faqs`, `testimonials`, `contact_messages`) beserta seeder idempoten
+> lahir lebih dulu di Tahap 3 (**R4**), supaya landing page punya sumber data nyata sejak awal.
+> Keempat layar di bawah menyusul di Tahap 9 — **tanpa migrasi data**, karena tabelnya sudah
+> terisi.
 >
-> Akibatnya selama Big Fase 1: **pesan dari form kontak masuk ke database tetapi belum bisa
-> dibaca dari panel admin.** Halaman kontak karena itu menonjolkan tombol WhatsApp sebagai jalur
-> utama, dan form hanya jalur cadangan.
+> Sampai layar itu ada, pesan dari form kontak masuk ke database tetapi tidak bisa dibaca dari
+> panel. Halaman kontak karena itu menonjolkan tombol WhatsApp sebagai jalur utama.
 
 | Modul | Isi |
 |-------|-----|
@@ -200,7 +199,25 @@ Phone, Status — ditambah Kode Booking dan Advisor.
 | `/admin/testimoni` | Nama, model mobil, rating 1–5, isi, terbitkan/sembunyikan |
 | `/admin/pesan-masuk` | Pesan dari form kontak: tandai dibaca, balas via WA (klik-to-chat), hapus spam |
 
-## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ⏳ Big Fase 2 (F2.2.3)
+Urutan fasilitas, FAQ, dan testimoni diatur dengan **menyeret**, memakai ulang pola galeri
+katalog. Tombol naik/turun disediakan berdampingan, bukan sebagai pelengkap: seret-lepas HTML5
+tidak bisa dijalankan dengan papan ketik sama sekali.
+
+> **Testimoni diketik admin, tanpa alur moderasi.** Tidak ada form publik yang mengirimnya, jadi
+> `is_published` hanyalah saklar tampil atau sembunyi di landing page — bukan antrean yang
+> menunggu persetujuan. Bila kelak pelanggan boleh mengirim sendiri, alur moderasinya
+> ditambahkan saat itu di atas kolom yang sudah ada.
+
+> **"Hapus spam" menghapus permanen.** `contact_messages` tidak memakai soft delete, dan tidak
+> ada layar pemulihan. Konsekuensinya diterima secara sadar: pesan pelanggan sungguhan yang
+> salah ditandai spam hilang selamanya.
+>
+> Dua pengaman yang menyertainya: `ConfirmDialog` menampilkan **nama pengirim beserta cuplikan
+> isi pesan** sebelum tombolnya ditekan — yang akan hilang harus terlihat lebih dulu, bukan
+> sesudah — dan penghapusannya tercatat di activity log, sehingga isinya hilang tetapi fakta
+> siapa menghapus pesan dari siapa tetap punya jejak.
+
+## A11 — Pengguna Internal  `/admin/users`  (SA saja) — ✅ Tahap 9
 
 Daftar akun staf: nama, email, role, status aktif, login terakhir. Saringan role & status,
 paginasi 25.
@@ -228,19 +245,44 @@ Pengaman:
 - Akun tidak pernah dihapus permanen — nonaktifkan (soft delete tersedia, tetapi bukan aksi
   layar ini).
 
-> **Seluruhnya di Big Fase 2** (**R9**): layar dan pengamannya di F2.2.3–F2.2.4, penegakan
-> `must_reset_password` saat login di F2.2.5, pencatatan perubahan akun ke activity log di
-> F2.2.6. F2.2 adalah sub-fase **kedua** Big Fase 2 — sesudah dashboard, sebelum WhatsApp dan
-> invoice.
->
-> Selama Big Fase 1 layar ini **tidak ada**, dan `/admin/users` tidak terdaftar sebagai rute.
-> Akun staf lahir dari `UserSeeder` saja.
+> **Seluruhnya lahir di Tahap 9** (**R9**): layar dan pengamannya di F2.2.3–F2.2.4, penegakan
+> `must_reset_password` di F2.2.5, pencatatan perubahan akun ke activity log di F2.2.6. Sampai
+> saat itu `/admin/users` tidak terdaftar sebagai rute, dan akun staf lahir dari `UserSeeder`
+> saja.
 
-## A12 — Activity Log  `/admin/activity-log`  (SA saja) — ⏳ Big Fase 2
+**Password sementara ditampilkan sekali di layar**, tepat setelah aksi berhasil, disertai
+peringatan bahwa ia tidak bisa dilihat lagi. Tanpa notifikasi email (keputusan final #4) tidak
+ada jalur lain untuk menyampaikannya; Super Admin meneruskannya lewat WhatsApp atau lisan.
+
+Yang menjaga agar itu tidak menjadi kebocoran:
+
+- Nilainya lewat **flash session** — hidup untuk satu tampilan, lalu hilang. Tidak pernah
+  tersimpan dalam bentuk terbaca di mana pun.
+- **Tidak pernah masuk activity log.** A12 mencatat *bahwa* password direset, bukan isinya.
+- Masa berlakunya dipersempit `must_reset_password`: hanya sah untuk satu kali masuk.
+
+Alternatif yang ditolak: membiarkan Super Admin mengetik sendiri password staf. Itu berarti ia
+mengetahui password orang lain secara permanen.
+
+## A12 — Activity Log  `/admin/activity-log`  (SA saja) — ✅ Tahap 9
 
 Menjawab "siapa mengubah apa dan kapan" — kebutuhan yang sama sekali tidak terpenuhi sistem lama.
 Kolom: waktu, pelaku, aksi, objek, perubahan (sebelum → sesudah). Filter: pelaku, jenis objek,
 rentang tanggal. Retensi 12 bulan.
+
+> **Pencatatan dimulai sejak Tahap 9, tanpa pengisian mundur.** Perubahan sebelumnya tidak punya
+> jejak, dan mengarangnya akan menghasilkan log audit yang isinya tebakan — lebih berbahaya
+> daripada log yang jujur mulai dari satu tanggal. Layar menyebutkan tanggal mulai pencatatan
+> supaya kekosongan sebelumnya tidak dibaca sebagai "tidak ada yang berubah".
+>
+> **Perubahan status booking tidak ada di sini** — riwayatnya milik `booking_status_histories`.
+> Rinciannya beserta kolom yang dikecualikan ada di
+> [04 §4.2 `activity_log`](04-skema-database.md#activity_log).
+>
+> **Penjadwal retensi baru aktif di Tahap 12.** Perintah `activitylog:clean` sudah didaftarkan
+> di `routes/console.php` dan batas harinya ada di `config/activitylog.php`, tetapi proses cron
+> yang menjalankannya belum ada di Railway. Dengan volume satu bengkel, log yang menumpuk
+> beberapa bulan tidak membahayakan apa pun.
 
 ## A13 — Navigasi Panel Admin
 
@@ -257,18 +299,26 @@ Sistem (SA)   → Pengguna · Template WA · Activity Log
 Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server bila URL-nya
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
-> **Big Fase 1** hanya merender menu yang modulnya sudah ada: Jadwal · Booking · Customer ·
-> Kendaraan · Katalog Mobil (SA) · Paket Layanan (SA). Menu lain tidak dirender — bukan
-> ditampilkan-lalu-dinonaktifkan. Item "Dashboard" juga belum ada karena `/admin` mengalihkan
-> ke `/admin/bookings`, dan grup "Sistem" belum ada karena A11 mundur ke Big Fase 2 (**R9**).
+> **Yang dirender selalu hanya menu yang modulnya sudah ada** — bukan
+> ditampilkan-lalu-dinonaktifkan. Sesudah Tahap 9, yang masih belum dirender tinggal **Invoice**
+> (Tahap 11) dan **Template WA** (Tahap 10).
+>
+> "Pesan Masuk" membawa **lencana jumlah belum dibaca**. Angkanya dihitung server dan hanya
+> dikirim untuk Super Admin — peran lain menerima `null`, bukan angka nol, karena jumlah pesan
+> pelanggan yang menunggu bukan urusan mereka.
 
 ## A14 — Ringkasan Matriks Hak Akses
 
-> Baris yang menyangkut **modul yang sudah ada** — A2–A6, katalog, dan paket layanan — berlaku
-> dan teruji sejak Big Fase 1 (F1.3.7, F1.5.9), lalu disusun ulang sebagai satu uji per baris di
-> **F2.2.7** (`AccessMatrixTest`) supaya baris yang *hilang* ikut kelihatan — berkasnya dibuat
-> sekaligus lengkap dengan baris konten dan pengguna internal. Baris template WA menyusul di
-> F2.3.6, baris invoice di F2.4.6. Menunda otorisasi berarti mengulang temuan S3 sistem lama.
+> Otorisasi tiap modul berlaku dan teruji sejak modulnya lahir — menundanya berarti mengulang
+> temuan S3 sistem lama. Yang menyusul di **F2.2.7** hanyalah penyusunannya sebagai satu berkas:
+> `tests/Feature/Admin/AccessMatrixTest.php`, satu uji per baris matriks, supaya baris yang
+> *hilang* ikut kelihatan.
+>
+> Berkas itu sengaja ditulis **lebih dulu**, sebelum modul A10/A11/A12 dibangun: baris untuk
+> rute yang belum ada dibiarkan **merah**, bukan dilewati. Merah di sana adalah daftar pekerjaan
+> yang tersisa, dan uji matriksnya tidak bisa jatuh sebagai korban saat pekerjaan dikejar cepat.
+>
+> Baris template WA menyusul di F2.3.6, baris invoice di F2.4.6.
 
 | Modul | Super Admin | Service Advisor |
 |-------|-------------|-----------------|

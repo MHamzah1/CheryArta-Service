@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
+use App\Models\Concerns\RecordsActivity;
 use App\Support\SlotTime;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -54,7 +55,41 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Booking extends Model
 {
     /** @use HasFactory<\Database\Factories\BookingFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, RecordsActivity, SoftDeletes;
+
+    /**
+     * Kolom booking yang dicatat A12 (docs/07 §A12).
+     *
+     * **`status` sengaja TIDAK ada di sini** (keputusan grill #3). Riwayat
+     * transisi status sudah menjadi milik `booking_status_histories` sejak
+     * Tahap 6, dipakai detail booking, dan diuji. Mencatatnya lagi di
+     * `activity_log` menciptakan dua sumber kebenaran untuk satu fakta —
+     * persis cacat B2 sistem lama, dan keduanya pasti akan berbeda suatu hari.
+     *
+     * Yang dicatat di sini adalah perubahan DATA booking: jadwal, paket,
+     * kendaraan, keluhan.
+     *
+     * `handled_by` juga TIDAK ada di sini, dan alasannya sama meski kurang
+     * kentara: kolom itu hanya pernah berubah sebagai efek samping transisi
+     * status. Mencatatnya berarti setiap perubahan status meninggalkan
+     * bayangannya di activity log — duplikasi yang sama, hanya lewat pintu
+     * belakang. Siapa yang menangani booking sudah tercatat di
+     * `booking_status_histories` bersama transisinya.
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return [
+            'vehicle_id',
+            'service_package_id',
+            'booking_date',
+            'booking_time',
+            'odometer',
+            'complaint',
+            'admin_note',
+        ];
+    }
 
     /**
      * `booking_code`, `status`, dan `user_id` sengaja TIDAK fillable —

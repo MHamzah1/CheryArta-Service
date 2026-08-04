@@ -19,8 +19,8 @@ benar-benar beres, dan bagian itulah yang paling mahal bila dilewati.
 | **6** · `F1.5` | Admin operasional (A2, A3, A6) | ✅ selesai |
 | **7** · `F1.6` | Landing page publik | ✅ selesai |
 | **8** · `F2.1` | Dashboard & laporan (A1, A9) | ✅ selesai |
-| **9** · `F2.2` | **Konten, pengguna & audit (A10–A14)** | 🔄 **sedang dikerjakan** |
-| **10** · `F2.3` | Notifikasi WhatsApp penuh (A7) | ⏳ berikutnya |
+| **9** · `F2.2` | Konten, pengguna & audit (A10–A14) | ✅ selesai |
+| **10** · `F2.3` | **Notifikasi WhatsApp penuh (A7)** | 🔄 **berikutnya** |
 | **11** · `F2.4` | Invoice (A8) | ⏳ |
 | **12** · `F2.5` | Pengerasan & go-live | ⏳ |
 
@@ -70,11 +70,11 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | A7 — Notifikasi WhatsApp | ⚠️ tombol manual saja (**R6**) | penuh di **Tahap 10** |
 | A8 — Invoice | ❌ belum ada | **Tahap 11** |
 | A9 — Laporan & Export | ⚠️ tiga laporan jalan; **Pendapatan** menyusul | Tahap 8 · sisanya **Tahap 11** (2.4.7) |
-| A10 — Konten landing page | ⚠️ tabel + seeder saja (**R4**), belum ada layar | **Tahap 9** |
-| A11 — Pengguna Internal | ❌ akun staf dari seeder (**R9**) | **Tahap 9** |
-| A12 — Activity Log | ❌ belum ada | **Tahap 9** |
-| A13 — Navigasi panel | ⚠️ menu A1–A6 + Laporan | lengkap di **Tahap 9** |
-| A14 — Matriks hak akses | ⚠️ otorisasinya berlaku & teruji, tetapi tersebar di banyak berkas | satu berkas matriks di **Tahap 9** |
+| A10 — Konten landing page | ✅ lengkap | Tahap 3 (tabel) · Tahap 9 (layar) |
+| A11 — Pengguna Internal | ✅ lengkap | Tahap 9 |
+| A12 — Activity Log | ✅ lengkap; penjadwal retensi menyusul | Tahap 9 · cron di **Tahap 12** |
+| A13 — Navigasi panel | ⚠️ lengkap kecuali Invoice & Template WA | Tahap 9 · sisanya Tahap 10–11 |
+| A14 — Matriks hak akses | ✅ satu berkas `AccessMatrixTest` | Tahap 9 · baris WA/invoice menyusul |
 
 > **A13 dan A14 tidak pernah bisa ditunda sepenuhnya.** A13 hanyalah spesifikasi menu — tanpa
 > menu, layar A2–A6 tidak bisa dicapai. A14 hanyalah *ringkasan* matriks — otorisasinya sendiri
@@ -536,7 +536,7 @@ dashboard tidak boleh menampilkan "0 draft" untuk tabel yang belum ada.
 > warisan F1.2, di luar lingkup PRD ini — **diusulkan masuk F2.2**, keputusannya diambil di
 > sesi grill F2.2.
 
-## Tahap 9 · Konten, Pengguna & Audit  `F2.2`
+## Tahap 9 · Konten, Pengguna & Audit  `F2.2` — ✅ SELESAI
 
 Menutup sisi panel admin: layar konten yang tabelnya sudah terisi sejak F1.2.2, pengelolaan
 akun staf yang sampai kini hanya bisa lewat DBeaver, dan jejak audit atas keduanya.
@@ -553,6 +553,35 @@ akun staf yang sampai kini hanya bisa lewat DBeaver, dan jejak audit atas keduan
 | 2.2.6 | **A12** activity log (`spatie/laravel-activitylog`), retensi 12 bulan — termasuk perubahan akun staf dari 2.2.3 |
 | 2.2.7 | **A13** navigasi panel lengkap (termasuk grup "Sistem" → Pengguna Internal) + **A14** `tests/Feature/Admin/AccessMatrixTest.php` dibuat **sekaligus lengkap**: satu uji per baris matriks untuk seluruh modul yang sudah ada saat itu (A2–A6, master data, A10, A11) — SA boleh, advisor ditolak pada baris SA-saja, customer & tamu ditolak di seluruhnya. Baris invoice & template WA menyusul di F2.4.6 dan F2.3.6 |
 | 2.2.8 | Uji A11: SA gagal menurunkan/menonaktifkan diri sendiri; SA aktif terakhir tidak bisa dijatuhkan; akun staf baru tidak bisa membuka menu apa pun sebelum menetapkan password; `UserSeeder` tetap idempoten dan tetap menghasilkan SA + advisor yang bisa dipakai masuk |
+
+> **Selesai 4 Agustus 2026.** 546 uji Pest hijau — 62 di antaranya baru
+> (`AccessMatrixTest`, `ContentCrudTest`, `UserManagementTest`, `ActivityLogTest`,
+> `MustResetPasswordTest`). Pint, PHPStan, ESLint, `tsc --noEmit`, dan `npm run build` bersih;
+> ketiga migration `activity_log` diuji `migrate` **dan** `rollback`.
+> Rancangannya di [`docs/prds/prd-konten-pengguna-audit.md`](prds/prd-konten-pengguna-audit.md).
+>
+> **A14 dikerjakan lebih dulu** sesuai keputusan grill #1: `AccessMatrixTest` ditulis sebagai
+> kerangka lengkap dengan 10 baris merah, lalu menghijau seiring modulnya lahir. Mekanismenya
+> terbukti bekerja — enam baris berubah hijau begitu backend A10 selesai, dan ia menangkap satu
+> rute yang controllernya belum di-import.
+>
+> **Penyimpangan dari rencana, disengaja:**
+> 1. **`spatie/laravel-activitylog` ternyata mendukung Laravel 12** (v4.12.3) — pertanyaan
+>    terbuka PRD terjawab, jalur cadangan tabel buatan sendiri tidak jadi dipakai.
+> 2. **`App\Models\Concerns\RecordsActivity` ditambahkan** di luar daftar berkas PRD. Pengecualian
+>    `password`/`remember_token` harus berlaku untuk seluruh model sekaligus; menyalinnya ke
+>    delapan model berarti cukup satu terlewat untuk membocorkannya.
+> 3. **`FacilityService` dan `ContentOrderService` dipisah**, bukan satu service konten. Hanya
+>    fasilitas yang menyentuh Cloudinary; FAQ dan testimoni tidak butuh lapis yang tidak
+>    memutuskan apa pun.
+> 4. **`LastSuperAdminException` ditambahkan** beserta penanganannya di `bootstrap/app.php`,
+>    supaya penolakan "SA aktif terakhir" tampil sebagai galat inline yang menjelaskan jalan
+>    keluarnya — bukan 403 yang tidak menjelaskan apa pun.
+>
+> **Bug warisan yang ikut ditemukan dan diperbaiki:** `PasswordController::update` tidak pernah
+> melepas `must_reset_password`. Tidak berakibat apa-apa selama tandanya belum ditegakkan —
+> tetapi begitu middleware 2.2.5c hidup, orang yang baru menetapkan passwordnya sendiri akan
+> terjebak selamanya di halaman ganti password. Ditemukan oleh ujinya, bukan setelah rilis.
 
 ## Tahap 10 · Notifikasi WhatsApp Penuh  `F2.3`
 
@@ -595,6 +624,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.5.9 | Panduan singkat untuk admin (PDF 2 halaman) + serah terima |
 | 2.5.10 | `/audit-paritas` terhadap prototipe lama untuk **seluruh** fitur yang sudah dibangun — bekas 1.8.4, kini menjangkau **seluruh** tahap sekaligus |
 | 2.5.11 | Satu putaran `migrate:fresh --seed` terhadap DB **dev** (setelah 2.5.1 memisahkannya), lalu telusuri alur penuh — membuktikan seeder masih lengkap. Bekas 1.8.6 |
+| 2.5.12 | **Aktifkan penjadwal di Railway** (proses `schedule:work` atau cron), lalu buktikan `activitylog:clean` benar-benar berjalan. Perintahnya sudah didaftarkan di `routes/console.php` sejak Tahap 9, tetapi tanpa penjadwal ia tidak pernah jalan — retensi 12 bulan (`docs/07 §A12`, `docs/09 §9.7`) sampai saat itu masih janji di dokumen |
 
 **Selesai bila:** seluruh daftar periksa [09 §9.10](09-keamanan-hak-akses.md#910-daftar-periksa-sebelum-rilis) tercentang.
 

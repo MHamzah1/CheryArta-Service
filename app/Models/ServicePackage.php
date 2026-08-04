@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ServicePackageCategory;
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +24,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ServicePackage extends Model
 {
     /** @use HasFactory<\Database\Factories\ServicePackageFactory> */
-    use HasFactory;
+    use HasFactory, RecordsActivity;
+
+    /**
+     * Kolom paket layanan yang dicatat A12 (docs/07 §A12). Harga ikut dicatat: perubahannya berpengaruh langsung ke estimasi biaya pelanggan.
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['code', 'name', 'category', 'applicable_series', 'estimated_duration_minutes', 'price', 'is_free', 'is_active', 'sort_order'];
+    }
 
     /** @var list<string> */
     protected $fillable = [

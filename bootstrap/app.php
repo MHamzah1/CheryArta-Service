@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Exceptions\InvalidStatusTransitionException;
+use App\Exceptions\LastSuperAdminException;
 use App\Exceptions\MasterDataInUseException;
 use App\Exceptions\SlotUnavailableException;
+use App\Http\Middleware\EnsurePasswordIsReset;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -31,6 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            // Akun yang passwordnya dibuatkan admin wajib menetapkan sendiri
+            // sebelum memakai apa pun (roadmap 2.2.5c). Ditaruh di grup `web`,
+            // bukan pada satu grup rute, karena tandanya berlaku untuk staf
+            // MAUPUN customer — dan lubangnya justru ada di rute yang lupa
+            // didaftarkan.
+            EnsurePasswordIsReset::class,
         ]);
 
         // Penjaga pintu masuk grup rute berdasarkan role.
@@ -70,5 +78,17 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
                 : back()->withErrors($errors);
+        });
+
+        // Perubahan akun staf yang akan mengunci orang dari panelnya sendiri
+        // (docs/07 §A11). Sengaja 422 dan bukan 403: Super Admin memang berhak
+        // mengubah akun staf — yang ditolak adalah akibat perubahannya.
+        // Ditampilkan inline supaya alasannya terbaca di dekat kolomnya.
+        $exceptions->render(function (LastSuperAdminException $e, Request $request) {
+            $errors = ['role' => [$e->getMessage()]];
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
+                : back()->withInput()->withErrors($errors);
         });
     })->create();

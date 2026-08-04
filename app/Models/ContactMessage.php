@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -22,12 +23,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $message
  * @property bool $is_read
  * @property int|null $read_by
+ * @property \Illuminate\Support\Carbon|null $read_at
+ * @property \Illuminate\Support\Carbon|null $created_at
  * @property string|null $ip_address
+ * @property-read User|null $readBy
  */
 class ContactMessage extends Model
 {
     /** @use HasFactory<\Database\Factories\ContactMessageFactory> */
-    use HasFactory;
+    use HasFactory, RecordsActivity;
+
+    /**
+     * Hanya perubahan status baca yang dicatat. Isi pesannya TIDAK: ia data pribadi pengirim, dan hapus di sini permanen (keputusan grill #4) - yang perlu punya jejak adalah SIAPA yang menghapus, bukan salinan isinya di tabel kedua.
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['is_read', 'read_by'];
+    }
 
     /**
      * `is_read`, `read_by`, dan `ip_address` sengaja tidak fillable —

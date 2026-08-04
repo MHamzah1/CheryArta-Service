@@ -4,20 +4,36 @@ import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 import { type NavItem, type SharedData, type UserRole } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { BarChart3, CalendarDays, CalendarRange, Car, LayoutDashboard, LogOut, Menu, Users, Wrench, X } from 'lucide-react';
+import {
+    BarChart3,
+    Building2,
+    CalendarDays,
+    CalendarRange,
+    Car,
+    HelpCircle,
+    History,
+    Inbox,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    MessageSquareQuote,
+    ShieldCheck,
+    Users,
+    Wrench,
+    X,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 /*
  * Struktur menu mengikuti docs/07-modul-admin.md §A13.
  *
- * Hanya menu yang modulnya SUDAH ADA yang dirender: Dashboard, Jadwal,
- * Booking, Laporan, Customer, Kendaraan, dan dua master data khusus Super
- * Admin. Invoice, Konten, dan Sistem sengaja tidak dirender sama sekali —
- * bukan ditampilkan lalu dinonaktifkan. Menu yang mengantar ke halaman 404
- * membuat orang menyangka aplikasinya rusak.
+ * Hanya menu yang modulnya SUDAH ADA yang dirender — bukan ditampilkan lalu
+ * dinonaktifkan. Menu yang mengantar ke halaman 404 membuat orang menyangka
+ * aplikasinya rusak.
  *
- * Dashboard dan Laporan masuk di F2.1; keputusan R8 yang mengalihkan `/admin`
- * ke `/admin/bookings` sudah dicabut bersamanya.
+ * Yang belum ada tinggal **Invoice** (Tahap 11) dan **Template WA** (Tahap
+ * 10). Dashboard dan Laporan masuk di Tahap 8; Konten dan Sistem di Tahap 9,
+ * yang sekaligus menutup A13.
  *
  * `roles` hanya menyembunyikan menu — otorisasi sesungguhnya ada di
  * middleware + Policy di server (.claude/rules/50-keamanan.md).
@@ -33,7 +49,7 @@ const SUPER_ADMIN: UserRole[] = ['super_admin'];
  * bentuk absolut bawaan Ziggy tidak bisa dibandingkan dengan `usePage().url`
  * untuk menentukan menu mana yang sedang aktif.
  */
-function menuAdmin(): { title: string; items: NavItem[] }[] {
+function menuAdmin(pesanBelumDibaca: number): { title: string; items: NavItem[] }[] {
     const path = (name: string) => route(name, undefined, false);
 
     return [
@@ -66,6 +82,28 @@ function menuAdmin(): { title: string; items: NavItem[] }[] {
                 { title: 'Paket Layanan', url: path('admin.service-packages.index'), icon: Wrench, roles: SUPER_ADMIN },
             ],
         },
+        {
+            title: 'Konten',
+            items: [
+                { title: 'Fasilitas', url: path('admin.facilities.index'), icon: Building2, roles: SUPER_ADMIN },
+                { title: 'FAQ', url: path('admin.faqs.index'), icon: HelpCircle, roles: SUPER_ADMIN },
+                { title: 'Testimoni', url: path('admin.testimonials.index'), icon: MessageSquareQuote, roles: SUPER_ADMIN },
+                {
+                    title: 'Pesan Masuk',
+                    url: path('admin.contact-messages.index'),
+                    icon: Inbox,
+                    roles: SUPER_ADMIN,
+                    badge: pesanBelumDibaca,
+                },
+            ],
+        },
+        {
+            title: 'Sistem',
+            items: [
+                { title: 'Pengguna Internal', url: path('admin.users.index'), icon: ShieldCheck, roles: SUPER_ADMIN },
+                { title: 'Activity Log', url: path('admin.activity-log.index'), icon: History, roles: SUPER_ADMIN },
+            ],
+        },
     ];
 }
 
@@ -82,12 +120,15 @@ export default function AdminLayout({ children, title, description, actions }: P
     const [sidebarTerbuka, setSidebarTerbuka] = useState(false);
 
     const role = auth.user?.role;
+    // Dihitung server dan hanya dikirim untuk Super Admin — lencana ini
+    // mengungkap ada berapa pesan pelanggan yang menunggu.
+    const pesanBelumDibaca = props.unreadContactMessages ?? 0;
     const aktif = (href: string) => url === href || url.startsWith(`${href}/`) || url.startsWith(`${href}?`);
     const bolehLihat = (item: NavItem) => !item.roles || !role || item.roles.includes(role);
 
     const sidebar = (
         <nav aria-label="Navigasi admin" className="space-y-6 px-3 py-4">
-            {menuAdmin().map((grup, i) => {
+            {menuAdmin(pesanBelumDibaca).map((grup, i) => {
                 const items = grup.items.filter(bolehLihat);
                 if (items.length === 0) return null;
 
@@ -110,7 +151,15 @@ export default function AdminLayout({ children, title, description, actions }: P
                                         )}
                                     >
                                         {item.icon && <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                                        {item.title}
+                                        <span className="flex-1">{item.title}</span>
+                                        {/* Angka disertai teks tersembunyi supaya pembaca
+                                            layar menyebut maknanya, bukan angkanya saja. */}
+                                        {item.badge !== undefined && item.badge > 0 && (
+                                            <span className="bg-gold-400 text-ink rounded-full px-2 py-0.5 text-xs font-semibold">
+                                                {item.badge}
+                                                <span className="sr-only"> belum dibaca</span>
+                                            </span>
+                                        )}
                                     </Link>
                                 </li>
                             ))}

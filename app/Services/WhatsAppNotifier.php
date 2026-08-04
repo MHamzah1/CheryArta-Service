@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\ContactMessage;
 use App\Support\PhoneNumber;
 use App\Support\SlotTime;
 use Illuminate\Support\Facades\Config;
@@ -54,6 +55,36 @@ class WhatsAppNotifier
             'message' => $message,
             'phone_display' => PhoneNumber::forDisplay($phone),
         ];
+    }
+
+    /**
+     * Tautan balasan untuk satu pesan dari form kontak (docs/07 §A10).
+     *
+     * Bukan draft booking: tidak ada template dan tidak ada placeholder, hanya
+     * sapaan pembuka yang menyebut subjek pesannya. Yang penting sama —
+     * nomornya dipakai dalam bentuk ternormalisasi `62…` yang tersimpan, bukan
+     * apa pun yang diketik pengirim (.claude/rules/50 #7).
+     *
+     * Pemanggil wajib memastikan `phone` tidak null; kembaliannya string
+     * kosong bila tetap dipanggil tanpa nomor, supaya tidak ada tautan yang
+     * mengarah entah ke mana.
+     */
+    public function contactReplyUrl(ContactMessage $message): string
+    {
+        $phone = $message->phone;
+
+        if ($phone === null || $phone === '') {
+            return '';
+        }
+
+        $teks = mb_substr(
+            "Halo {$message->name}, terima kasih telah menghubungi ".
+            Config::string('company.name').". Kami menanggapi pesan Anda mengenai \"{$message->subject}\".",
+            0,
+            self::PANJANG_MAKSIMAL,
+        );
+
+        return 'https://wa.me/'.$phone.'?text='.rawurlencode($teks);
     }
 
     private function render(Booking $booking): string

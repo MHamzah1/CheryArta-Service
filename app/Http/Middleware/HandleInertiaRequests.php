@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\ContactMessage;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -53,6 +55,22 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
 
+            // Lencana "pesan belum dibaca" di sidebar (docs/07 §A10).
+            //
+            // Closure, jadi kueri ini TIDAK berjalan pada permintaan yang tidak
+            // memerlukannya. Hanya untuk Super Admin — merekalah satu-satunya
+            // yang boleh membuka layarnya, dan angka pesan pelanggan yang
+            // menunggu tidak perlu bocor ke props peran lain.
+            'unreadContactMessages' => function () use ($request): ?int {
+                $user = $request->user();
+
+                if (! $user instanceof User || ! $user->isSuperAdmin()) {
+                    return null;
+                }
+
+                return ContactMessage::query()->where('is_read', false)->count();
+            },
+
             // Closure = dievaluasi malas, tidak ikut terkirim pada partial
             // reload yang tidak memintanya.
             'company' => fn (): array => [
@@ -70,6 +88,11 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'info' => fn () => $request->session()->get('info'),
+                // Password sementara akun staf (docs/07 §A11). Lewat flash
+                // dengan sengaja: ia hidup untuk SATU tampilan lalu hilang
+                // bersama sesinya, dan tidak pernah tersimpan terbaca di mana
+                // pun (keputusan grill #8).
+                'temporaryPassword' => fn () => $request->session()->get('temporaryPassword'),
             ],
         ];
     }

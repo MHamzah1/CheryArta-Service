@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +20,17 @@ use Illuminate\Database\Eloquent\Model;
 class Testimonial extends Model
 {
     /** @use HasFactory<\Database\Factories\TestimonialFactory> */
-    use HasFactory;
+    use HasFactory, RecordsActivity;
+
+    /**
+     * Kolom testimoni yang dicatat A12 (docs/07 §A12).
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['customer_name', 'car_model', 'rating', 'content', 'is_published', 'sort_order'];
+    }
 
     /** @var list<string> */
     protected $fillable = [

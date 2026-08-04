@@ -23,6 +23,8 @@ export interface NavItem {
     isActive?: boolean;
     /** Role yang boleh melihat menu ini. Kosong = semua yang sudah login. */
     roles?: UserRole[];
+    /** Angka kecil di samping menu, mis. pesan kontak yang belum dibaca. */
+    badge?: number;
 }
 
 /**
@@ -57,6 +59,12 @@ export interface FlashMessages {
     success?: string | null;
     error?: string | null;
     info?: string | null;
+    /**
+     * Password sementara akun staf (docs/07 §A11). Lewat flash dengan sengaja
+     * — hidup untuk satu tampilan lalu hilang bersama sesinya, dan tidak
+     * pernah tersimpan terbaca di mana pun.
+     */
+    temporaryPassword?: { name: string; password: string } | null;
 }
 
 export interface SharedData {
@@ -66,6 +74,8 @@ export interface SharedData {
     auth: Auth;
     company: Company;
     flash: FlashMessages;
+    /** Lencana sidebar; hanya dikirim untuk Super Admin, `null` bagi yang lain. */
+    unreadContactMessages?: number | null;
     [key: string]: unknown;
 }
 
@@ -683,6 +693,101 @@ export interface ReportNewCustomers {
     total: number;
     rata_rata_per_hari: number;
     per_hari: TrendPoint[];
+}
+
+/*
+| A10 — Konten landing page (docs/07 §A10)
+*/
+
+export interface FacilityRow {
+    id: number;
+    title: string;
+    description: string;
+    image_url: string | null;
+    is_active: boolean;
+}
+
+export interface FaqRow {
+    id: number;
+    question: string;
+    answer: string;
+    category: string | null;
+    is_active: boolean;
+}
+
+export interface TestimonialRow {
+    id: number;
+    customer_name: string;
+    car_model: string | null;
+    rating: number;
+    content: string;
+    is_published: boolean;
+}
+
+export interface ContactMessageRow {
+    id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    subject: string;
+    message: string;
+    is_read: boolean;
+    read_at: string | null;
+    read_by_name: string | null;
+    created_at: string | null;
+    /** Disusun server dari nomor ternormalisasi; null bila tidak ada nomor. */
+    whatsapp_url: string | null;
+}
+
+/*
+| A11 — Pengguna internal (docs/07 §A11)
+*/
+
+export interface StaffUserRow {
+    id: number;
+    name: string;
+    email: string;
+    phone_wa: string | null;
+    role: 'super_admin' | 'service_advisor';
+    role_label: string;
+    is_active: boolean;
+    last_login_at: string | null;
+    must_reset_password: boolean;
+    /** Dihitung server — UI tidak pernah menyimpulkan sendiri. */
+    can_demote: boolean;
+    can_deactivate: boolean;
+    is_self: boolean;
+}
+
+export interface StaffUserFilters {
+    role: string | null;
+    status: string | null;
+}
+
+/*
+| A12 — Activity log (docs/07 §A12)
+*/
+
+export interface ActivityLogRow {
+    id: number;
+    description: string;
+    subject_label: string;
+    subject_type: string | null;
+    causer_name: string | null;
+    changes: { field: string; before: string; after: string }[];
+    created_at: string;
+}
+
+export interface ActivityLogFilters {
+    causer: number | null;
+    subject: string | null;
+    dari: string | null;
+    sampai: string | null;
+}
+
+export interface ActivityLogOption {
+    value: string;
+    label: string;
 }
 
 /** Bentuk paginasi Laravel, dipakai seluruh tabel daftar. */

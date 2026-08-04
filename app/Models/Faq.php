@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +19,17 @@ use Illuminate\Database\Eloquent\Model;
 class Faq extends Model
 {
     /** @use HasFactory<\Database\Factories\FaqFactory> */
-    use HasFactory;
+    use HasFactory, RecordsActivity;
+
+    /**
+     * Kolom FAQ yang dicatat A12 (docs/07 §A12).
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['question', 'answer', 'category', 'is_active', 'sort_order'];
+    }
 
     /** @var list<string> */
     protected $fillable = [

@@ -4,7 +4,7 @@
 **Tahap:** 9 (`F2.2`) — lihat [roadmap](../10-roadmap-implementasi.md#tahap-9--konten-pengguna--audit--f22)
 **Keputusan:** 8 pertanyaan terjawab. Tujuh rekomendasi disetujui; **satu ditolak** (Q4 —
 hapus spam dikerjakan sebagai hapus permanen, bukan soft delete).
-**Berikutnya:** `/write-prd` → `docs/prds/prd-konten-pengguna-audit.md`
+**Berikutnya:** ✅ sudah ditulis → [`docs/prds/prd-konten-pengguna-audit.md`](../prds/prd-konten-pengguna-audit.md)
 
 Sumber yang sudah dibaca: `docs/07-modul-admin.md §A10–§A14` ·
 `docs/10-roadmap-implementasi.md §F2.2` (butir 2.2.1–2.2.8) ·

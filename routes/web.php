@@ -2,17 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BookingExportController;
 use App\Http\Controllers\Admin\BookingStatusController;
 use App\Http\Controllers\Admin\CarModelController;
 use App\Http\Controllers\Admin\CarModelImageController;
 use App\Http\Controllers\Admin\CarModelVariantController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FacilityController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServicePackageController;
+use App\Http\Controllers\Admin\TestimonialController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
 use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\BookingHistoryController;
@@ -197,6 +203,57 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
                     Route::put('galeri/{image}/utama', [CarModelImageController::class, 'primary'])->name('images.primary');
                     Route::delete('galeri/{image}', [CarModelImageController::class, 'destroy'])->name('images.destroy');
                 });
+
+            // --- A10 Konten landing page --------------------------------
+            // Tabelnya sudah terisi sejak Tahap 3 (**R4**); yang lahir di sini
+            // hanyalah layar pengelolaannya. URL berbahasa Indonesia, nama
+            // rute Inggris — sama seperti katalog dan paket layanan.
+            // `urutan` didaftarkan SEBELUM `{model}` agar tidak dikira id.
+            Route::get('fasilitas', [FacilityController::class, 'index'])->name('facilities.index');
+            Route::get('fasilitas/tambah', [FacilityController::class, 'create'])->name('facilities.create');
+            Route::post('fasilitas', [FacilityController::class, 'store'])->name('facilities.store');
+            Route::put('fasilitas/urutan', [FacilityController::class, 'reorder'])->name('facilities.reorder');
+            Route::get('fasilitas/{facility}/ubah', [FacilityController::class, 'edit'])->name('facilities.edit');
+            Route::put('fasilitas/{facility}', [FacilityController::class, 'update'])->name('facilities.update');
+            Route::delete('fasilitas/{facility}', [FacilityController::class, 'destroy'])->name('facilities.destroy');
+
+            Route::get('faq', [FaqController::class, 'index'])->name('faqs.index');
+            Route::get('faq/tambah', [FaqController::class, 'create'])->name('faqs.create');
+            Route::post('faq', [FaqController::class, 'store'])->name('faqs.store');
+            Route::put('faq/urutan', [FaqController::class, 'reorder'])->name('faqs.reorder');
+            Route::get('faq/{faq}/ubah', [FaqController::class, 'edit'])->name('faqs.edit');
+            Route::put('faq/{faq}', [FaqController::class, 'update'])->name('faqs.update');
+            Route::delete('faq/{faq}', [FaqController::class, 'destroy'])->name('faqs.destroy');
+
+            Route::get('testimoni', [TestimonialController::class, 'index'])->name('testimonials.index');
+            Route::get('testimoni/tambah', [TestimonialController::class, 'create'])->name('testimonials.create');
+            Route::post('testimoni', [TestimonialController::class, 'store'])->name('testimonials.store');
+            Route::put('testimoni/urutan', [TestimonialController::class, 'reorder'])->name('testimonials.reorder');
+            Route::get('testimoni/{testimonial}/ubah', [TestimonialController::class, 'edit'])->name('testimonials.edit');
+            Route::put('testimoni/{testimonial}', [TestimonialController::class, 'update'])->name('testimonials.update');
+            Route::delete('testimoni/{testimonial}', [TestimonialController::class, 'destroy'])->name('testimonials.destroy');
+
+            // Pesan kontak: tidak ada tambah/ubah — isinya datang dari
+            // pengunjung. Hapus di sini benar-benar menghapus (keputusan
+            // grill #4), dikawal ConfirmDialog di sisi layar.
+            Route::get('pesan-masuk', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+            Route::put('pesan-masuk/{contactMessage}/dibaca', [ContactMessageController::class, 'markRead'])->name('contact-messages.read');
+            Route::delete('pesan-masuk/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+
+            // --- A11 Pengguna Internal ----------------------------------
+            // Menutup **R9**: sampai sini akun staf hanya lahir dari
+            // UserSeeder. Tidak ada rute hapus — akun dinonaktifkan, tidak
+            // pernah dihapus permanen (docs/07 §A11).
+            Route::get('users', [UserController::class, 'index'])->name('users.index');
+            Route::get('users/tambah', [UserController::class, 'create'])->name('users.create');
+            Route::post('users', [UserController::class, 'store'])->name('users.store');
+            Route::get('users/{user}/ubah', [UserController::class, 'edit'])->name('users.edit');
+            Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::put('users/{user}/status-akun', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+            Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+
+            // --- A12 Activity Log ---------------------------------------
+            Route::get('activity-log', ActivityLogController::class)->name('activity-log.index');
         });
     });
 

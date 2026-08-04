@@ -36,9 +36,18 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
+        // `must_reset_password` DILEPAS di sini, dan itu bukan sekadar
+        // kerapian: sejak roadmap 2.2.5c, EnsurePasswordIsReset mengalihkan
+        // pemilik akun bertanda ke halaman ini. Tanpa melepasnya, orang yang
+        // baru saja menetapkan passwordnya sendiri tetap dialihkan ke sini —
+        // terjebak selamanya di satu halaman.
+        //
+        // forceFill, bukan update(): kolomnya di luar $fillable dengan sengaja
+        // supaya tidak pernah bisa datang dari request.
+        $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            'must_reset_password' => false,
+        ])->save();
 
         return back();
     }

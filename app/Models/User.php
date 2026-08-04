@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Models\Concerns\RecordsActivity;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +35,22 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, RecordsActivity, SoftDeletes;
+
+    /**
+     * Kolom akun yang dicatat A12 (docs/07 §A12).
+     *
+     * `password`, `remember_token`, dan `must_reset_password` TIDAK ada di
+     * sini — dan tetap dikecualikan `RecordsActivity` sekalipun kelak
+     * ditambahkan tanpa sengaja. Password sementara akun staf tidak boleh
+     * meninggalkan jejak apa pun di log (keputusan grill #8).
+     *
+     * @return list<string>
+     */
+    protected function activityLogAttributes(): array
+    {
+        return ['name', 'email', 'phone_wa', 'role', 'is_active'];
+    }
 
     /**
      * The attributes that are mass assignable.
