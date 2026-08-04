@@ -1,8 +1,10 @@
 # Grill — F2.2 Konten, Pengguna & Audit (A10 + A11 + A12 + A13 + A14)
 
-**Status:** 🔄 berjalan · dibuka 4 Agustus 2026
-**Sub-fase:** F2.2 — sub-fase kedua Big Fase 2
-**Berikutnya (setelah ditutup):** `/write-prd` → `docs/prds/prd-konten-pengguna-audit.md`
+**Status:** ✅ selesai · dibuka dan ditutup 4 Agustus 2026
+**Tahap:** 9 (`F2.2`) — lihat [roadmap](../10-roadmap-implementasi.md#tahap-9--konten-pengguna--audit--f22)
+**Keputusan:** 8 pertanyaan terjawab. Tujuh rekomendasi disetujui; **satu ditolak** (Q4 —
+hapus spam dikerjakan sebagai hapus permanen, bukan soft delete).
+**Berikutnya:** `/write-prd` → `docs/prds/prd-konten-pengguna-audit.md`
 
 Sumber yang sudah dibaca: `docs/07-modul-admin.md §A10–§A14` ·
 `docs/10-roadmap-implementasi.md §F2.2` (butir 2.2.1–2.2.8) ·
@@ -272,14 +274,23 @@ Alternatif yang saya **tidak** rekomendasikan: membiarkan SA mengetik sendiri pa
 Itu berarti SA mengetahui password orang lain secara permanen, dan `docs/07 §A11` sudah
 menutup jalur itu ("password **tidak** diisi admin").
 
-- **Keputusan saya:** [ ] belum
-- **Catatan:**
+- **Keputusan saya:** [x] **Tampilkan sekali di layar tepat setelah aksi berhasil, lalu tidak
+  pernah lagi.**
+- **Catatan:** Empat syarat yang mengikat, seluruhnya sudah tertulis di rekomendasi dan menjadi
+  bagian DoD butir ini: tampil **satu kali** dengan peringatan bahwa ia tidak bisa dilihat lagi ·
+  **tidak pernah masuk `activity_log`** (A12 mencatat *bahwa* password direset, bukan isinya) ·
+  tidak tersimpan terbaca di mana pun · disampaikan SA ke staf lewat WhatsApp atau lisan.
+
+  ⚠️ Sudah tercatat di [tabel risiko `docs/10`](../10-roadmap-implementasi.md#risiko): password
+  staf lebih berat daripada kasus customer, karena yang dibuka adalah panel internal. Yang
+  memperpendek masa berlakunya adalah `must_reset_password` yang ditegakkan di butir 2.2.5 —
+  password sementara itu hanya sah untuk satu kali masuk.
 
 ---
 
 ## Log Keputusan
 
-_Diisi saat sesi ditutup._
+Ditutup 4 Agustus 2026.
 
 | # | Keputusan | Alasan singkat |
 |---|-----------|----------------|
@@ -289,5 +300,19 @@ _Diisi saat sesi ditutup._
 | Q4 | **Hapus spam = hapus sungguhan**, bukan soft delete | Keputusan pemilik proyek; rekomendasi soft delete ditolak. Dikawal `ConfirmDialog` + jejak di activity log |
 | Q5 | **Testimoni diketik admin**, tanpa moderasi | Tidak ada form publik yang mengirimnya |
 | Q6 | **Seret-lepas** untuk `sort_order` fasilitas, FAQ, testimoni | Pola sudah ada di galeri katalog; kolom angka selalu berakhir bentrok |
-| Q7 | **`activitylog:clean` didaftarkan sekarang, penjadwalnya diaktifkan di F2.5** | Volume satu bengkel tidak terancam log yang menumpuk beberapa bulan; menyiapkan proses cron di Railway urusan infrastruktur |
+| Q7 | **`activitylog:clean` didaftarkan sekarang, penjadwalnya diaktifkan di Tahap 12** | Volume satu bengkel tidak terancam log yang menumpuk beberapa bulan; menyiapkan proses cron di Railway urusan infrastruktur |
+| Q8 | **Password sementara staf tampil sekali di layar**, tidak pernah masuk activity log | Tanpa email (keputusan final #4) tidak ada jalur lain; SA mengetik sendiri password orang lain jauh lebih buruk |
 | — | **Seluruh target berbasis hari dihapus dari dokumen** atas permintaan pemilik proyek | Angka hari menciptakan tekanan menyatakan selesai sebelum uji dan otorisasi beres. Selesai diukur dari DoD, bukan durasi |
+| — | **Roadmap ditata ulang tanpa pembagian Big Fase** — satu urutan 12 tahap | Permintaan pemilik proyek. Kode `Fx.y` dipertahankan sebagai label tetap karena dirujuk ±350 kali |
+
+## Yang berubah di `docs/` akibat sesi ini
+
+Dicatat supaya PRD tinggal menyalin, dan supaya tidak ada yang terlewat saat implementasi.
+
+| Berkas | Perubahan | Status |
+|--------|-----------|--------|
+| `docs/10` butir **2.2.5** | Ditambah perbaikan tujuan setelah login menurut role + `role:customer` pada grup rute customer (Q2) | ✅ sudah |
+| `docs/04 §4.2` | `activity_log` **tidak** mencatat perubahan status booking — itu milik `booking_status_histories` (Q3) | ⏳ saat implementasi |
+| `docs/07 §A10` | Testimoni diketik admin, tanpa moderasi (Q5); "hapus spam" = hapus permanen berkawal `ConfirmDialog` (Q4) | ⏳ saat implementasi |
+| `docs/07 §A12` | Pencatatan dimulai sejak Tahap 9, tanpa pengisian mundur; penjadwal retensi aktif di Tahap 12 (Q3, Q7) | ⏳ saat implementasi |
+| `docs/10` Tahap 12 | Butir baru: aktifkan penjadwal `activitylog:clean` di Railway (Q7) | ⏳ saat implementasi |
