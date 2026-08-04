@@ -17,7 +17,7 @@ Sudah ditetapkan rancangan atau kode. Dicatat supaya tidak dibuka ulang.
 
 | Hal | Ketetapan | Sumber |
 |-----|-----------|--------|
-| Sub-fase & estimasi | F2.1, 3 hari, sub-fase **pertama** Big Fase 2 | `docs/10 §Ringkasan Jadwal` |
+| Sub-fase | F2.1, sub-fase **pertama** Big Fase 2 | `docs/10 §Urutan Pengerjaan` |
 | `/admin` | Redirect ke `/admin/bookings` dicabut; `/admin` kembali jadi dashboard | roadmap 2.1.3, **R8** |
 | Siapa yang melihat dashboard | SA **dan** advisor | `docs/07 §A1`, matriks `docs/09 §9.3` |
 | Siapa yang melihat laporan | SA & advisor melihat; export keduanya. **Pendapatan SA saja** | `docs/07 §A9`, matriks `docs/09 §9.3` |

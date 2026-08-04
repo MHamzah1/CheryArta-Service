@@ -30,7 +30,7 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | R6 | **Notifikasi WA di Big Fase 1 = tombol manual sederhana** | Tombol "Chat via WhatsApp" di detail booking, teks dari `config`. Tanpa tabel template, tanpa log kirim — itu A7 di Big Fase 2. |
 | R7 | **Slot Sabtu berhenti di 13:00** — menutup [Q1](README.md#pertanyaan-terbuka) | `config/booking.php` memakai `slots_by_weekday` untuk hari Sabtu. Tidak ada perubahan kode `SlotService`. |
 | R8 | **`/admin` mengalihkan ke `/admin/bookings`** | A1 Dashboard ditunda utuh; `pages/admin/dashboard.tsx` dari Fase 0 dihapus, bukan diisi setengah. |
-| R9 | **A11 Pengguna Internal tetap di Big Fase 2** — F1.7 dicabut | Menggantikan keputusan sebelumnya yang menarik A11 maju ke Big Fase 1. Akun staf tetap lahir dari `UserSeeder` sepanjang Big Fase 1; penambahan advisor sungguhan lewat `tinker` atau DBeaver sampai F2.2.3. Penegakan `must_reset_password` ikut mundur ke Big Fase 2 — dampaknya kecil selama kolom itu hanya mengenai akun customer. `AccessMatrixTest` (A14) ikut ke F2.2.7 setelah F1.8 juga dicabut, dan dibuat sekaligus lengkap di sana. Big Fase 1 turun 2 hari (24 → 22), lalu 21 setelah F1.8 dicabut. |
+| R9 | **A11 Pengguna Internal tetap di Big Fase 2** — F1.7 dicabut | Menggantikan keputusan sebelumnya yang menarik A11 maju ke Big Fase 1. Akun staf tetap lahir dari `UserSeeder` sepanjang Big Fase 1; penambahan advisor sungguhan lewat `tinker` atau DBeaver sampai F2.2.3. Penegakan `must_reset_password` ikut mundur ke Big Fase 2 — dampaknya kecil selama kolom itu hanya mengenai akun customer. `AccessMatrixTest` (A14) ikut ke F2.2.7 setelah F1.8 juga dicabut, dan dibuat sekaligus lengkap di sana. |
 
 ## Modul admin: yang masuk dan yang ditunda
 
@@ -71,7 +71,7 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 
 # Big Fase 1 — Sistem Inti Berjalan Penuh
 
-## F1.0 — Fondasi  (2 hari) — ✅ SELESAI
+## F1.0 — Fondasi — ✅ SELESAI
 
 > **Penyimpangan dari rencana, disengaja:**
 > 1. Memakai `laravel/react-starter-kit` alih-alih `laravel/laravel` + Breeze — kit itu sudah
@@ -94,7 +94,7 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 **Selesai bila:** `npm run dev` + `php artisan serve` menampilkan kerangka tiga layout, dan
 `php artisan test` hijau.
 
-## F1.1 — Instalasi, Database Bersama & Deploy Railway  (2 hari) — ✅ SELESAI
+## F1.1 — Instalasi, Database Bersama & Deploy Railway — ✅ SELESAI
 
 Fase ini didahulukan agar **setiap commit berikutnya langsung terbukti bisa di-deploy**, dan agar
 semua komputer developer memandang data yang sama sejak hari pertama. Panduan langkah demi
@@ -161,7 +161,7 @@ Tiga akibat yang tetap perlu diingat meski diperbolehkan:
 | Baris gambar hilang, **berkasnya tetap di Cloudinary** → menumpuk jadi berkas yatim | Sesekali bersihkan lewat Media Library Cloudinary; folder sudah terpisah per jenis |
 | Seeder menjadi satu-satunya jalan pulih | Seeder produksi wajib **lengkap & idempoten** — kalau tidak, `migrate:fresh --seed` meninggalkan sistem setengah isi |
 
-## F1.2 — Autentikasi & Data Inti  (3 hari) — ✅ SELESAI
+## F1.2 — Autentikasi & Data Inti — ✅ SELESAI
 
 > **Selesai 3 Agustus 2026.** 124 uji Pest hijau; Pint, PHPStan, ESLint, `tsc --noEmit`, dan
 > `npm run build` bersih. Kesembilan migration diuji `migrate` **dan** `migrate:rollback`
@@ -204,7 +204,7 @@ Tiga akibat yang tetap perlu diingat meski diperbolehkan:
 **Selesai bila:** pelanggan bisa mendaftar, masuk, dan menyimpan kendaraannya; seluruh tabel
 inti + konten sudah terisi seeder di database Railway bersama.
 
-## F1.3 — Master Admin: Katalog & Paket Layanan  (3 hari) — ✅ SELESAI
+## F1.3 — Master Admin: Katalog & Paket Layanan — ✅ SELESAI
 
 Dikerjakan **sebelum** landing page, karena landing page menampilkan data yang dikelola di sini.
 
@@ -257,7 +257,7 @@ Dikerjakan **sebelum** landing page, karena landing page menampilkan data yang d
 **Selesai bila:** Super Admin bisa menambah satu model mobil baru berikut varian dan galerinya
 tanpa menyentuh database, dan gambarnya tampil dari Cloudinary.
 
-## F1.4 — Booking End-to-End (Customer)  (4 hari) — ✅ SELESAI
+## F1.4 — Booking End-to-End (Customer) — ✅ SELESAI
 
 > **Selesai 3 Agustus 2026.** 272 uji Pest hijau — 81 di antaranya baru di `tests/Feature/Booking/`,
 > ditambah uji slot Sabtu di `BookingConfigTest` dan uji aturan 1.3.5 yang baru bisa dijalankan
@@ -311,7 +311,7 @@ tanpa menyentuh database, dan gambarnya tampil dari Cloudinary.
 **Selesai bila:** pelanggan dapat memesan, melihat status, menjadwal ulang, dan membatalkan —
 dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan manual.
 
-## F1.5 — Admin Operasional: A2, A3, A6  (3 hari) — ✅ SELESAI
+## F1.5 — Admin Operasional: A2, A3, A6 — ✅ SELESAI
 
 > **Selesai 3 Agustus 2026.** 363 uji Pest hijau — 91 di antaranya baru di
 > `tests/Feature/Admin/` (`AdminAccessTest`, `BookingListTest`, `BookingStatusTest`,
@@ -388,7 +388,7 @@ dan seluruh aturan slot terbukti lewat uji otomatis, bukan lewat pemeriksaan man
 **Selesai bila:** advisor dapat menjalankan satu hari kerja penuh — menerima booking telepon,
 mengubah status, mencari riwayat unit — tanpa menyentuh database.
 
-## F1.6 — Landing Page Publik  (4 hari) — ✅ SELESAI
+## F1.6 — Landing Page Publik — ✅ SELESAI
 
 Menampilkan data yang sudah dikelola admin di F1.3 (katalog, paket layanan) dan data seeder
 untuk yang belum punya layar admin (fasilitas, FAQ, testimoni — **R4**).
@@ -511,19 +511,19 @@ akun. Notifikasi WhatsApp sudah punya jalur sementara yang berfungsi sejak Big F
 klik-to-chat, **R6**), dan invoice belum pernah ada di sistem lama sehingga tidak ada yang
 menunggunya. Keduanya boleh menyusul.
 
-| Sub-fase | Isi | Hari |
-|----------|-----|-----:|
-| F2.1 | Dashboard & Laporan (A1, A9) — ✅ selesai | 3 |
-| F2.2 | Konten, Pengguna & Audit (A10, A11, A12, A13, A14) | 3 |
-| F2.3 | Notifikasi WhatsApp penuh (A7) | 2 |
-| F2.4 | Invoice (A8) | 3 |
-| F2.5 | Pengerasan & Go-Live | 5 |
+| Sub-fase | Isi | Status |
+|----------|-----|--------|
+| F2.1 | Dashboard & Laporan (A1, A9) | ✅ selesai |
+| F2.2 | Konten, Pengguna & Audit (A10, A11, A12, A13, A14) | 🔄 sedang dikerjakan |
+| F2.3 | Notifikasi WhatsApp penuh (A7) | ⏳ |
+| F2.4 | Invoice (A8) | ⏳ |
+| F2.5 | Pengerasan & Go-Live | ⏳ |
 
 Satu ketergantungan yang harus dijaga: **F2.1 dashboard menampilkan hitungan draft WhatsApp**,
 padahal tabelnya baru lahir di F2.3. Kartu itu karena itu dibangun di F2.3.5, bukan di F2.1 —
 dashboard tidak boleh menampilkan "0 draft" untuk tabel yang belum ada.
 
-## F2.1 — Dashboard & Laporan  (3 hari) — ✅ SELESAI
+## F2.1 — Dashboard & Laporan — ✅ SELESAI
 
 | # | Pekerjaan |
 |---|-----------|
@@ -560,7 +560,7 @@ dashboard tidak boleh menampilkan "0 draft" untuk tabel yang belum ada.
 > warisan F1.2, di luar lingkup PRD ini — **diusulkan masuk F2.2**, keputusannya diambil di
 > sesi grill F2.2.
 
-## F2.2 — Konten, Pengguna & Audit  (3 hari)
+## F2.2 — Konten, Pengguna & Audit
 
 Menutup sisi panel admin: layar konten yang tabelnya sudah terisi sejak F1.2.2, pengelolaan
 akun staf yang selama Big Fase 1 hanya bisa lewat DBeaver, dan jejak audit atas keduanya.
@@ -576,7 +576,7 @@ akun staf yang selama Big Fase 1 hanya bisa lewat DBeaver, dan jejak audit atas 
 | 2.2.7 | **A13** navigasi panel lengkap (termasuk grup "Sistem" → Pengguna Internal) + **A14** `tests/Feature/Admin/AccessMatrixTest.php` dibuat **sekaligus lengkap**: satu uji per baris matriks untuk seluruh modul yang sudah ada saat itu (A2–A6, master data, A10, A11) — SA boleh, advisor ditolak pada baris SA-saja, customer & tamu ditolak di seluruhnya. Baris invoice & template WA menyusul di F2.4.6 dan F2.3.6 |
 | 2.2.8 | Uji A11: SA gagal menurunkan/menonaktifkan diri sendiri; SA aktif terakhir tidak bisa dijatuhkan; akun staf baru tidak bisa membuka menu apa pun sebelum menetapkan password; `UserSeeder` tetap idempoten dan tetap menghasilkan SA + advisor yang bisa dipakai masuk |
 
-## F2.3 — Notifikasi WhatsApp Penuh  (2 hari)
+## F2.3 — Notifikasi WhatsApp Penuh
 
 Sampai titik ini tombol klik-to-chat sederhana dari F1.5.7 masih yang dipakai (**R6**) — jalur
 manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pengiriman.
@@ -590,7 +590,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.3.5 | Kartu "draft WA belum dikirim" ditambahkan ke dashboard A1 — ditunda ke sini karena tabelnya baru lahir di 2.3.1 |
 | 2.3.6 | **A14** baris template WA ditambahkan ke `AccessMatrixTest` (F2.2.7) |
 
-## F2.4 — Invoice  (3 hari)
+## F2.4 — Invoice
 
 | # | Pekerjaan |
 |---|-----------|
@@ -602,7 +602,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.4.6 | **A14** baris invoice ditambahkan ke `AccessMatrixTest` (F2.2.7); total nilai invoice di detail customer (A6) yang tertunda sejak F1.5 ikut dilengkapi |
 | 2.4.7 | **A9** laporan **Pendapatan** (total invoice `issued`/`paid` per periode, **SA saja**) ditambahkan sebagai tab keempat di `/admin/laporan` — ditunda ke sini dari F2.1.4 karena tabel `invoices` baru lahir di 2.4.1 |
 
-## F2.5 — Pengerasan & Go-Live  (5 hari)
+## F2.5 — Pengerasan & Go-Live
 
 | # | Pekerjaan |
 |---|-----------|
@@ -622,39 +622,38 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 
 ---
 
-## Ringkasan Jadwal
+## Urutan Pengerjaan
 
-| Big Fase | Sub-fase | Hari | Kumulatif |
-|----------|----------|-----:|----------:|
-| **1** | F1.0 — Fondasi ✅ | 2 | 2 |
-| **1** | F1.1 — Instalasi, DB bersama & Railway | 2 | 4 |
-| **1** | F1.2 — Autentikasi & data inti | 3 | 7 |
-| **1** | F1.3 — Master admin (A4, A5) | 3 | 10 |
-| **1** | F1.4 — Booking end-to-end | 4 | 14 |
-| **1** | F1.5 — Admin operasional (A2, A3, A6) | 3 | 17 |
-| **1** | F1.6 — Landing page publik ✅ | 4 | 21 |
-| **1** | ~~F1.7 — Hak akses & pengguna internal~~ — dicabut (**R9**) | — | — |
-| **1** | ~~F1.8 — Stabilisasi~~ — dicabut, isinya ke DoD & F2.5 | — | — |
-| **2** | F2.1 — Dashboard & laporan (A1, A9) ✅ | 3 | 24 |
-| **2** | F2.2 — Konten, pengguna, audit (A10, A11, A12, A13, A14) | 3 | 27 |
-| **2** | F2.3 — WhatsApp penuh (A7) | 2 | 29 |
-| **2** | F2.4 — Invoice (A8) | 3 | 32 |
-| **2** | F2.5 — Pengerasan & go-live | 5 | **37** |
+> **Tidak ada target hari di roadmap ini.** Estimasi berbasis hari sengaja dibuang: yang
+> menentukan sebuah sub-fase selesai adalah **Definition of Done di bawah**, bukan berapa lama
+> ia dikerjakan. Angka hari hanya menciptakan tekanan untuk menyatakan selesai sebelum uji dan
+> otorisasinya benar-benar beres — dan bagian itulah yang paling mahal bila dilewati.
 
-**Big Fase 1 sudah selesai di angka 21 hari**, dan **F2.1 ditutup di angka 24**. Pekerjaan
-berikutnya adalah **F2.2 Konten, Pengguna & Audit**. Total ≈ 7,5 minggu
-untuk satu pengembang. Bila dikerjakan dua orang, F1.6 dapat berjalan paralel dengan F1.4–F1.5
-sesudah F1.3 selesai.
+| Big Fase | Sub-fase | Status |
+|----------|----------|--------|
+| **1** | F1.0 — Fondasi | ✅ selesai |
+| **1** | F1.1 — Instalasi, DB bersama & Railway | ✅ selesai |
+| **1** | F1.2 — Autentikasi & data inti | ✅ selesai |
+| **1** | F1.3 — Master admin (A4, A5) | ✅ selesai |
+| **1** | F1.4 — Booking end-to-end | ✅ selesai |
+| **1** | F1.5 — Admin operasional (A2, A3, A6) | ✅ selesai |
+| **1** | F1.6 — Landing page publik | ✅ selesai |
+| **1** | ~~F1.7 — Hak akses & pengguna internal~~ | dicabut (**R9**) |
+| **1** | ~~F1.8 — Stabilisasi~~ | dicabut, isinya ke DoD & F2.5 |
+| **2** | F2.1 — Dashboard & laporan (A1, A9) | ✅ selesai |
+| **2** | F2.2 — Konten, pengguna, audit (A10, A11, A12, A13, A14) | 🔄 sedang dikerjakan |
+| **2** | F2.3 — WhatsApp penuh (A7) | ⏳ |
+| **2** | F2.4 — Invoice (A8) | ⏳ |
+| **2** | F2.5 — Pengerasan & go-live | ⏳ |
+
+**Big Fase 1 selesai seluruhnya**, dan **F2.1 sudah ditutup**. Pekerjaan berikutnya adalah
+**F2.2 Konten, Pengguna & Audit**.
 
 Dua sub-fase yang dicabut tidak berarti pekerjaannya hilang seluruhnya: A11 pindah ke F2.2.3
 (**R9**), sedangkan verifikasi menyeluruh bekas F1.8 pindah ke F2.5.10–2.5.11 dan ke Definition
 of Done. Yang benar-benar berkurang adalah **satu putaran verifikasi berdiri sendiri di akhir
 Big Fase 1** — konsekuensinya dicatat di [F1.8 — dicabut](#f18--dicabut) dan
 [tabel risiko](#risiko).
-
-Angka total **lebih besar dari roadmap versi sebelumnya (25 hari)** karena bertambah dua
-pekerjaan nyata yang dulu tidak ada: penyiapan Railway + Cloudinary + database bersama (F1.1,
-2 hari) dan pemisahan database produksi menjelang rilis (F2.5.1, bagian dari 5 hari).
 
 ## Definition of Done (berlaku untuk setiap tugas)
 

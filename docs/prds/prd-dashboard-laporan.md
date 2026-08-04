@@ -1,7 +1,7 @@
 # PRD: Dashboard Admin & Laporan (F2.1 — A1 + A9)
 
 **Sumber keputusan:** [`docs/grills/grill-dashboard-laporan.md`](../grills/grill-dashboard-laporan.md) (ditutup 4 Agustus 2026)
-**Sub-fase:** F2.1 — sub-fase pertama Big Fase 2 · estimasi 3 hari
+**Sub-fase:** F2.1 — sub-fase pertama Big Fase 2
 **Tanggal:** 4 Agustus 2026
 **Status:** ✅ **SELESAI** 4 Agustus 2026 — 475 uji Pest hijau, seluruh gerbang kualitas bersih.
 Satu penyimpangan: export menghasilkan CSV, bukan `.xlsx` (lihat Pertanyaan Terbuka #1).
