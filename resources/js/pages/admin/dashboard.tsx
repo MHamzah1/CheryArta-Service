@@ -8,7 +8,7 @@ import AdminLayout from '@/layouts/admin-layout';
 import { formatJam, formatPlat, formatTanggal, formatTanggalSingkat } from '@/lib/format';
 import { type DashboardBookingRow, type DashboardKpi, type DashboardOccupancy, type TrendPoint } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { AlertTriangle, CalendarCheck, CalendarDays, CheckCircle2, Clock, Wrench } from 'lucide-react';
+import { AlertTriangle, CalendarCheck, CalendarDays, CheckCircle2, Clock, MessageCircle, Wrench } from 'lucide-react';
 
 interface Props {
     today: string;
@@ -18,6 +18,8 @@ interface Props {
     todayBookings: DashboardBookingRow[];
     overdue: DashboardBookingRow[];
     occupancy: DashboardOccupancy;
+    /** Booking yang pelanggannya belum dikabari (docs/07 §A1). */
+    awaitingWhatsApp: number;
 }
 
 /**
@@ -30,18 +32,27 @@ interface Props {
  * Seluruh angka datang dari server. Halaman ini tidak menghitung apa pun —
  * termasuk tidak menyimpulkan "hari ini" dari zona waktu peramban (temuan B7).
  */
-export default function AdminDashboard({ today, kpi, trend, trendDays, todayBookings, overdue, occupancy }: Props) {
+export default function AdminDashboard({
+    today,
+    kpi,
+    trend,
+    trendDays,
+    todayBookings,
+    overdue,
+    occupancy,
+    awaitingWhatsApp,
+}: Props) {
     // Bagian yang diminta ulang setelah aksi cepat. Menyebutkannya eksplisit
     // membuat perubahan status memperbarui KPI dan okupansi sekaligus, tanpa
     // memuat ulang seluruh halaman.
-    const muatUlang = ['kpi', 'todayBookings', 'overdue', 'occupancy'];
+    const muatUlang = ['kpi', 'todayBookings', 'overdue', 'occupancy', 'awaitingWhatsApp'];
 
     return (
         <AdminLayout title="Dashboard" description={`Ringkasan operasional — ${formatTanggal(today)}.`}>
             <Head title="Dashboard" />
 
             <div className="grid gap-6">
-                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     <KpiCard
                         label="Booking Hari Ini"
                         value={kpi.booking_hari_ini}
@@ -70,6 +81,17 @@ export default function AdminDashboard({ today, kpi, trend, trendDays, todayBook
                         icon={CheckCircle2}
                         hint="Bulan kalender berjalan"
                         href={route('admin.bookings.index', { status: 'completed' })}
+                    />
+                    {/* A7 (roadmap 2.3.5). Menghitung booking yang statusnya
+                        berubah belakangan ini tetapi pelanggannya belum
+                        menerima pesan — bukan jumlah draft yang pernah dibuat. */}
+                    <KpiCard
+                        label="Belum Dikabari"
+                        value={awaitingWhatsApp}
+                        icon={MessageCircle}
+                        hint="Perubahan status 7 hari terakhir"
+                        href={route('admin.bookings.index', { wa: 'belum' })}
+                        urgent
                     />
                 </section>
 

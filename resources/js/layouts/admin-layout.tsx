@@ -16,6 +16,7 @@ import {
     LayoutDashboard,
     LogOut,
     Menu,
+    MessageCircle,
     MessageSquareQuote,
     ShieldCheck,
     Users,
@@ -31,9 +32,9 @@ import { useState, type ReactNode } from 'react';
  * dinonaktifkan. Menu yang mengantar ke halaman 404 membuat orang menyangka
  * aplikasinya rusak.
  *
- * Yang belum ada tinggal **Invoice** (Tahap 11) dan **Template WA** (Tahap
- * 10). Dashboard dan Laporan masuk di Tahap 8; Konten dan Sistem di Tahap 9,
- * yang sekaligus menutup A13.
+ * Yang belum ada tinggal **Invoice** (Tahap 11). Dashboard dan Laporan masuk di
+ * Tahap 8; Konten dan Sistem di Tahap 9, yang sekaligus menutup A13; Template
+ * WA menyusul di Tahap 10.
  *
  * `roles` hanya menyembunyikan menu — otorisasi sesungguhnya ada di
  * middleware + Policy di server (.claude/rules/50-keamanan.md).
@@ -100,6 +101,7 @@ function menuAdmin(pesanBelumDibaca: number): { title: string; items: NavItem[] 
         {
             title: 'Sistem',
             items: [
+                { title: 'Template WA', url: path('admin.whatsapp-templates.index'), icon: MessageCircle, roles: SUPER_ADMIN },
                 { title: 'Pengguna Internal', url: path('admin.users.index'), icon: ShieldCheck, roles: SUPER_ADMIN },
                 { title: 'Activity Log', url: path('admin.activity-log.index'), icon: History, roles: SUPER_ADMIN },
             ],

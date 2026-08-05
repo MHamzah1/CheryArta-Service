@@ -41,6 +41,10 @@ class DashboardController extends Controller
             'todayBookings' => $dashboard->todayBookings($today),
             'overdue' => $dashboard->overdueConfirmed($today),
             'occupancy' => $this->okupansi($today, $slots),
+            // A7 (roadmap 2.3.5). Ditunda sampai Tahap 10 karena tabelnya baru
+            // lahir di sini — dashboard tidak boleh menampilkan "0 draft" untuk
+            // tabel yang belum ada.
+            'awaitingWhatsApp' => $dashboard->awaitingWhatsApp(),
         ]);
     }
 

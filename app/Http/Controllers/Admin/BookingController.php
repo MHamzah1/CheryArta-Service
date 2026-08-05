@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
 use App\Enums\UserRole;
+use App\Enums\WhatsAppTemplateKey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BookingFilterRequest;
 use App\Http\Requests\Admin\StoreWalkInBookingRequest;
@@ -17,7 +18,7 @@ use App\Models\ServicePackage;
 use App\Models\User;
 use App\Services\SlotService;
 use App\Services\WalkInBookingService;
-use App\Services\WhatsAppNotifier;
+use App\Services\WhatsApp\WhatsAppNotifier;
 use App\Support\BookingPresenter;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
@@ -102,7 +103,7 @@ class BookingController extends Controller
             ->with('success', "Booking walk-in {$booking->booking_code} dibuat dan langsung dikonfirmasi.");
     }
 
-    /** Detail booking + panel ubah status + panel WhatsApp (roadmap 1.5.3 & 1.5.7). */
+    /** Detail booking + panel ubah status + panel WhatsApp (roadmap 1.5.3 & 2.3.3). */
     public function show(Request $request, Booking $booking, WhatsAppNotifier $whatsapp): Response
     {
         Gate::authorize('view', $booking);
@@ -114,6 +115,10 @@ class BookingController extends Controller
             'handledBy:id,name',
             'rescheduledFrom:id,booking_code,booking_date,booking_time',
             'statusHistories' => fn ($query) => $query->with('changedBy:id,name')->orderBy('created_at')->orderBy('id'),
+            // Ikut dimuat di sini, bukan dikueri di dalam presenter: riwayat
+            // pesan dibaca beberapa kali saat menyusun panel, dan kueri di
+            // dalam perulangan adalah cara N+1 masuk lewat pintu belakang.
+            'whatsappMessages' => fn ($query) => $query->with('generatedBy:id,name')->latest('id'),
         ]);
 
         return Inertia::render('admin/bookings/show', [
@@ -130,10 +135,17 @@ class BookingController extends Controller
             'canUpdateStatus' => $request->user()->can('updateStatus', $booking),
             'canDelete' => $request->user()->can('delete', $booking),
 
-            // R6: tombol klik-to-chat sederhana. Null bila pelanggan tidak
-            // punya nomor WhatsApp — tombol tanpa tujuan lebih buruk daripada
-            // tidak ada tombol.
-            'whatsapp' => $whatsapp->draft($booking),
+            // Panel penuh A7 (docs/08 §8.2). Draftnya dihitung di sini supaya
+            // BookingPresenter tetap murni pembentuk props — ia tidak ikut
+            // memutuskan template mana yang berlaku.
+            'whatsapp' => BookingPresenter::whatsappPanel(
+                $booking,
+                $whatsapp->draft($booking, WhatsAppTemplateKey::forStatus($booking->status)),
+                $booking->isRemindable()
+                    ? $whatsapp->draft($booking, WhatsAppTemplateKey::BookingReminder)
+                    : null,
+                $booking->whatsappMessages,
+            ),
         ]);
     }
 

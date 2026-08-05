@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
+use App\Enums\WhatsAppMessageStatus;
+use App\Enums\WhatsAppTemplateKey;
 use App\Models\Concerns\RecordsActivity;
 use App\Support\SlotTime;
 use Carbon\CarbonImmutable;
@@ -51,6 +53,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read User|null $handledBy
  * @property-read Booking|null $rescheduledFrom
  * @property-read \Illuminate\Database\Eloquent\Collection<int, BookingStatusHistory> $statusHistories
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, WhatsAppMessage> $whatsappMessages
  */
 class Booking extends Model
 {
@@ -176,6 +179,12 @@ class Booking extends Model
         return $this->hasMany(BookingStatusHistory::class);
     }
 
+    /** Log klik-to-chat untuk booking ini (docs/08 §8.8). @return HasMany<WhatsAppMessage, $this> */
+    public function whatsappMessages(): HasMany
+    {
+        return $this->hasMany(WhatsAppMessage::class);
+    }
+
     /**
      * Jam slot selalu tersimpan dalam bentuk kanonis `H:i:s`.
      *
@@ -202,6 +211,21 @@ class Booking extends Model
         ));
     }
 
+    /**
+     * Layak dikirimi pengingat H-1 (docs/07 §A3, keputusan grill Q8).
+     *
+     * Hanya booking yang sudah **dikonfirmasi** dan jadwalnya masih di depan.
+     * `pending` sengaja ditolak: mengirim "sampai jumpa besok" untuk booking
+     * yang belum dikonfirmasi adalah janji yang belum tentu ditepati bengkel.
+     * Status akhir juga ditolak — mengingatkan servis yang sudah lewat atau
+     * batal adalah cacat, bukan fitur.
+     */
+    public function isRemindable(): bool
+    {
+        return $this->status === BookingStatus::Confirmed
+            && $this->booking_date->gt(now(config('booking.timezone'))->startOfDay());
+    }
+
     /** Booking yang masih menempati kuota slotnya. @param  Builder<$this>  $query */
     public function scopeOccupyingQuota(Builder $query): void
     {
@@ -219,5 +243,79 @@ class Booking extends Model
     {
         $query->whereIn('status', BookingStatus::activeValues())
             ->whereDate('booking_date', '>=', now(config('booking.timezone'))->toDateString());
+    }
+
+    /**
+     * Booking yang pelanggannya belum dikabari (docs/07 §A1, keputusan grill Q6).
+     *
+     * Satu definisi untuk dua pemakai — kartu dashboard DAN saringan `wa=belum`
+     * di daftar booking. Menuliskannya dua kali berarti dua angka yang
+     * perlahan berselisih, dan pengguna tidak akan tahu mana yang benar
+     * (cacat B2 sistem lama).
+     *
+     * Tiga syarat sekaligus:
+     * 1. Statusnya termasuk yang ditagih (`booking_created` dan
+     *    `booking_reminder` bersifat sukarela), DAN templatenya sedang aktif —
+     *    template yang dinonaktifkan Super Admin berarti pesan itu memang tidak
+     *    diharapkan.
+     * 2. Belum ada pesan yang sudah diurus (`sent` atau `skipped`) untuk kunci
+     *    template status itu.
+     * 3. Statusnya berubah dalam rentang `whatsapp.pending_window_days`.
+     *    Tanpa syarat ini seluruh booking sejak Tahap 5 ikut terhitung dan
+     *    kartunya mustahil dikosongkan.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeAwaitingWhatsApp(Builder $query): void
+    {
+        $kunciAktif = WhatsAppTemplate::query()
+            ->active()
+            ->get()
+            ->map(fn (WhatsAppTemplate $template): string => $template->key->value)
+            ->all();
+
+        $statuses = array_values(array_filter(
+            WhatsAppTemplateKey::trackedStatusValues(),
+            fn (string $status): bool => in_array(
+                WhatsAppTemplateKey::forStatus(BookingStatus::from($status))->value,
+                $kunciAktif,
+                true,
+            ),
+        ));
+
+        // Seluruh template ditutup Super Admin, atau belum di-seed sama sekali.
+        // Tidak ada yang ditagih — dan kueri yang tanpa syarat justru akan
+        // mengembalikan SEMUANYA.
+        if ($statuses === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $sejak = now(config('booking.timezone'))
+            ->subDays((int) config('whatsapp.pending_window_days'))
+            ->startOfDay();
+
+        $query
+            ->whereIn('status', $statuses)
+            ->whereHas('statusHistories', fn (Builder $h) => $h->where('created_at', '>=', $sejak))
+            ->where(function (Builder $outer) use ($statuses): void {
+                // Satu kelompok per status: kunci template yang dicari berbeda
+                // untuk masing-masing, dan pemetaannya hidup di PHP (enum) —
+                // bukan sesuatu yang bisa dijodohkan dengan whereColumn.
+                foreach ($statuses as $status) {
+                    $kunci = WhatsAppTemplateKey::forStatus(BookingStatus::from($status))->value;
+
+                    $outer->orWhere(function (Builder $q) use ($status, $kunci): void {
+                        $q->where('status', $status)
+                            ->whereDoesntHave(
+                                'whatsappMessages',
+                                fn (Builder $m) => $m
+                                    ->whereIn('status', WhatsAppMessageStatus::settledValues())
+                                    ->where('template_key', $kunci),
+                            );
+                    });
+                }
+            });
     }
 }

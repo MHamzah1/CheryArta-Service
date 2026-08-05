@@ -6,11 +6,14 @@ namespace App\Support;
 
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
+use App\Enums\WhatsAppTemplateKey;
 use App\Models\Booking;
 use App\Models\BookingStatusHistory;
 use App\Models\ServicePackage;
 use App\Models\Vehicle;
+use App\Models\WhatsAppMessage;
 use App\Services\SlotService;
+use Illuminate\Support\Collection;
 
 /**
  * Bentuk props booking untuk Inertia.
@@ -306,6 +309,68 @@ final class BookingPresenter
             'booking_time' => SlotTime::short($booking->booking_time),
             'status' => $booking->status->value,
             'estimated_finish_at' => $booking->estimated_finish_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Panel WhatsApp di detail booking (docs/07 §A7, docs/08 §8.2).
+     *
+     * Draftnya dihitung pemanggil supaya kelas ini tetap murni pembentuk props
+     * — ia tidak boleh ikut memutuskan template mana yang berlaku.
+     *
+     * `reason` menjelaskan MENGAPA tidak ada draft. Dua sebabnya wajar dan
+     * berbeda penanganannya, jadi panel tidak boleh sekadar diam: nomor
+     * pelanggan yang kosong diperbaiki dari halaman customer, template yang
+     * dinonaktifkan dari halaman Template WA.
+     *
+     * @param  Collection<int, WhatsAppMessage>  $history
+     * @return array<string, mixed>
+     */
+    public static function whatsappPanel(
+        Booking $booking,
+        ?WhatsAppDraft $draft,
+        ?WhatsAppDraft $reminder,
+        Collection $history,
+    ): array {
+        $key = WhatsAppTemplateKey::forStatus($booking->status);
+
+        $sudahDiurus = $history->contains(
+            fn (WhatsAppMessage $m): bool => $m->template_key === $key && $m->status->isSettled(),
+        );
+
+        return [
+            'template_key' => $key->value,
+            'template_label' => $key->label(),
+            'draft' => $draft?->toArray(),
+            'reason' => $draft !== null
+                ? null
+                : (($booking->user->phone_wa === null || $booking->user->phone_wa === '')
+                    ? 'tanpa_nomor'
+                    : 'template_nonaktif'),
+            'reminder' => $reminder?->toArray(),
+            // Penanda menonjol "belum dikabari": hanya bila memang ADA yang
+            // bisa dikirim dan belum diurus. Menyalakannya untuk template yang
+            // sengaja dinonaktifkan berarti menagih pekerjaan yang tidak ada.
+            'awaiting' => $draft !== null && $key->isTracked() && ! $sudahDiurus,
+            'history' => $history->map(self::whatsappMessage(...))->values()->all(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public static function whatsappMessage(WhatsAppMessage $message): array
+    {
+        return [
+            'id' => $message->id,
+            'template_key' => $message->template_key->value,
+            'template_label' => $message->template_key->label(),
+            'status' => $message->status->value,
+            'status_label' => $message->status->label(),
+            'tone' => $message->status->tone(),
+            'is_settled' => $message->status->isSettled(),
+            'message' => $message->rendered_message,
+            'actor_name' => $message->generatedBy?->name,
+            'created_at' => $message->created_at?->toIso8601String(),
+            'sent_at' => $message->sent_at?->toIso8601String(),
         ];
     }
 }

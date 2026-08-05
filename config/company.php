@@ -46,40 +46,17 @@ return [
     'wa_number' => env('COMPANY_WA_NUMBER', '6282123872515'),
 
     /*
-    | Teks pesan WhatsApp klik-to-chat, berkunci status booking.
+    | Teks pesan WhatsApp TIDAK lagi ada di sini.
     |
-    | BIG FASE 1 SAJA (keputusan R6, docs/10 §Modul admin). Tabel
-    | `whatsapp_templates` yang bisa disunting Super Admin, log pengiriman, dan
-    | penanda "belum dikirim" baru lahir di F2.2 — sampai saat itu teksnya ada
-    | di sini supaya tidak tertanam di JSX seperti sistem lama.
+    | Sampai Tahap 9 ia hidup sebagai `wa_messages`, berkunci status booking —
+    | jalur sementara keputusan R6. Sejak Tahap 10 (F2.3) teksnya pindah ke
+    | tabel `whatsapp_templates` yang bisa disunting Super Admin tanpa deploy,
+    | dan salinan di sini DIHAPUS pada perubahan yang sama: dua sumber teks
+    | yang hidup bersamaan adalah pola cacat B2 sistem lama.
     |
-    | Daftar placeholder yang sah ada di docs/08-notifikasi-whatsapp.md §8.4
-    | dan diisi App\Services\WhatsAppNotifier. Placeholder yang tidak dikenali
-    | dibiarkan apa adanya — advisor akan melihatnya sebelum menekan kirim.
+    | Lihat docs/08-notifikasi-whatsapp.md §8.4 dan
+    | database/seeders/WhatsAppTemplateSeeder.php.
     */
-    'wa_messages' => [
-        'pending' => 'Halo {{nama}}, booking servis Anda dengan kode *{{kode_booking}}* '
-            .'untuk {{kendaraan}} ({{plat}}) sudah kami terima untuk {{tanggal}} pukul {{jam}}. '
-            .'Kami akan segera mengonfirmasi. - Chery Arta',
-
-        'confirmed' => 'Halo {{nama}}, booking *{{kode_booking}}* untuk {{kendaraan}} ({{plat}}) '
-            .'*dikonfirmasi* pada {{tanggal}} pukul {{jam}}. Layanan: {{paket}}. '
-            .'Mohon datang 10 menit lebih awal. Alamat: {{alamat}}. - Chery Arta',
-
-        'in_progress' => 'Halo {{nama}}, kendaraan {{kendaraan}} ({{plat}}) sedang kami kerjakan. '
-            .'Estimasi selesai pukul {{estimasi_selesai}}. Kode: {{kode_booking}}. - Chery Arta',
-
-        'completed' => 'Halo {{nama}}, servis kendaraan {{kendaraan}} ({{plat}}) telah *selesai* '
-            .'dan siap diambil. Kode: {{kode_booking}}. '
-            .'Terima kasih telah mempercayakan perawatan pada Chery Arta.',
-
-        'cancelled' => 'Halo {{nama}}, booking *{{kode_booking}}* pada {{tanggal}} pukul {{jam}} '
-            .'telah dibatalkan. Alasan: {{alasan}}. Silakan booking ulang kapan saja. - Chery Arta',
-
-        'no_show' => 'Halo {{nama}}, kami menunggu kendaraan {{kendaraan}} ({{plat}}) pada {{tanggal}} '
-            .'pukul {{jam}} namun belum sempat bertemu. Kode: {{kode_booking}}. '
-            .'Silakan hubungi kami untuk menjadwalkan ulang. - Chery Arta',
-    ],
 
     /*
     | Jam operasional. 'closed' => true berarti tutup.

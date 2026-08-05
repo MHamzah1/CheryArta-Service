@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatJam, formatPlat, formatTanggal } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { type ScheduleRow } from '@/types';
+import { type ScheduleCard, type ScheduleRow } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
-import { CalendarOff, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { BellRing, CalendarOff, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 interface Props {
     date: string;
@@ -31,6 +31,23 @@ interface Props {
 export default function JadwalIndex({ date, previousDate, nextDate, isToday, closedReason, quotaPerSlot, rows }: Props) {
     const buka = (tanggal: string) => {
         router.get(route('admin.schedule.index'), { tanggal }, { preserveState: true, replace: true });
+    };
+
+    /**
+     * Tautannya sudah terbuka lewat <a href> — ini hanya mencatat bahwa itu
+     * terjadi. Sengaja bukan "POST dulu, buka jendela belakangan": peramban
+     * memblokir jendela yang dibuka di luar tumpukan gestur pengguna.
+     */
+    const catatPengingat = (booking: ScheduleCard) => {
+        if (booking.reminder === null) {
+            return;
+        }
+
+        router.post(
+            route('admin.bookings.whatsapp.store', booking.booking_code),
+            { template_key: booking.reminder.template_key },
+            { preserveScroll: true, preserveState: true },
+        );
     };
 
     const totalTerisi = rows.reduce((jumlah, row) => jumlah + row.bookings.length, 0);
@@ -101,21 +118,47 @@ export default function JadwalIndex({ date, previousDate, nextDate, isToday, clo
 
                                 <div className="grid gap-2 sm:grid-cols-2">
                                     {row.bookings.map((booking) => (
-                                        <Link
+                                        <div
                                             key={booking.booking_code}
-                                            href={route('admin.bookings.show', booking.booking_code)}
-                                            className="border-line bg-canvas hover:border-brand-400 focus-visible:ring-brand-600 rounded-xl border p-3 transition focus-visible:ring-2"
+                                            className="border-line bg-canvas rounded-xl border p-3"
                                         >
-                                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <p className="text-brand-700 font-mono text-sm font-semibold">{booking.booking_code}</p>
-                                                <StatusBadge status={booking.status} />
-                                            </div>
-                                            <p className="mt-1 font-medium">{booking.customer_name}</p>
-                                            <p className="text-ink-soft text-sm">
-                                                {booking.vehicle_model} · {formatPlat(booking.vehicle_plate)}
-                                            </p>
-                                            <p className="text-ink-muted text-xs">{booking.package_name}</p>
-                                        </Link>
+                                            {/* Tautan dan tombol pengingat harus BERSEBELAHAN, bukan
+                                                bersarang: tombol di dalam <a> adalah HTML tidak sah dan
+                                                membuat penekanannya membuka halaman detail. */}
+                                            <Link
+                                                href={route('admin.bookings.show', booking.booking_code)}
+                                                className="hover:text-brand-700 focus-visible:ring-brand-600 block rounded-lg transition focus-visible:ring-2"
+                                            >
+                                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                                    <p className="text-brand-700 font-mono text-sm font-semibold">
+                                                        {booking.booking_code}
+                                                    </p>
+                                                    <StatusBadge status={booking.status} />
+                                                </div>
+                                                <p className="mt-1 font-medium">{booking.customer_name}</p>
+                                                <p className="text-ink-soft text-sm">
+                                                    {booking.vehicle_model} · {formatPlat(booking.vehicle_plate)}
+                                                </p>
+                                                <p className="text-ink-muted text-xs">{booking.package_name}</p>
+                                            </Link>
+
+                                            {/* Pengingat H-1 (keputusan grill Q8). Hanya muncul untuk
+                                                booking yang sudah dikonfirmasi dan jadwalnya masih di
+                                                depan — kelayakannya diputuskan server. */}
+                                            {booking.reminder !== null && (
+                                                <Button variant="outline" size="sm" className="mt-3 w-full" asChild>
+                                                    <a
+                                                        href={booking.reminder.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={() => catatPengingat(booking)}
+                                                    >
+                                                        <BellRing className="h-4 w-4" aria-hidden="true" />
+                                                        Kirim Pengingat
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
                                     ))}
 
                                     {Array.from({ length: row.remaining }).map((_, index) => (

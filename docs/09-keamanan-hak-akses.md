@@ -70,6 +70,8 @@ public function updateStatus(User $user, Booking $booking): bool
 | Menghapus booking (soft delete) | ✅ | ❌ | ❌ | ❌ |
 | Mengelola kendaraan sendiri | — | — | ✅ | ❌ |
 | Melihat data seluruh customer | ✅ | ✅ | ❌ | ❌ |
+| Menyiapkan & menandai pesan WhatsApp booking | ✅ | ✅ | ❌ | ❌ |
+| Menyunting template WhatsApp | ✅ | ❌ | ❌ | ❌ |
 | Membuat & menerbitkan invoice | ✅ | ✅ | ❌ | ❌ |
 | Membatalkan (void) invoice | ✅ | ❌ | ❌ | ❌ |
 | Melihat invoice sendiri | — | — | ✅ | ❌ |

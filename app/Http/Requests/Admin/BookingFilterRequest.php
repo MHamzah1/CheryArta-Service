@@ -40,6 +40,8 @@ class BookingFilterRequest extends FormRequest
             'paket' => ['nullable', 'integer', 'exists:service_packages,id'],
             'advisor' => ['nullable', 'integer', 'exists:users,id'],
             'urutan' => ['nullable', Rule::in([BookingFilters::URUTAN_TERBARU, BookingFilters::URUTAN_TERDEKAT])],
+            // Datang dari kartu "Belum dikabari" di dashboard (docs/07 §A1).
+            'wa' => ['nullable', Rule::in([BookingFilters::WA_BELUM])],
         ];
     }
 

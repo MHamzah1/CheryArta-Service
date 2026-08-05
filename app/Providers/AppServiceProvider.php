@@ -7,6 +7,8 @@ namespace App\Providers;
 use App\Services\CloudinaryImageUploader;
 use App\Services\FakeImageUploader;
 use App\Services\ImageUploader;
+use App\Services\WhatsApp\ClickToChatNotifier;
+use App\Services\WhatsApp\WhatsAppNotifier;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +40,25 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return new CloudinaryImageUploader($credentialsUrl);
+        });
+
+        // Notifikasi WhatsApp (docs/08 §8.7). Beralih ke gateway otomatis
+        // kelak cukup menambah implementasi baru dan satu cabang di sini —
+        // tidak ada controller, template, atau tabel yang perlu diubah.
+        //
+        // `bind`, BUKAN `singleton`: implementasinya menyimpan template yang
+        // sudah dibaca agar layar jadwal tidak memicu satu kueri per booking.
+        // Singleton akan membuat simpanan itu bertahan antar-permintaan di
+        // dalam satu uji — template yang baru dinonaktifkan akan tampak masih
+        // aktif pada permintaan berikutnya.
+        $this->app->bind(WhatsAppNotifier::class, function (): WhatsAppNotifier {
+            return match (Config::string('whatsapp.driver')) {
+                'click_to_chat' => new ClickToChatNotifier,
+                default => throw new RuntimeException(sprintf(
+                    'WHATSAPP_DRIVER "%s" tidak dikenali. Satu-satunya driver yang tersedia saat ini adalah "click_to_chat".',
+                    Config::string('whatsapp.driver'),
+                )),
+            };
         });
     }
 

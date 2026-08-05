@@ -1,4 +1,5 @@
 import BookingStatusPanel from '@/components/admin/booking-status-panel';
+import WhatsAppMessageHistory from '@/components/admin/whatsapp-message-history';
 import WhatsAppPanel from '@/components/admin/whatsapp-panel';
 import ConfirmDialog from '@/components/confirm-dialog';
 import { StatusBadge } from '@/components/status-badge';
@@ -14,7 +15,12 @@ import {
     formatTelepon,
 } from '@/lib/format';
 import { bookingStatusMeta } from '@/lib/status';
-import { type AdminBookingDetail, type AdminTimelineEntry, type StatusTransitionOption, type WhatsAppDraft } from '@/types';
+import {
+    type AdminBookingDetail,
+    type AdminTimelineEntry,
+    type StatusTransitionOption,
+    type WhatsAppPanelProps,
+} from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { type ReactNode } from 'react';
@@ -26,7 +32,7 @@ interface Props {
     statusOptions: StatusTransitionOption[];
     canUpdateStatus: boolean;
     canDelete: boolean;
-    whatsapp: WhatsAppDraft | null;
+    whatsapp: WhatsAppPanelProps;
 }
 
 function Baris({ label, children }: { label: string; children: ReactNode }) {
@@ -176,7 +182,15 @@ export default function AdminBookingShow({ booking, timeline, statusOptions, can
                     </Kartu>
 
                     <Kartu judul="Notifikasi WhatsApp">
-                        <WhatsAppPanel draft={whatsapp} customerName={booking.customer.name} />
+                        <WhatsAppPanel
+                            panel={whatsapp}
+                            bookingCode={booking.booking_code}
+                            customerName={booking.customer.name}
+                        />
+                    </Kartu>
+
+                    <Kartu judul="Riwayat Pesan">
+                        <WhatsAppMessageHistory bookingCode={booking.booking_code} messages={whatsapp.history} />
                     </Kartu>
                 </div>
 

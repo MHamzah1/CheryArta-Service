@@ -14,7 +14,8 @@ Dokumen ini adalah spesifikasi **lengkap** tiap modul. Urutan pengerjaannya diat
 Tiga modul dikerjakan sebagian di Big Fase 1 — bagian sisanya menyusul:
 
 - **A7** → hanya tombol "Chat via WhatsApp" (`wa.me` + teks dari `config/company.php`).
-  Tabel template, CRUD template, dan log pengiriman menyusul.
+  Tabel template, penyunting template, dan log pengiriman menyusul. **Ditutup di Tahap 10:**
+  teksnya kini di `whatsapp_templates`, dan `config('company.wa_messages')` sudah dihapus.
 - **A10** → hanya tabel `facilities`, `faqs`, `testimonials`, `contact_messages` + seeder,
   supaya landing page punya sumber data. Layar CRUD-nya menyusul.
 - **A13/A14** → menu untuk A2–A6 saja. Tetapi **Policy dan pembatasan SA-saja wajib lengkap
@@ -30,16 +31,12 @@ matriks hak akses teruji terhadap akun contoh, bukan terhadap orang sungguhan.
 
 > Selama Big Fase 1, `/admin` **mengalihkan ke `/admin/bookings`** (**R8**). Redirect itu
 > dicabut di F2.1.3; `/admin` kini merender dashboard.
->
-> Satu kartu masih menyusul: **hitungan draft WhatsApp belum dikirim**, karena tabel
-> `whatsapp_messages` baru lahir di F2.3.1. Kartunya dibangun di F2.3.5 — dashboard tidak
-> menampilkan "0 draft" untuk tabel yang belum ada.
 
 **Tujuan:** menjawab "apa yang harus dikerjakan hari ini" dalam satu layar.
 
 | Elemen | Isi | Sumber data |
 |--------|-----|-------------|
-| Kartu KPI | Booking hari ini · Perlu konfirmasi · Sedang dikerjakan · Selesai bulan ini | agregat `bookings` |
+| Kartu KPI | Booking hari ini · Perlu konfirmasi · Sedang dikerjakan · Selesai bulan ini · **Belum dikabari** | agregat `bookings` |
 | Grafik tren | Jumlah booking 30 hari terakhir (garis) | `bookings` dikelompokkan per tanggal |
 | Okupansi slot hari ini | 11 baris slot dengan bar terisi `n/2` | `SlotService::occupancy(today)` |
 | Tabel booking hari ini | Jam, kode, customer, kendaraan, paket, status, aksi cepat | `bookings` hari ini, urut jam |
@@ -48,13 +45,35 @@ matriks hak akses teruji terhadap akun contoh, bukan terhadap orang sungguhan.
 Aksi cepat pada tabel: **Konfirmasi** · **Mulai** · **Selesai** — tanpa berpindah halaman
 (Inertia partial reload).
 
+### Kartu "Belum dikabari" (F2.3.5)
+
+Menghitung **booking**, bukan baris draft — baris `whatsapp_messages` hanya lahir ketika advisor
+menekan tombolnya, sehingga menghitung draft justru melewatkan kelalaian yang ditakutkan: advisor
+yang tidak membuka WhatsApp sama sekali.
+
+Sebuah booking terhitung bila ketiganya benar:
+
+1. statusnya termasuk yang ditagih (`confirmed`, `in_progress`, `completed`, `cancelled`,
+   `no_show` — `booking_created` dan `booking_reminder` bersifat sukarela) **dan** templatenya
+   sedang aktif;
+2. belum ada pesan berstatus `sent` maupun `skipped` untuk kunci template status itu;
+3. statusnya berubah dalam `config('whatsapp.pending_window_days')` hari terakhir.
+
+Syarat ketiga wajib: tanpanya seluruh booking sejak Tahap 5 ikut terhitung — tabelnya baru lahir
+di Tahap 10 sehingga tak satu pun punya baris terkirim — dan kartunya mustahil dikosongkan.
+
+Definisinya hidup di satu tempat, `Booking::scopeAwaitingWhatsApp()`, dan dipakai bersama saringan
+`wa=belum` di [A2](#a2--manajemen-booking-adminbookings--sa-adv). Kartunya bisa diklik menuju
+daftar itu.
+
 ## A2 — Manajemen Booking  `/admin/bookings`  (SA, ADV)
 
 **Daftar**
 
 - Kolom: Kode · Tanggal · Jam · Customer · Kendaraan · Paket · Status · Advisor · Aksi.
 - Filter (dijalankan **di server**, mempertahankan fitur lama): pencarian nama/plat/kode,
-  status, rentang tanggal, paket layanan, advisor penanggung jawab.
+  status, rentang tanggal, paket layanan, advisor penanggung jawab, dan **`wa=belum`** — hanya
+  booking yang pelanggannya belum dikabari (F2.3.5, tujuan kartu dashboard).
 - Urutan bawaan: tanggal & jam menaik untuk booking mendatang; terbaru dulu untuk riwayat.
 - Paginasi 25 baris; filter tersimpan di query string agar bisa dibagikan/di-bookmark.
 - Tombol: **Tambah Booking (Walk-in)** · **Export Excel** · **Salin untuk Spreadsheet**.
@@ -82,6 +101,14 @@ tersimpan di riwayat dan terlihat customer.
 Tampilan harian: 11 baris slot × kapasitas 2, tiap sel berisi kartu booking (kode, customer,
 kendaraan, status). Navigasi ← hari → dan pemilih tanggal. Slot penuh diberi penanda jelas.
 Berguna saat menerima booking lewat telepon.
+
+Sejak F2.3, tiap kartu booking juga membawa tombol **Kirim Pengingat** — tetapi hanya untuk
+booking berstatus **Dikonfirmasi** yang jadwalnya masih di depan. Layar inilah satu-satunya yang
+sudah menjawab "siapa saja yang servis besok", jadi di sinilah pengingat H-1 paling murah ditekan;
+mengirimnya dari detail booking saja berarti membuka delapan halaman untuk delapan pengingat.
+
+`pending` sengaja tidak ditawari: mengirim "sampai jumpa besok" untuk booking yang belum
+dikonfirmasi adalah janji yang belum tentu ditepati bengkel.
 
 Tampilan mingguan (opsional, Fase 5): matriks 7 hari × slot berisi angka okupansi.
 
@@ -124,20 +151,38 @@ Aksi: nonaktifkan akun (SA), reset password (SA), buat booking untuk customer in
 **`/admin/vehicles`** — daftar seluruh unit terdaftar: plat, model, tahun, pemilik, odometer
 terakhir, jumlah servis. Berguna untuk pertanyaan "unit ini terakhir servis kapan?".
 
-## A7 — Notifikasi WhatsApp  (SA, ADV) — ⚠️ sebagian di Big Fase 1
+## A7 — Notifikasi WhatsApp  (SA, ADV) — ✅ F2.3
 
-Panel tertanam di halaman detail booking, ditambah `/admin/wa-template` (SA) untuk menyunting
+Panel tertanam di halaman detail booking, ditambah `/admin/template-wa` (SA) untuk menyunting
 teks template. Rincian mekanisme: [08-notifikasi-whatsapp.md](08-notifikasi-whatsapp.md).
 
-> **Big Fase 1 hanya membuat tombol "Chat via WhatsApp"** di detail booking — membuka `wa.me`
-> dengan teks dari `config/company.php`. Tabel `whatsapp_templates` & `whatsapp_messages`, panel
-> draft, penanda "belum dikirim", dan CRUD template menyusul di F2.3.
+| Layar | Isi | Hak akses |
+|-------|-----|-----------|
+| Panel di detail booking | Pratinjau pesan (tidak bisa disunting), nomor tujuan, **Buka WhatsApp**, **Salin Pesan**, penanda "Belum dikabari" | SA + ADV |
+| Riwayat pesan di detail booking | Waktu, template, pelaku, status, kutipan pesan · aksi **Tandai Terkirim** / **Lewati** | SA + ADV |
+| Tombol pengingat di [A3 Jadwal](#a3--jadwal--okupansi-adminjadwal--sa-adv) | Hanya untuk booking **Dikonfirmasi** yang jadwalnya masih di depan | SA + ADV |
+| `/admin/template-wa` | Daftar 7 template + form sunting (`name`, `body`, `is_active`) | **SA saja** |
+
+**Penyunting template bukan CRUD.** Tidak ada tambah dan tidak ada hapus: himpunan kuncinya milik
+`App\Enums\WhatsAppTemplateKey` karena setiap kunci punya pemicunya sendiri di dalam kode.
+Template buatan admin tidak akan pernah terpanggil — baris mati yang tampak seperti fitur — dan
+template yang dihapus mematahkan jalur kirim di tengah advisor mengubah status.
+
+Formnya menampilkan daftar placeholder yang bisa diklik untuk disisipkan, penghitung karakter, dan
+**pratinjau terender memakai data contoh** (karangan, bukan pelanggan sungguhan). Placeholder di
+luar daftar ditolak dengan pesan yang menyebut namanya.
+
+`is_active = false` berarti **pesan untuk pemicu itu tidak ditawarkan sama sekali**: panel
+menjelaskan keadaannya dan tidak merender tombol, dan bookingnya tidak ikut dihitung sebagai
+"belum dikabari". Tidak ada jalur cadangan diam-diam ke teks bawaan — cadangan semacam itu membuat
+tombol "nonaktifkan" tidak melakukan apa-apa.
+
+> **Jejaknya baru lahir saat tombol ditekan**, bukan saat status berubah. Alasannya beserta
+> konsekuensinya ada di [08 §8.2](08-notifikasi-whatsapp.md#82-cara-kerja).
 >
-> Terpasang di F1.5: `App\Services\WhatsAppNotifier::draft()` menyusun tautan dan teksnya di
-> server (nomor selalu bentuk ternormalisasi `62…`, `rawurlencode`), lalu mengirimkannya ke
-> React sebagai prop `whatsapp`. Teks per status ada di `config('company.wa_messages')` dan
-> memakai placeholder yang sama dengan [08 §8.4](08-notifikasi-whatsapp.md). Bernilai `null`
-> bila pelanggan tidak punya nomor WhatsApp — tombolnya tidak dirender sama sekali.
+> **Tidak ada layar log global.** Riwayat dibaca dari detail booking dan dari daftar booking yang
+> disaring `wa=belum` ([A2](#a2--manajemen-booking-adminbookings--sa-adv)) — lihat
+> [08 §8.8](08-notifikasi-whatsapp.md#88-aturan-privasi).
 
 ## A8 — Invoice  `/admin/invoices`  (SA, ADV) — ⏳ Big Fase 2
 
@@ -300,8 +345,8 @@ Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
 > **Yang dirender selalu hanya menu yang modulnya sudah ada** — bukan
-> ditampilkan-lalu-dinonaktifkan. Sesudah Tahap 9, yang masih belum dirender tinggal **Invoice**
-> (Tahap 11) dan **Template WA** (Tahap 10).
+> ditampilkan-lalu-dinonaktifkan. Sesudah Tahap 10, yang masih belum dirender tinggal **Invoice**
+> (Tahap 11).
 >
 > "Pesan Masuk" membawa **lencana jumlah belum dibaca**. Angkanya dihitung server dan hanya
 > dikirim untuk Super Admin — peran lain menerima `null`, bukan angka nol, karena jumlah pesan

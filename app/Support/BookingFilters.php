@@ -28,6 +28,9 @@ final readonly class BookingFilters
     /** Jadwal terdekat lebih dulu — dipakai bersama saringan "Mendatang". */
     public const URUTAN_TERDEKAT = 'terdekat';
 
+    /** Nilai saringan WhatsApp: hanya booking yang pelanggannya belum dikabari. */
+    public const WA_BELUM = 'belum';
+
     public function __construct(
         public ?string $cari = null,
         public ?string $status = null,
@@ -36,6 +39,7 @@ final readonly class BookingFilters
         public ?int $paket = null,
         public ?int $advisor = null,
         public string $urutan = self::URUTAN_TERBARU,
+        public ?string $wa = null,
     ) {}
 
     /** @param  array<string, mixed>  $validated */
@@ -51,6 +55,7 @@ final readonly class BookingFilters
             urutan: ($validated['urutan'] ?? null) === self::URUTAN_TERDEKAT
                 ? self::URUTAN_TERDEKAT
                 : self::URUTAN_TERBARU,
+            wa: ($validated['wa'] ?? null) === self::WA_BELUM ? self::WA_BELUM : null,
         );
     }
 
@@ -63,7 +68,11 @@ final readonly class BookingFilters
             ->when($this->dari !== null, fn (Builder $q) => $q->where('booking_date', '>=', $this->dari))
             ->when($this->sampai !== null, fn (Builder $q) => $q->where('booking_date', '<=', $this->sampai))
             ->when($this->paket !== null, fn (Builder $q) => $q->where('service_package_id', $this->paket))
-            ->when($this->advisor !== null, fn (Builder $q) => $q->where('handled_by', $this->advisor));
+            ->when($this->advisor !== null, fn (Builder $q) => $q->where('handled_by', $this->advisor))
+            // Definisinya hidup di Booking::scopeAwaitingWhatsApp — satu tempat
+            // yang sama dengan kartu dashboard, supaya angka di kartu dan isi
+            // daftar ini tidak pernah berselisih.
+            ->when($this->wa === self::WA_BELUM, fn (Builder $q) => $q->awaitingWhatsApp());
 
         $arah = $this->urutan === self::URUTAN_TERDEKAT ? 'asc' : 'desc';
 
@@ -114,6 +123,7 @@ final readonly class BookingFilters
             'paket' => $this->paket,
             'advisor' => $this->advisor,
             'urutan' => $this->urutan,
+            'wa' => $this->wa,
         ];
     }
 
@@ -124,7 +134,8 @@ final readonly class BookingFilters
             && $this->dari === null
             && $this->sampai === null
             && $this->paket === null
-            && $this->advisor === null;
+            && $this->advisor === null
+            && $this->wa === null;
     }
 
     /** String kosong dari form yang dikosongkan berarti "tanpa filter", bukan "cari string kosong". */

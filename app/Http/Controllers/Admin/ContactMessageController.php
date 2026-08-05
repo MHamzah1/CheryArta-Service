@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ContactMessageFilterRequest;
 use App\Models\ContactMessage;
-use App\Services\WhatsAppNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +28,7 @@ use Inertia\Response;
  */
 class ContactMessageController extends Controller
 {
-    public function index(ContactMessageFilterRequest $request, WhatsAppNotifier $whatsapp): Response
+    public function index(ContactMessageFilterRequest $request): Response
     {
         Gate::authorize('viewAny', ContactMessage::class);
 
@@ -53,11 +52,11 @@ class ContactMessageController extends Controller
                 'read_at' => $m->read_at?->toIso8601String(),
                 'read_by_name' => $m->readBy?->name,
                 'created_at' => $m->created_at?->toIso8601String(),
-                // Tautan disusun server: nomor selalu bentuk ternormalisasi
-                // `62…`, tidak pernah input mentah yang ditempel ke URL
-                // (.claude/rules/50 #7). `null` bila pengirim tidak
-                // mencantumkan nomor — tombolnya tidak dirender sama sekali.
-                'whatsapp_url' => $m->phone === null ? null : $whatsapp->contactReplyUrl($m),
+                // Tautan disusun server lewat App\Support\WhatsAppLink: nomor
+                // selalu bentuk ternormalisasi `62…`, tidak pernah input mentah
+                // yang ditempel ke URL (.claude/rules/50 #7). `null` bila
+                // pengirim tidak mencantumkan nomor — tombolnya tidak dirender.
+                'whatsapp_url' => $m->whatsapp_reply_url,
             ]);
 
         return Inertia::render('admin/konten/pesan-masuk/index', [

@@ -494,11 +494,64 @@ export interface StatusTransitionOption {
     requires_note: boolean;
 }
 
-/** Draft klik-to-chat; null bila pelanggan tidak punya nomor WhatsApp. */
+/**
+ * Pesan siap kirim. Teksnya disusun server dan TIDAK bisa disunting di panel —
+ * advisor menyuntingnya di kotak ketik WhatsApp bila perlu (docs/08 §8.2).
+ */
 export interface WhatsAppDraft {
+    template_key: string;
+    template_label: string;
     url: string;
     message: string;
     phone_display: string;
+}
+
+/** Satu baris log klik-to-chat (docs/04 §4.2). */
+export interface WhatsAppMessage {
+    id: number;
+    template_key: string;
+    template_label: string;
+    status: string;
+    status_label: string;
+    tone: string;
+    is_settled: boolean;
+    message: string;
+    actor_name: string | null;
+    created_at: string | null;
+    sent_at: string | null;
+}
+
+/** Panel WhatsApp di detail booking (docs/07 §A7). */
+export interface WhatsAppPanelProps {
+    template_key: string;
+    template_label: string;
+    /** null bila tidak ada yang bisa dikirim — `reason` menjelaskan sebabnya. */
+    draft: WhatsAppDraft | null;
+    reason: 'tanpa_nomor' | 'template_nonaktif' | null;
+    /** Draft pengingat H-1; null bila booking belum dikonfirmasi atau sudah lewat. */
+    reminder: WhatsAppDraft | null;
+    /** Ada pesan yang seharusnya dikirim tetapi belum diurus. */
+    awaiting: boolean;
+    history: WhatsAppMessage[];
+}
+
+/** Satu template pesan di /admin/template-wa. */
+export interface WhatsAppTemplateRow {
+    id: number;
+    key: string;
+    name: string;
+    trigger: string;
+    is_active: boolean;
+    updated_at: string | null;
+}
+
+export interface WhatsAppTemplateDetail {
+    id: number;
+    key: string;
+    name: string;
+    trigger: string;
+    body: string;
+    is_active: boolean;
 }
 
 /** Keadaan saringan daftar booking, dikembalikan server apa adanya. */
@@ -510,6 +563,8 @@ export interface AdminBookingFilters {
     paket: number | null;
     advisor: number | null;
     urutan: string;
+    /** 'belum' = hanya booking yang pelanggannya belum dikabari. */
+    wa: string | null;
 }
 
 /** Satu baris slot di jadwal harian. */
@@ -527,6 +582,8 @@ export interface ScheduleCard {
     vehicle_plate: string;
     vehicle_model: string;
     package_name: string;
+    /** Draft pengingat H-1; null bila booking ini tidak layak diingatkan. */
+    reminder: WhatsAppDraft | null;
 }
 
 /** Baris daftar customer di /admin/customers. */

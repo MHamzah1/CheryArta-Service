@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type AdminBookingFilters, type SelectOption } from '@/types';
 import { router } from '@inertiajs/react';
-import { CalendarClock, Search, X } from 'lucide-react';
+import { CalendarClock, MessageCircle, Search, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 
 interface Props {
@@ -52,7 +52,8 @@ export default function BookingFilterBar({ filters, statusOptions, packageOption
         filters.dari !== null ||
         filters.sampai !== null ||
         filters.paket !== null ||
-        filters.advisor !== null;
+        filters.advisor !== null ||
+        filters.wa !== null;
 
     return (
         <form onSubmit={kirim} className="border-line bg-surface shadow-card grid gap-4 rounded-2xl border p-4">
@@ -166,6 +167,19 @@ export default function BookingFilterBar({ filters, statusOptions, packageOption
 
                 <Button type="button" variant="outline" size="sm" onClick={() => kunjungi({ dari: today, sampai: today, urutan: 'terdekat' })}>
                     Hari ini
+                </Button>
+
+                {/* Tujuan kartu "Belum Dikabari" di dashboard (docs/07 §A1).
+                    Ada juga di sini supaya advisor bisa mencapainya tanpa
+                    kembali ke dashboard lebih dulu. */}
+                <Button
+                    type="button"
+                    variant={filters.wa === 'belum' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => kunjungi({ wa: filters.wa === 'belum' ? null : 'belum' })}
+                >
+                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                    Belum dikabari
                 </Button>
 
                 {adaSaringan && (

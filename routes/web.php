@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\ServicePackageController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleController as AdminVehicleController;
+use App\Http\Controllers\Admin\WhatsAppMessageController;
+use App\Http\Controllers\Admin\WhatsAppTemplateController;
 use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\BookingHistoryController;
 use App\Http\Controllers\Customer\VehicleController;
@@ -147,6 +149,21 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
         Route::post('bookings', [AdminBookingController::class, 'store'])->name('bookings.store');
         Route::get('bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
         Route::put('bookings/{booking}/status', BookingStatusController::class)->name('bookings.status');
+
+        // --- A7 Jejak pesan WhatsApp (docs/08 §8.2) -------------------------
+        // Bukan Policy tersendiri: siapa pun yang boleh membuka booking boleh
+        // mengabari pelanggannya (matriks docs/09 §9.3). `scopeBindings`
+        // memastikan pesan milik booking lain berujung 404, bukan tertandai
+        // diam-diam.
+        Route::prefix('bookings/{booking}/whatsapp')
+            ->name('bookings.whatsapp.')
+            ->scopeBindings()
+            ->group(function () {
+                Route::post('/', [WhatsAppMessageController::class, 'store'])->name('store');
+                Route::put('{whatsapp_message}/terkirim', [WhatsAppMessageController::class, 'markSent'])->name('sent');
+                Route::put('{whatsapp_message}/lewati', [WhatsAppMessageController::class, 'skip'])->name('skip');
+            });
+
         // Soft delete — ditolak untuk advisor oleh BookingPolicy (docs/07 §A14).
         Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
 
@@ -251,6 +268,14 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
             Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
             Route::put('users/{user}/status-akun', [UserController::class, 'toggleActive'])->name('users.toggle-active');
             Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+
+            // --- A7 Template WhatsApp -----------------------------------
+            // Tidak ada `tambah` maupun `hapus`: himpunan kuncinya milik
+            // App\Enums\WhatsAppTemplateKey karena tiap kunci punya pemicunya
+            // sendiri di dalam kode (keputusan grill Q5).
+            Route::get('template-wa', [WhatsAppTemplateController::class, 'index'])->name('whatsapp-templates.index');
+            Route::get('template-wa/{whatsapp_template}/ubah', [WhatsAppTemplateController::class, 'edit'])->name('whatsapp-templates.edit');
+            Route::put('template-wa/{whatsapp_template}', [WhatsAppTemplateController::class, 'update'])->name('whatsapp-templates.update');
 
             // --- A12 Activity Log ---------------------------------------
             Route::get('activity-log', ActivityLogController::class)->name('activity-log.index');

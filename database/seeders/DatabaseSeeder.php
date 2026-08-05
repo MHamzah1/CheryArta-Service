@@ -11,12 +11,14 @@ class DatabaseSeeder extends Seeder
     /**
      * Seeder dijalankan berurutan.
      *
-     * Seluruhnya idempoten (`updateOrCreate`), sehingga `db:seed` boleh
-     * dijalankan berkali-kali terhadap database yang sudah terisi tanpa
-     * menggandakan baris — .claude/rules/30-database.md.
+     * Seluruhnya idempoten, sehingga `db:seed` boleh dijalankan berkali-kali
+     * terhadap database yang sudah terisi tanpa menggandakan baris —
+     * .claude/rules/30-database.md.
      *
-     * WhatsAppTemplateSeeder menyusul di F2.2, DemoBookingSeeder di F2.1 —
-     * lihat docs/04-skema-database.md §4.4.
+     * Sebagian besar memakai `updateOrCreate`. WhatsAppTemplateSeeder adalah
+     * pengecualian yang disengaja: isinya justru dimaksudkan untuk disunting
+     * Super Admin, jadi ia hanya membuat baris yang belum ada dan tidak pernah
+     * menimpa yang sudah ada.
      */
     public function run(): void
     {
@@ -27,6 +29,7 @@ class DatabaseSeeder extends Seeder
             FacilitySeeder::class,
             FaqSeeder::class,
             TestimonialSeeder::class,
+            WhatsAppTemplateSeeder::class,
 
             // Paling akhir: bergantung pada baris yang dibuat CarModelSeeder
             // dan FacilitySeeder. Menyerah dengan tenang bila Cloudinary

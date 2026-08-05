@@ -235,10 +235,20 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 | Kolom | Tipe | Ket. |
 |-------|------|------|
 | id | | |
-| key | varchar(50) UNIQUE | `booking_created`, `booking_confirmed`, `booking_in_progress`, `booking_completed`, `booking_cancelled`, `reminder_h1` |
-| name | varchar(100) | label di panel admin |
-| body | text | mengandung placeholder `{{nama}}`, `{{kode_booking}}`, `{{tanggal}}`, `{{jam}}`, `{{plat}}`, `{{paket}}`, `{{status}}` |
-| is_active, timestamps | | |
+| key | varchar(50) UNIQUE | Tujuh kunci, ditetapkan `App\Enums\WhatsAppTemplateKey` — lihat [08 §8.4](08-notifikasi-whatsapp.md#84-template-pesan) |
+| name | varchar(100) | label di panel admin, bisa disunting |
+| body | text | mengandung placeholder; daftar sahnya di `config('whatsapp.allowed_placeholders')` |
+| is_active, timestamps | | `false` = pesan untuk pemicu ini **tidak ditawarkan sama sekali** |
+
+> **Kuncinya milik kode, bukan data.** Layar A7 hanya menyunting `name`, `body`, dan `is_active`;
+> tidak ada tambah maupun hapus. Template buatan admin tidak akan pernah terpanggil, dan template
+> yang dihapus mematahkan jalur kirim di tengah advisor mengubah status.
+>
+> **Revisi Tahap 10:** kunci ke-6 bernama `booking_reminder`, bukan `reminder_h1` — "H-1" adalah
+> aturan yang hidup di `config/booking.php`, dan menyalinnya ke dalam nama kunci membuat namanya
+> berbohong begitu aturannya bergeser. Ditambahkan kunci ke-7 `booking_no_show`. Placeholder
+> `{{status}}` **tidak ada**: setiap template sudah terikat satu pemicu, sehingga ia selalu
+> berbunyi hal yang sama.
 
 ### `whatsapp_messages` — log klik-to-chat
 
@@ -248,10 +258,20 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 | template_key | varchar(50) | |
 | recipient_phone | varchar(20) | nomor ternormalisasi saat pesan dibuat |
 | rendered_message | text | isi final, disimpan agar bisa diaudit |
-| generated_by | FK → users | admin yang membuka draft |
+| generated_by | FK → users nullOnDelete | admin yang membuka draft |
 | status | varchar(15) | `generated` \| `sent` (ditandai manual) \| `skipped` |
 | sent_at | timestamp NULL | |
-| timestamps | | |
+| timestamps | | index `(booking_id, template_key)` dan `(status, created_at)` |
+
+> **Satu baris = satu penekanan tombol "Buka WhatsApp"**, bukan satu perubahan status. Bila
+> barisnya ditulis otomatis setiap kali status berubah, aksi cepat dashboard meninggalkan tiga
+> baris per booking dan kartu "Belum dikabari" tidak akan pernah bisa kembali ke nol.
+>
+> `generated` karena itu berarti "WhatsApp sudah dibuka, belum ditandai". Perpindahannya hanya
+> `generated → sent` atau `generated → skipped`; yang sudah selesai diurus tidak bisa diubah lagi.
+>
+> Balasan pesan kontak (A10) **tidak** dicatat di sini — `booking_id` tidak nullable dan pesan
+> kontak memang tidak punya booking. Tautannya disusun `App\Support\WhatsAppLink`.
 
 ### `facilities` — 8 fasilitas, kini bisa dikelola admin
 

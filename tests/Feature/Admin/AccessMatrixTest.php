@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Enums\WhatsAppTemplateKey;
+use App\Models\Booking;
 use App\Models\ContactMessage;
 use App\Models\Facility;
 use App\Models\Faq;
 use App\Models\Testimonial;
 use App\Models\User;
+use App\Models\WhatsAppMessage;
+use App\Models\WhatsAppTemplate;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,8 +29,8 @@ use App\Models\User;
 | tersisa — kalau ada yang tertinggal saat pekerjaan dikejar cepat, ia
 | terlihat sebagai uji gagal, bukan sebagai kekosongan senyap.
 |
-| Baris invoice dan template WhatsApp belum ada di sini: modulnya lahir di
-| Tahap 10 dan 11, dan barisnya menyusul di F2.3.6 serta F2.4.6.
+| Baris template WhatsApp ditambahkan di F2.3.6 (Tahap 10). Baris invoice
+| belum ada: modulnya lahir di Tahap 11, dan barisnya menyusul di F2.4.6.
 |
 */
 
@@ -201,6 +205,54 @@ it('menolak pengelolaan akun customer lewat rute pengguna internal', function ()
 
     $this->actingAs(superAdmin())
         ->put(route('admin.users.update', $pelanggan))
+        ->assertForbidden();
+});
+
+/*
+|--------------------------------------------------------------------------
+| A7 Template WhatsApp — SA saja (F2.3.6)
+|--------------------------------------------------------------------------
+|
+| Isi pesan yang dibaca pelanggan hanya boleh diubah Super Admin. Advisor
+| MEMAKAI templatenya lewat panel di detail booking — barisnya ada di bawah,
+| dan justru harus boleh untuk keduanya.
+|
+*/
+
+it('baris matriks: daftar template WA — SA saja', function () {
+    matriks('get', route('admin.whatsapp-templates.index'), sa: true, advisor: false, customer: false, tamu: false);
+});
+
+// Satu `matriks()` per uji: penolongnya memakai actingAs, dan status login itu
+// bertahan sampai akhir uji — panggilan kedua akan memeriksa "tamu" sebagai
+// pengguna yang masih masuk dari panggilan pertama.
+it('baris matriks: form ubah template WA — SA saja', function () {
+    $template = WhatsAppTemplate::factory()->key(WhatsAppTemplateKey::BookingConfirmed)->create();
+
+    matriks('get', route('admin.whatsapp-templates.edit', $template), sa: true, advisor: false, customer: false, tamu: false);
+});
+
+it('baris matriks: menyimpan template WA — SA saja', function () {
+    $template = WhatsAppTemplate::factory()->key(WhatsAppTemplateKey::BookingConfirmed)->create();
+
+    matriks('put', route('admin.whatsapp-templates.update', $template), sa: true, advisor: false, customer: false, tamu: false);
+});
+
+it('baris matriks: mencatat pesan WhatsApp — SA & advisor boleh', function () {
+    $booking = Booking::factory()->create();
+
+    matriks('post', route('admin.bookings.whatsapp.store', $booking), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('menolak customer menandai pesan pada booking miliknya sendiri', function () {
+    // Pemilik booking boleh MELIHAT bookingnya, tetapi jejak pengiriman adalah
+    // catatan internal bengkel — bukan sesuatu yang ditandai pelanggan.
+    $pemilik = customer();
+    $booking = Booking::factory()->create(['user_id' => $pemilik->id]);
+    $pesan = WhatsAppMessage::factory()->create(['booking_id' => $booking->id]);
+
+    $this->actingAs($pemilik)
+        ->put(route('admin.bookings.whatsapp.sent', [$booking, $pesan]))
         ->assertForbidden();
 });
 

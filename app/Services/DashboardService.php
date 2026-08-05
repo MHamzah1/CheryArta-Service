@@ -70,6 +70,23 @@ final readonly class DashboardService
     }
 
     /**
+     * Kartu "Belum dikabari" (docs/07 §A1, roadmap 2.3.5, keputusan grill Q6).
+     *
+     * Menghitung BOOKING, bukan baris draft. Baris `whatsapp_messages` hanya
+     * lahir ketika advisor menekan tombolnya (keputusan grill Q1), sehingga
+     * menghitung baris berstatus `generated` justru melewatkan kelalaian yang
+     * ditakutkan: advisor yang tidak membuka WhatsApp sama sekali.
+     *
+     * Definisinya sendiri hidup di `Booking::scopeAwaitingWhatsApp()` — dipakai
+     * bersama saringan `wa=belum` di daftar booking, supaya angka di kartu dan
+     * isi daftarnya tidak pernah berselisih.
+     */
+    public function awaitingWhatsApp(): int
+    {
+        return Booking::query()->awaitingWhatsApp()->count();
+    }
+
+    /**
      * Deret grafik tren (PRD F2.1 §B).
      *
      * Dikelompokkan menurut `booking_date` — beban bengkel, bukan tren

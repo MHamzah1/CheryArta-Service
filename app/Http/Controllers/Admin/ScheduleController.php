@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\WhatsAppTemplateKey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ScheduleRequest;
 use App\Models\Booking;
 use App\Services\SlotService;
+use App\Services\WhatsApp\WhatsAppNotifier;
 use App\Support\BookingPresenter;
 use App\Support\SlotTime;
 use Carbon\CarbonImmutable;
@@ -26,7 +28,7 @@ use Inertia\Response;
  */
 class ScheduleController extends Controller
 {
-    public function __invoke(ScheduleRequest $request, SlotService $slots): Response
+    public function __invoke(ScheduleRequest $request, SlotService $slots, WhatsAppNotifier $whatsapp): Response
     {
         Gate::authorize('viewAny', Booking::class);
 
@@ -43,7 +45,7 @@ class ScheduleController extends Controller
                 ? $slots->dateRejectionReason($date)
                 : null,
             'quotaPerSlot' => Config::integer('booking.quota_per_slot'),
-            'rows' => $this->baris($date, $slots),
+            'rows' => $this->baris($date, $slots, $whatsapp),
         ]);
     }
 
@@ -56,12 +58,14 @@ class ScheduleController extends Controller
      *
      * @return list<array{time: string, remaining: int, is_full: bool, bookings: list<array<string, mixed>>}>
      */
-    private function baris(CarbonImmutable $date, SlotService $slots): array
+    private function baris(CarbonImmutable $date, SlotService $slots, WhatsAppNotifier $whatsapp): array
     {
         $perSlot = Booking::query()
             ->occupyingQuota()
             ->where('booking_date', $date->toDateString())
-            ->with(['user:id,name', 'vehicle.carModel:id,name', 'servicePackage:id,name'])
+            // `phone_wa` ikut diambil karena draft pengingat membutuhkannya di
+            // server. Ia TIDAK ikut ke props — lihat kartuDenganPengingat().
+            ->with(['user:id,name,phone_wa', 'vehicle.carModel:id,name', 'servicePackage:id,name'])
             ->orderBy('booking_time')
             ->orderBy('id')
             ->get()
@@ -71,11 +75,37 @@ class ScheduleController extends Controller
             fn (array $slot): array => [
                 ...$slot,
                 'bookings' => ($perSlot[$slot['time']] ?? collect())
-                    ->map(BookingPresenter::scheduleCard(...))
+                    ->map(fn (Booking $booking): array => $this->kartuDenganPengingat($booking, $whatsapp))
                     ->values()
                     ->all(),
             ],
             $slots->availability($date),
         );
+    }
+
+    /**
+     * Kartu jadwal + tombol pengingat H-1 (docs/07 §A3, keputusan grill Q8).
+     *
+     * Layar inilah satu-satunya yang sudah menjawab "siapa saja yang servis
+     * besok", jadi di sinilah pengingat paling murah ditekan — bukan dengan
+     * membuka delapan halaman detail untuk delapan pengingat.
+     *
+     * `reminder` bernilai null bila bookingnya belum dikonfirmasi, jadwalnya
+     * sudah lewat, pelanggannya tidak punya nomor WhatsApp, atau template
+     * pengingat sedang dinonaktifkan. Tombolnya tidak dirender sama sekali —
+     * tombol tanpa tujuan lebih buruk daripada tidak ada tombol.
+     *
+     * @return array<string, mixed>
+     */
+    private function kartuDenganPengingat(Booking $booking, WhatsAppNotifier $whatsapp): array
+    {
+        $reminder = $booking->isRemindable()
+            ? $whatsapp->draft($booking, WhatsAppTemplateKey::BookingReminder)
+            : null;
+
+        return [
+            ...BookingPresenter::scheduleCard($booking),
+            'reminder' => $reminder?->toArray(),
+        ];
     }
 }

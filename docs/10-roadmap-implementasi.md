@@ -20,11 +20,11 @@ benar-benar beres, dan bagian itulah yang paling mahal bila dilewati.
 | **7** · `F1.6` | Landing page publik | ✅ selesai |
 | **8** · `F2.1` | Dashboard & laporan (A1, A9) | ✅ selesai |
 | **9** · `F2.2` | Konten, pengguna & audit (A10–A14) | ✅ selesai |
-| **10** · `F2.3` | **Notifikasi WhatsApp penuh (A7)** | 🔄 **berikutnya** |
-| **11** · `F2.4` | Invoice (A8) | ⏳ |
+| **10** · `F2.3` | Notifikasi WhatsApp penuh (A7) | ✅ selesai |
+| **11** · `F2.4` | **Invoice (A8)** | 🔄 **berikutnya** |
 | **12** · `F2.5` | Pengerasan & go-live | ⏳ |
 
-Delapan tahap selesai, satu sedang berjalan, tiga tersisa. Dua sub-fase pernah dicabut —
+Sepuluh tahap selesai, dua tersisa. Dua sub-fase pernah dicabut —
 riwayatnya di [Tahap yang dicabut](#tahap-yang-dicabut).
 
 > **Kode `F1.x` / `F2.x` dipertahankan apa adanya.** Nomor itu dirujuk ±350 kali di komentar
@@ -67,14 +67,14 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | A4 — Katalog Mobil | ✅ lengkap | Tahap 4 |
 | A5 — Paket Layanan | ✅ lengkap | Tahap 4 |
 | A6 — Customer & Kendaraan | ✅ lengkap | Tahap 6 |
-| A7 — Notifikasi WhatsApp | ⚠️ tombol manual saja (**R6**) | penuh di **Tahap 10** |
+| A7 — Notifikasi WhatsApp | ✅ lengkap | Tahap 6 (tombol R6) · penuh di Tahap 10 |
 | A8 — Invoice | ❌ belum ada | **Tahap 11** |
 | A9 — Laporan & Export | ⚠️ tiga laporan jalan; **Pendapatan** menyusul | Tahap 8 · sisanya **Tahap 11** (2.4.7) |
 | A10 — Konten landing page | ✅ lengkap | Tahap 3 (tabel) · Tahap 9 (layar) |
 | A11 — Pengguna Internal | ✅ lengkap | Tahap 9 |
 | A12 — Activity Log | ✅ lengkap; penjadwal retensi menyusul | Tahap 9 · cron di **Tahap 12** |
-| A13 — Navigasi panel | ⚠️ lengkap kecuali Invoice & Template WA | Tahap 9 · sisanya Tahap 10–11 |
-| A14 — Matriks hak akses | ✅ satu berkas `AccessMatrixTest` | Tahap 9 · baris WA/invoice menyusul |
+| A13 — Navigasi panel | ⚠️ lengkap kecuali Invoice | Tahap 9 · Template WA di Tahap 10 · sisanya Tahap 11 |
+| A14 — Matriks hak akses | ✅ satu berkas `AccessMatrixTest` | Tahap 9 · baris WA di Tahap 10 · baris invoice menyusul |
 
 > **A13 dan A14 tidak pernah bisa ditunda sepenuhnya.** A13 hanyalah spesifikasi menu — tanpa
 > menu, layar A2–A6 tidak bisa dicapai. A14 hanyalah *ringkasan* matriks — otorisasinya sendiri
@@ -499,6 +499,11 @@ Satu ketergantungan yang harus dijaga: **dashboard Tahap 8 menampilkan hitungan 
 WhatsApp**, padahal tabelnya baru lahir di Tahap 10. Kartu itu karena itu dibangun di F2.3.5 —
 dashboard tidak boleh menampilkan "0 draft" untuk tabel yang belum ada.
 
+> **Sudah ditutup di Tahap 10**, dan bentuknya berubah saat dikerjakan: kartunya menghitung
+> **booking yang belum dikabari**, bukan jumlah draft. Baris draft hanya lahir ketika advisor
+> menekan tombolnya, sehingga menghitung draft justru melewatkan advisor yang tidak membuka
+> WhatsApp sama sekali — persis kelalaian yang hendak ditangkap.
+
 ## Tahap 8 · Dashboard & Laporan  `F2.1` — ✅ SELESAI
 
 | # | Pekerjaan |
@@ -583,19 +588,75 @@ akun staf yang sampai kini hanya bisa lewat DBeaver, dan jejak audit atas keduan
 > tetapi begitu middleware 2.2.5c hidup, orang yang baru menetapkan passwordnya sendiri akan
 > terjebak selamanya di halaman ganti password. Ditemukan oleh ujinya, bukan setelah rilis.
 
-## Tahap 10 · Notifikasi WhatsApp Penuh  `F2.3`
+## Tahap 10 · Notifikasi WhatsApp Penuh  `F2.3` — ✅ SELESAI
 
 Sampai titik ini tombol klik-to-chat sederhana dari F1.5.7 masih yang dipakai (**R6**) — jalur
 manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pengiriman.
 
 | # | Pekerjaan |
 |---|-----------|
-| 2.3.1 | Migration `whatsapp_templates`, `whatsapp_messages` + seeder 6 template |
+| 2.3.1 | Migration `whatsapp_templates`, `whatsapp_messages` + seeder **7** template |
 | 2.3.2 | Interface `WhatsAppNotifier` + implementasi `ClickToChatNotifier`; tombol sederhana F1.5.7 diganti |
 | 2.3.3 | Panel draft di detail booking + tandai terkirim + penanda "belum dikirim" yang menonjol |
-| 2.3.4 | **A7** CRUD template WA (SA) dengan validasi placeholder |
-| 2.3.5 | Kartu "draft WA belum dikirim" ditambahkan ke dashboard A1 — ditunda ke sini karena tabelnya baru lahir di 2.3.1 |
+| 2.3.4 | **A7** `/admin/template-wa` (SA): daftar + sunting dengan validasi placeholder — **bukan CRUD** |
+| 2.3.5 | Kartu "Belum dikabari" ditambahkan ke dashboard A1 — ditunda ke sini karena tabelnya baru lahir di 2.3.1 |
 | 2.3.6 | **A14** baris template WA ditambahkan ke `AccessMatrixTest` (F2.2.7) |
+
+> **Selesai 5 Agustus 2026.** 592 uji Pest hijau — 46 di antaranya baru
+> (`WhatsAppDraftTest`, `WhatsAppTemplateCrudTest`, `WhatsAppPendingTest`,
+> `WhatsAppPlaceholderTest`, plus baris WA di `AccessMatrixTest`). Pint, PHPStan, ESLint,
+> `tsc --noEmit`, dan `npm run build` bersih. Kedua migration diuji `migrate` **dan**
+> `migrate:rollback` terhadap database Railway bersama, lalu dipasang kembali dan di-seed —
+> ketujuh kunci terbukti terisi urut.
+> Rancangannya di [`docs/prds/prd-notifikasi-whatsapp.md`](prds/prd-notifikasi-whatsapp.md),
+> keputusannya di [`docs/grills/grill-notifikasi-whatsapp.md`](grills/grill-notifikasi-whatsapp.md).
+>
+> **Penyimpangan dari rencana, disengaja** — seluruhnya diputuskan saat grill:
+> 1. **Baris log ditulis saat advisor menekan "Buka WhatsApp"**, bukan saat status berubah seperti
+>    tertulis di [08 §8.2](08-notifikasi-whatsapp.md). Aksi cepat dashboard (F2.1.2) akan
+>    meninggalkan tiga baris per booking, dan kartu 2.3.5 tidak akan pernah bisa dikosongkan.
+>    Konsekuensinya kartu itu menghitung dari sisi **booking**, bukan dari sisi baris draft.
+> 2. **Pesan tidak bisa disunting di panel**, berbeda dari [08 §8.2](08-notifikasi-whatsapp.md).
+>    Kotak ketik WhatsApp sendiri sudah menyediakannya, dan `rendered_message` harus tetap bisa
+>    dipercaya sebagai buatan server — POST pencatatnya hanya membawa `template_key`.
+> 3. **Tujuh template, bukan enam** — `booking_no_show` ditambahkan. Ia satu-satunya akhir yang
+>    punya jalur pemulihan, teksnya sudah hidup sejak F1.5, dan menghapusnya akan ditandai
+>    `/audit-paritas` di 2.5.10 sebagai fitur yang hilang.
+> 4. **Kunci ke-6 bernama `booking_reminder`**, bukan `reminder_h1` seperti di
+>    [04 §4.2](04-skema-database.md): "H-1" hidup di `config/booking.php`, dan menyalinnya ke nama
+>    kunci membuat namanya berbohong begitu aturannya bergeser.
+> 5. **`{{ringkasan_biaya}}` ditolak validasi**, bukan dirender kosong — sumbernya tabel
+>    `invoices` yang baru lahir di 2.4.1. Placeholder yang sah tetapi selalu kosong membuat Super
+>    Admin menyangka penyuntingnya rusak. Dihidupkan di **2.4.8**. `{{status}}` dibuang sama
+>    sekali.
+> 6. **Bukan CRUD template** — tanpa tambah dan tanpa hapus (butir 2.3.4 sudah dikoreksi di atas).
+> 7. **`send()` tidak dibuat** meski [08 §8.7](08-notifikasi-whatsapp.md) menuliskannya sebagai
+>    no-op; ia kode mati yang tidak dipanggil siapa pun.
+> 8. **Enam berkas baru di luar daftar PRD** — `App\Enums\WhatsAppTemplateKey` (menggantikan
+>    `config('whatsapp.templates')` supaya himpunan kuncinya tidak hidup di dua tempat),
+>    `WhatsAppMessageStatus`, `App\Support\WhatsAppPlaceholders`, `WhatsAppLink`, `WhatsAppDraft`,
+>    dan dua exception yang ditangani terpusat di `bootstrap/app.php` — polanya sama dengan
+>    `InvalidStatusTransitionException` di F1.5.
+> 9. **`WhatsAppNotifier` diikat `bind`, bukan `singleton`.** Implementasinya menyimpan template
+>    yang sudah dibaca agar layar jadwal tidak memicu satu kueri per booking; singleton akan
+>    membuat simpanan itu bertahan antar-permintaan di dalam satu uji.
+> 10. **Balasan pesan kontak pindah ke accessor `ContactMessage::whatsapp_reply_url`**, bukan ikut
+>    di interface: ia tidak punya template, tidak punya booking, dan `booking_id` tidak nullable.
+>
+> **Bug warisan yang ikut ditemukan:** `App\Models\WhatsAppTemplate` dan `WhatsAppMessage`
+> membutuhkan `$table` eksplisit — Laravel menurunkan nama `WhatsAppTemplate` menjadi
+> `whats_app_templates`, dan tanpa itu seluruh kueri menabrak tabel yang tidak ada. Ditemukan oleh
+> uji, bukan setelah rilis.
+>
+> **Sisa yang belum terbukti:**
+> - **DoD #9** — belum ada push ke `main` sejak perubahan ini, jadi yang teruji baru lingkungan
+>   lokal terhadap database Railway.
+> - **Uji responsif 360/768/1280** untuk panel WA, halaman template, dan kartu dashboard kelima
+>   dikerjakan lewat kelas Tailwind mobile-first tetapi **belum dibuktikan di peramban sungguhan**
+>   — bergabung ke **F2.5.6** bersama sisa tahap-tahap sebelumnya.
+> - **Kartu dashboard akan lahir dengan tunggakan kecil**: booking yang sudah dikabari lewat
+>   tombol R6 tidak punya catatan apa pun, jadi ikut terhitung "belum dikabari" pada hari pertama.
+>   Habis sendiri dalam sepekan karena rentang 7 hari; tombol **Lewati** membersihkan sisanya.
 
 ## Tahap 11 · Invoice  `F2.4`
 
@@ -608,6 +669,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.4.5 | Uji: total dihitung server, invoice `issued` tidak bisa disunting, advisor tidak bisa `void` |
 | 2.4.6 | **A14** baris invoice ditambahkan ke `AccessMatrixTest` (F2.2.7); total nilai invoice di detail customer (A6) yang tertunda sejak F1.5 ikut dilengkapi |
 | 2.4.7 | **A9** laporan **Pendapatan** (total invoice `issued`/`paid` per periode, **SA saja**) ditambahkan sebagai tab keempat di `/admin/laporan` — ditunda ke sini dari F2.1.4 karena tabel `invoices` baru lahir di 2.4.1 |
+| 2.4.8 | **A7** placeholder `{{ringkasan_biaya}}` dihidupkan: satu entri di `config('whatsapp.allowed_placeholders')` + satu di `App\Support\WhatsAppPlaceholders`, lalu teks awal `booking_completed` di seeder diperbarui — ditunda ke sini dari Tahap 10 karena sumbernya tabel `invoices` |
 
 ## Tahap 12 · Pengerasan & Go-Live  `F2.5`
 
@@ -666,7 +728,8 @@ menggantikan estimasi hari yang sengaja dibuang dari roadmap ini.
 | Filesystem Railway ephemeral | Berkas yang tidak sengaja ditulis ke disk hilang saat redeploy | Seluruh unggahan lewat `ImageUploader` → Cloudinary. Session, cache, dan queue memakai driver `database`, bukan `file` |
 | Pesan form kontak tak terbaca sampai F2.2 | Calon pelanggan mengira diabaikan | Halaman kontak menonjolkan tombol WhatsApp langsung sebagai jalur utama; form hanya jalur cadangan |
 | Aturan slot lama (kuota 2/jam) ternyata tidak sesuai kapasitas bengkel | Slot penuh palsu atau bengkel kebanjiran | Nilai di `config/booking.php` — bisa diubah tanpa menyentuh kode; `SlotService` sudah membaca `slots_by_weekday` |
-| Notifikasi WA bergantung kedisiplinan advisor menekan kirim | Pelanggan tidak menerima kabar | F2.3.3 menampilkan penanda "belum dikirim" yang menonjol; kartu hitungan draft di dashboard menyusul di F2.3.5. **Risiko ini hidup lebih lama sekarang** — WA penuh baru datang di Tahap 10, jadi sepanjang Tahap 8–9 yang berlaku hanya tombol manual R6 |
+| Notifikasi WA bergantung kedisiplinan advisor menekan kirim | Pelanggan tidak menerima kabar | ✅ **Penangkalnya terpasang sejak Tahap 10.** Penanda "Belum dikabari" di detail booking, kartu berangka di dashboard yang bisa diklik ke daftar tersaring, dan tombol **Lewati** supaya angkanya mencerminkan keadaan sebenarnya. Ukurannya: bila sesudah dua minggu angka itu tidak pernah turun ke nol, definisinya yang salah — bukan advisornya |
+| Seeder menimpa teks template yang sudah disunting Super Admin | Hasil kerja pemilik bengkel hilang tanpa jejak pada setiap `db:seed` | `WhatsAppTemplateSeeder` hanya membuat baris yang belum ada dan **tidak pernah** menyentuh yang sudah ada — satu-satunya seeder produksi yang bukan `updateOrCreate`. Diuji: seed → sunting → seed ulang → suntingan bertahan |
 | Reset password tanpa SMTP ([09 §9.2](09-keamanan-hak-akses.md#92-autentikasi)) | Pelanggan terkunci dari akunnya | Pastikan SMTP tersedia, atau sediakan alur reset lewat admin sebelum go-live (F2.5) |
 | Password sementara akun **staf** ditampilkan di flash message (F2.2.3) | Kredensial yang membuka panel internal melintas lewat session dan layar admin — lebih berat daripada kasus customer di F1.5 | `must_reset_password` ditegakkan sejak login pertama (F2.2.5), jadi masa berlakunya sependek satu kali masuk; nilainya tidak tersimpan terbaca di mana pun. Ditinjau ulang begitu SMTP tersedia (F2.5) |
 | Akun staf hanya dari seeder sampai F2.2 (**R9**) | Menambah advisor sungguhan menuntut `tinker`/DBeaver; matriks hak akses hanya teruji terhadap akun contoh | Dapat diterima selama sistem dipakai developer saja (**R5**). Diperpendek oleh urutan sekarang: A11 datang di Tahap 9, bukan menjelang akhir. `AccessMatrixTest` menyusul bersamanya di F2.2.7 |

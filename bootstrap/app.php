@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Exceptions\InvalidStatusTransitionException;
+use App\Exceptions\InvalidWhatsAppTransitionException;
 use App\Exceptions\LastSuperAdminException;
 use App\Exceptions\MasterDataInUseException;
 use App\Exceptions\SlotUnavailableException;
+use App\Exceptions\WhatsAppDraftUnavailableException;
 use App\Http\Middleware\EnsurePasswordIsReset;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -90,5 +92,25 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
                 : back()->withInput()->withErrors($errors);
+        });
+
+        // Pesan diminta untuk keadaan yang tidak punya draft: pelanggan tanpa
+        // nomor WhatsApp, atau template yang dinonaktifkan di antara halaman
+        // dimuat dan tombol ditekan. Tidak ada kolom form yang bisa disorot,
+        // jadi penjelasannya tampil sebagai toast — pola yang sama dengan
+        // MasterDataInUseException.
+        $exceptions->render(function (WhatsAppDraftUnavailableException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->with('error', $e->getMessage());
+        });
+
+        // Penandaan pesan yang sudah selesai diurus (docs/04 §4.2). Sengaja 422
+        // dan bukan 403: advisornya memang berhak menandai pesan booking ini —
+        // yang ditolak adalah perpindahan yang sudah tidak ada lagi.
+        $exceptions->render(function (InvalidWhatsAppTransitionException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->with('error', $e->getMessage());
         });
     })->create();

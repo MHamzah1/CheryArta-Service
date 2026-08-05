@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\BookingStatus;
+use App\Enums\WhatsAppTemplateKey;
 use App\Models\Booking;
 use App\Models\ServicePackage;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\WhatsAppTemplate;
 use App\Services\SlotService;
 
 /*
@@ -228,22 +230,32 @@ it('mengirim hanya transisi yang sah sebagai pilihan di detail', function () {
 });
 
 it('menyiapkan draft WhatsApp berisi kode booking di detail', function () {
+    // Sejak Tahap 10 teksnya datang dari tabel `whatsapp_templates`, bukan dari
+    // config — jalur sementara R6 sudah dicabut.
+    WhatsAppTemplate::factory()
+        ->key(WhatsAppTemplateKey::BookingConfirmed)
+        ->create(['body' => 'Booking {{kode_booking}} dikonfirmasi. - Chery Arta']);
+
     $booking = bookingStatus(BookingStatus::Confirmed);
     $booking->user->forceFill(['phone_wa' => '081234567890'])->save();
 
     $this->actingAs(serviceAdvisor())
         ->get(route('admin.bookings.show', $booking))
         ->assertInertia(fn ($page) => $page
-            ->where('whatsapp.phone_display', '0812-3456-7890')
-            ->where('whatsapp.message', fn (string $pesan) => str_contains($pesan, $booking->booking_code))
-            ->where('whatsapp.url', fn (string $url) => str_starts_with($url, 'https://wa.me/6281234567890?text=')));
+            ->where('whatsapp.draft.phone_display', '0812-3456-7890')
+            ->where('whatsapp.draft.message', fn (string $pesan) => str_contains($pesan, $booking->booking_code))
+            ->where('whatsapp.draft.url', fn (string $url) => str_starts_with($url, 'https://wa.me/6281234567890?text=')));
 });
 
 it('tidak menyiapkan draft WhatsApp bila pelanggan tanpa nomor', function () {
+    WhatsAppTemplate::factory()->key(WhatsAppTemplateKey::BookingConfirmed)->create();
+
     $booking = bookingStatus(BookingStatus::Confirmed);
     $booking->user->forceFill(['phone_wa' => null])->save();
 
     $this->actingAs(serviceAdvisor())
         ->get(route('admin.bookings.show', $booking))
-        ->assertInertia(fn ($page) => $page->where('whatsapp', null));
+        ->assertInertia(fn ($page) => $page
+            ->where('whatsapp.draft', null)
+            ->where('whatsapp.reason', 'tanpa_nomor'));
 });
