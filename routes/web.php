@@ -14,6 +14,9 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
+use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\Admin\InvoiceStatusController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServicePackageController;
@@ -24,6 +27,7 @@ use App\Http\Controllers\Admin\WhatsAppMessageController;
 use App\Http\Controllers\Admin\WhatsAppTemplateController;
 use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\BookingHistoryController;
+use App\Http\Controllers\Customer\InvoiceController as CustomerInvoiceController;
 use App\Http\Controllers\Customer\VehicleController;
 use App\Http\Controllers\Public\BookingTrackingController;
 use App\Http\Controllers\Public\CatalogController;
@@ -109,6 +113,18 @@ Route::middleware(['auth', 'role:customer'])->group(function () {
         Route::put('booking/{booking}/batal', [BookingController::class, 'cancel'])->name('booking.cancel');
 
         Route::get('riwayat', [BookingHistoryController::class, 'index'])->name('history.index');
+
+        // Invoice milik sendiri (US-C7, roadmap 2.4.4). Pintu masuknya detail
+        // booking — sengaja TIDAK ada menu tersendiri, karena riwayat servis
+        // sudah ada dan dua daftar untuk satu kenyataan hanya membingungkan.
+        //
+        // Diikat lewat id, tetapi dicari ULANG lewat relasi penggunanya di
+        // controller: invoice milik orang lain tidak pernah terambil sama
+        // sekali (.claude/rules/50 #2).
+        Route::get('invoice/{invoice}', [CustomerInvoiceController::class, 'show'])->name('invoice.show');
+        Route::get('invoice/{invoice}/pdf', [CustomerInvoiceController::class, 'download'])
+            ->middleware('throttle:10,1')
+            ->name('invoice.pdf');
     });
 });
 
@@ -166,6 +182,29 @@ Route::middleware(['auth', 'role:super_admin,service_advisor'])
 
         // Soft delete — ditolak untuk advisor oleh BookingPolicy (docs/07 §A14).
         Route::delete('bookings/{booking}', [AdminBookingController::class, 'destroy'])->name('bookings.destroy');
+
+        // --- A8 Invoice (docs/07 §A8) ---------------------------------------
+        // TIDAK ada `create`/`store` yang berdiri sendiri: invoice selalu lahir
+        // dari sebuah booking yang sudah selesai (keputusan grill Q3). Karena
+        // itu pembuatannya bersarang di bawah bookings, bukan di bawah invoices.
+        Route::post('bookings/{booking}/invoice', [AdminInvoiceController::class, 'store'])->name('bookings.invoice.store');
+
+        Route::get('invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('invoices/{invoice}', [AdminInvoiceController::class, 'show'])->name('invoices.show');
+        Route::put('invoices/{invoice}', [AdminInvoiceController::class, 'update'])->name('invoices.update');
+
+        // Tiga aksi status. `void` khusus Super Admin — penolakannya datang
+        // dari InvoicePolicy, bukan dari middleware: sasarannya satu invoice
+        // tertentu, dan pesannya harus menyebut invoice itu.
+        Route::put('invoices/{invoice}/terbitkan', [InvoiceStatusController::class, 'issue'])->name('invoices.issue');
+        Route::put('invoices/{invoice}/lunas', [InvoiceStatusController::class, 'markPaid'])->name('invoices.paid');
+        Route::put('invoices/{invoice}/batal', [InvoiceStatusController::class, 'void'])->name('invoices.void');
+
+        // Alasan throttle-nya sama dengan export di atas: satu berkas memuat
+        // nama, plat, dan rincian biaya pelanggan (docs/09 §9.7).
+        Route::get('invoices/{invoice}/pdf', InvoicePdfController::class)
+            ->middleware('throttle:10,1')
+            ->name('invoices.pdf');
 
         // --- A6 Customer & Kendaraan ----------------------------------------
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');

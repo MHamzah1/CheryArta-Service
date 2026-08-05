@@ -46,14 +46,26 @@ class BookingPolicy
      * Kedua role staf boleh melihat keduanya — dashboard yang dilihat advisor
      * identik dengan yang dilihat Super Admin, karena tidak satu pun elemennya
      * menyentuh pendapatan (docs/09 §9.3, PRD F2.1).
-     *
-     * Laporan **pendapatan** adalah satu-satunya yang khusus Super Admin, dan
-     * ia belum ada: tabel `invoices` baru lahir di F2.4. Kemampuannya
-     * ditambahkan bersama laporannya, bukan disiapkan kosong di sini.
      */
     public function viewReports(User $user): bool
     {
         return $user->isStaff();
+    }
+
+    /**
+     * Tab **Pendapatan** di halaman laporan — Super Admin saja (docs/09 §9.3).
+     *
+     * Dipisahkan dari `viewReports` karena inilah satu-satunya laporan yang
+     * dibatasi. Tab-nya TIDAK dirender untuk advisor, bukan dirender lalu
+     * dinonaktifkan — tetapi yang menolak tetap server, bukan React (temuan S3).
+     *
+     * Catatan jujur: advisor tetap melihat total tiap invoice satu per satu di
+     * A8, karena ia yang menerbitkannya. Pembatasan di sini soal kemudahan
+     * agregat, bukan kerahasiaan angka.
+     */
+    public function viewRevenueReport(User $user): bool
+    {
+        return $user->isSuperAdmin();
     }
 
     /**

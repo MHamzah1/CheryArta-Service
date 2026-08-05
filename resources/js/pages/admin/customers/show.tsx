@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/layouts/admin-layout';
-import { formatJam, formatPlat, formatTanggalJamIso, formatTanggalSingkat, formatTelepon } from '@/lib/format';
+import { formatJam, formatPlat, formatRupiah, formatTanggalJamIso, formatTanggalSingkat, formatTelepon } from '@/lib/format';
 import {
     type AdminBookingRow,
     type CustomerDetail,
@@ -104,10 +104,16 @@ export default function AdminCustomerShow({ customer, vehicles, bookings, stats,
             <Head title={`Customer — ${customer.name}`} />
 
             <div className="grid gap-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <Angka label="Total booking" value={stats.total_bookings} />
                     <Angka label="Servis selesai" value={stats.completed_bookings} />
                     <Angka label="Sedang berjalan" value={stats.upcoming_bookings} />
+                    {/* Melunasi janji yang ditinggalkan F1.5 (docs/07 §A6):
+                        angkanya baru bisa dihitung setelah tabel invoices ada. */}
+                    <Angka
+                        label="Total invoice"
+                        value={<span className="text-base">{formatRupiah(stats.total_invoice)}</span>}
+                    />
                     <Angka
                         label="Servis terakhir"
                         value={

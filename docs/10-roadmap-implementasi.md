@@ -21,10 +21,10 @@ benar-benar beres, dan bagian itulah yang paling mahal bila dilewati.
 | **8** · `F2.1` | Dashboard & laporan (A1, A9) | ✅ selesai |
 | **9** · `F2.2` | Konten, pengguna & audit (A10–A14) | ✅ selesai |
 | **10** · `F2.3` | Notifikasi WhatsApp penuh (A7) | ✅ selesai |
-| **11** · `F2.4` | **Invoice (A8)** | 🔄 **berikutnya** |
-| **12** · `F2.5` | Pengerasan & go-live | ⏳ |
+| **11** · `F2.4` | Invoice (A8) | ✅ selesai |
+| **12** · `F2.5` | **Pengerasan & go-live** | 🔄 **berikutnya** |
 
-Sepuluh tahap selesai, dua tersisa. Dua sub-fase pernah dicabut —
+Sebelas tahap selesai, satu tersisa. Dua sub-fase pernah dicabut —
 riwayatnya di [Tahap yang dicabut](#tahap-yang-dicabut).
 
 > **Kode `F1.x` / `F2.x` dipertahankan apa adanya.** Nomor itu dirujuk ±350 kali di komentar
@@ -68,13 +68,13 @@ Bila salah satunya berubah, roadmap ini ikut berubah.
 | A5 — Paket Layanan | ✅ lengkap | Tahap 4 |
 | A6 — Customer & Kendaraan | ✅ lengkap | Tahap 6 |
 | A7 — Notifikasi WhatsApp | ✅ lengkap | Tahap 6 (tombol R6) · penuh di Tahap 10 |
-| A8 — Invoice | ❌ belum ada | **Tahap 11** |
-| A9 — Laporan & Export | ⚠️ tiga laporan jalan; **Pendapatan** menyusul | Tahap 8 · sisanya **Tahap 11** (2.4.7) |
+| A8 — Invoice | ✅ lengkap | Tahap 11 |
+| A9 — Laporan & Export | ✅ lengkap — Pendapatan menyusul di 2.4.7 | Tahap 8 · Pendapatan di Tahap 11 |
 | A10 — Konten landing page | ✅ lengkap | Tahap 3 (tabel) · Tahap 9 (layar) |
 | A11 — Pengguna Internal | ✅ lengkap | Tahap 9 |
 | A12 — Activity Log | ✅ lengkap; penjadwal retensi menyusul | Tahap 9 · cron di **Tahap 12** |
-| A13 — Navigasi panel | ⚠️ lengkap kecuali Invoice | Tahap 9 · Template WA di Tahap 10 · sisanya Tahap 11 |
-| A14 — Matriks hak akses | ✅ satu berkas `AccessMatrixTest` | Tahap 9 · baris WA di Tahap 10 · baris invoice menyusul |
+| A13 — Navigasi panel | ✅ lengkap | Tahap 9 · Template WA di Tahap 10 · Invoice di Tahap 11 |
+| A14 — Matriks hak akses | ✅ satu berkas `AccessMatrixTest`, seluruh baris terisi | Tahap 9 · baris WA di Tahap 10 · baris invoice di Tahap 11 |
 
 > **A13 dan A14 tidak pernah bisa ditunda sepenuhnya.** A13 hanyalah spesifikasi menu — tanpa
 > menu, layar A2–A6 tidak bisa dicapai. A14 hanyalah *ringkasan* matriks — otorisasinya sendiri
@@ -658,7 +658,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 >   tombol R6 tidak punya catatan apa pun, jadi ikut terhitung "belum dikabari" pada hari pertama.
 >   Habis sendiri dalam sepekan karena rentang 7 hari; tombol **Lewati** membersihkan sisanya.
 
-## Tahap 11 · Invoice  `F2.4`
+## Tahap 11 · Invoice  `F2.4` — ✅ SELESAI
 
 | # | Pekerjaan |
 |---|-----------|
@@ -670,6 +670,71 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.4.6 | **A14** baris invoice ditambahkan ke `AccessMatrixTest` (F2.2.7); total nilai invoice di detail customer (A6) yang tertunda sejak F1.5 ikut dilengkapi |
 | 2.4.7 | **A9** laporan **Pendapatan** (total invoice `issued`/`paid` per periode, **SA saja**) ditambahkan sebagai tab keempat di `/admin/laporan` — ditunda ke sini dari F2.1.4 karena tabel `invoices` baru lahir di 2.4.1 |
 | 2.4.8 | **A7** placeholder `{{ringkasan_biaya}}` dihidupkan: satu entri di `config('whatsapp.allowed_placeholders')` + satu di `App\Support\WhatsAppPlaceholders`, lalu teks awal `booking_completed` di seeder diperbarui — ditunda ke sini dari Tahap 10 karena sumbernya tabel `invoices` |
+
+> **Selesai 5 Agustus 2026.** 661 uji Pest hijau — 69 di antaranya baru
+> (`tests/Feature/Invoice/`: `CreateInvoiceTest`, `EditInvoiceTest`, `InvoiceStatusTest`,
+> `CustomerInvoiceTest`, `InvoicePdfTest`, `RevenueReportTest`, `InvoiceWhatsAppSummaryTest`,
+> plus `tests/Unit/InvoiceStatusTest` dan sembilan baris invoice di `AccessMatrixTest`).
+> Pint, PHPStan, ESLint, `tsc --noEmit`, dan `npm run build` bersih. Kedua migration diuji
+> `migrate` **dan** `migrate:rollback` terhadap database Railway bersama, lalu dipasang kembali.
+> Rancangannya di [`docs/prds/prd-invoice.md`](prds/prd-invoice.md), keputusannya di
+> [`docs/grills/grill-invoice.md`](grills/grill-invoice.md).
+>
+> **Penyimpangan dari rencana, disengaja** — sepuluh keputusan pertamanya diambil saat grill:
+> 1. **`invoices.booking_id` BUKAN unique**, berbeda dari [04 §4.2](04-skema-database.md) versi
+>    awal. Kolom unik membuat janji jalur koreksi di [05 §5.6](05-alur-bisnis.md) — "void lalu
+>    dibuat ulang" — mustahil dijalankan, karena baris void-nya tidak boleh dihapus. Aturannya
+>    kini "maksimal satu invoice non-void per booking", ditegakkan `InvoiceService` di dalam
+>    transaksi dengan baris **booking**-nya terkunci.
+> 2. **`paid → void` dibuka** untuk Super Admin, berbeda dari `App\Enums\InvoiceStatus` yang lahir
+>    di F1.0 dan menjadikan `paid` buntu. Tanpa jalur itu, satu klik "Tandai Lunas" yang keliru
+>    hanya bisa diperbaiki lewat DBeaver. `paid_at` dan `payment_method` tetap disimpan.
+> 3. **Kolom `void_reason` ditambahkan**; [07 §A8](07-modul-admin.md) mewajibkan alasan tetapi
+>    [04 §4.2](04-skema-database.md) tidak menyediakan tempatnya, dan `notes` sudah dipakai untuk
+>    catatan yang dibaca pelanggan.
+> 4. **Yang terlihat pelanggan dipatok `issued_at`, bukan status.** `InvoiceStatus::isVisibleToCustomer()`
+>    dicabut: enum tidak bisa membedakan void-yang-pernah-terbit dari void-yang-tidak-pernah, dan
+>    dengan patokan status invoice yang dicabut akan hilang menjadi 404 dari mata pelanggan yang
+>    sudah memegang PDF-nya.
+> 5. **Tanpa `create`/`store` yang berdiri sendiri** di `resource /invoices` seperti tertulis di
+>    [03](03-arsitektur-teknis.md); pembuatannya bersarang di `POST /admin/bookings/{booking}/invoice`.
+> 6. **Tiga enum & empat kelas Support baru** di luar daftar PRD — `InvoiceItemType`,
+>    `PaymentMethod`, `InvoiceNumber`, `InvoicePresenter`, `InvoiceDocument`, ditambah
+>    `TanggalIndonesia` dan `Rupiah`. Dua yang terakhir lahir dari temuan saat menulis PDF:
+>    format tanggal Indonesia sudah **disalin dua kali** di sisi PHP (`SlotService` dan
+>    `WhatsAppPlaceholders`), dan PDF akan menjadi yang ketiga — cacat B2 tumbuh persis di depan
+>    mata. Ketiganya kini memakai satu kelas.
+> 7. **Otorisasi `void` diperiksa di Form Request, bukan hanya di controller.** Laravel
+>    menjalankan `authorize()` sebelum `rules()`, dan advisor yang menekan "Batalkan" tanpa
+>    mengisi alasan harus menerima **403** — bukan "alasan wajib diisi", yang justru mengundangnya
+>    mencoba lagi untuk sesuatu yang bukan haknya. Ditemukan oleh `AccessMatrixTest`.
+> 8. **Scope `active()` dan `countsAsRevenue()` mengkualifikasi nama kolomnya.** `bookings` juga
+>    punya kolom `status`, dan kedua scope itu dipakai di atas kueri yang mem-`join` ke sana.
+>    Tanpa prefix, SQLite menolaknya sebagai "ambiguous column name" — dan MySQL memilih salah
+>    satu tanpa memberi tahu, yang jauh lebih berbahaya. Ditemukan oleh uji laporan.
+> 9. **Dua uji Tahap 10 diperbarui, bukan dihapus** — `ReportTest > tab pendapatan` dan
+>    `WhatsAppTemplateCrudTest > menolak ringkasan_biaya`. Keduanya sengaja ditulis untuk memerah
+>    begitu Tahap 11 datang; keduanya memang memerah, dan kalimat barunya menyimpan riwayat itu.
+>
+> **Sisa yang belum terbukti:**
+> - **DoD #9** — belum ada push ke `main` sejak perubahan ini, jadi yang teruji baru lingkungan
+>   lokal terhadap database Railway. Untuk tahap ini butirnya lebih berat daripada biasa: PDF
+>   hanya benar-benar terbukti setelah satu berkas diunduh **dari Railway** (lihat butir berikut).
+> - **Ekstensi PHP `gd` tidak terpasang** di lingkungan pengembangan ini, dan belum diperiksa di
+>   runtime Railway. Karena `gd` hanya *suggest* pada dompdf, `composer install` tetap lulus dan
+>   kegagalannya baru muncul saat render pertama. PDF karena itu dirancang **tanpa gambar raster**
+>   (kop surat berupa teks) dan ujinya membuktikan berkasnya benar-benar terbentuk secara lokal —
+>   tetapi satu unduhan sungguhan dari Railway tetap wajib sebelum 2.4.3 dianggap tuntas.
+> - **`{{ringkasan_biaya}}` tidak akan muncul di database yang sudah berjalan.**
+>   `WhatsAppTemplateSeeder` sengaja tidak pernah menimpa baris yang sudah ada (jaminan Tahap 10),
+>   jadi teks awal yang diperbarui hanya berlaku untuk instalasi baru. Satu suntingan manual lewat
+>   layar A7 diperlukan setelah deploy — dicatat sebagai butir serah terima di **2.5.9**.
+> - **Penguncian baris** pada pembuatan invoice memakai `lockForUpdate`, yang hanya berlaku nyata
+>   di MySQL — sama seperti catatan F1.4 dan F1.5. Yang terbukti otomatis adalah keatomikannya,
+>   dan bahwa tiga permintaan beruntun tidak pernah menghasilkan dua invoice aktif.
+> - **Uji responsif 360/768/1280** untuk daftar, penyunting, panel di detail booking, dan halaman
+>   invoice pelanggan dikerjakan lewat kelas Tailwind mobile-first tetapi **belum dibuktikan di
+>   peramban sungguhan** — bergabung ke **F2.5.6** bersama sisa tahap-tahap sebelumnya.
 
 ## Tahap 12 · Pengerasan & Go-Live  `F2.5`
 
@@ -683,7 +748,7 @@ manualnya berfungsi, hanya tanpa template yang bisa disunting dan tanpa jejak pe
 | 2.5.6 | Uji lintas peramban (Chrome, Safari iOS, Firefox) & perangkat nyata, **pada 360/768/1280** — menyerap bekas 1.8.7 dan sisa F1.6.6 |
 | 2.5.7 | Domain kustom + SSL; `APP_ENV=production`, `APP_DEBUG=false` diverifikasi |
 | 2.5.8 | *Opsional:* perintah `booking:import-firebase` bila data lama perlu dibawa |
-| 2.5.9 | Panduan singkat untuk admin (PDF 2 halaman) + serah terima |
+| 2.5.9 | Panduan singkat untuk admin (PDF 2 halaman) + serah terima. **Wajib memuat dua butir dari Tahap 11:** (a) sisipkan `{{ringkasan_biaya}}` ke template `booking_completed` lewat layar A7 — seeder sengaja tidak menimpanya; (b) tanyakan status PKP bengkel, karena kolom pajak invoice diketik nominal tanpa tarif otomatis |
 | 2.5.10 | `/audit-paritas` terhadap prototipe lama untuk **seluruh** fitur yang sudah dibangun — bekas 1.8.4, kini menjangkau **seluruh** tahap sekaligus |
 | 2.5.11 | Satu putaran `migrate:fresh --seed` terhadap DB **dev** (setelah 2.5.1 memisahkannya), lalu telusuri alur penuh — membuktikan seeder masih lengkap. Bekas 1.8.6 |
 | 2.5.12 | **Aktifkan penjadwal di Railway** (proses `schedule:work` atau cron), lalu buktikan `activitylog:clean` benar-benar berjalan. Perintahnya sudah didaftarkan di `routes/console.php` sejak Tahap 9, tetapi tanpa penjadwal ia tidak pernah jalan — retensi 12 bulan (`docs/07 §A12`, `docs/09 §9.7`) sampai saat itu masih janji di dokumen |
@@ -722,7 +787,9 @@ menggantikan estimasi hari yang sengaja dibuang dari roadmap ini.
 
 | Risiko | Dampak | Penanganan |
 |--------|--------|------------|
-| **Database dev = database deploy (R2)** | Aman selama isinya data seeder; berubah jadi berbahaya begitu ada satu registrasi nyata | Seeder lengkap & idempoten sebagai jalur pulih; [batas pemakaian `migrate:fresh`](#kapan-migratefresh-berhenti-boleh) ditulis eksplisit. **Dipisahkan di F2.5.1 sebelum go-live** — tugas bernomor, bukan janji longgar |
+| **PDF invoice bergantung pada dompdf, dan `ext-gd` belum terbukti ada di Railway** | PDF pertama gagal dirender **di produksi**, bukan saat deploy — `gd` hanya *suggest* sehingga `composer install` tetap lulus | PDF dirancang tanpa gambar raster (kop surat teks); ujinya membuktikan berkasnya terbentuk secara lokal. Satu unduhan sungguhan dari Railway wajib sebelum 2.4.3 dianggap tuntas. Jalur cadangan yang sudah disepakati: halaman cetak `@media print` + "Simpan sebagai PDF" dari peramban — antarmuka dan datanya tidak berubah |
+| **Aturan "satu invoice aktif per booking" hanya hidup di aplikasi** | Sejak `booking_id` tidak lagi unik, tidak ada jaring pengaman database; dua permintaan bersamaan bisa menyisipkan dua draft | Dihitung di dalam transaksi dengan baris **booking**-nya dikunci `lockForUpdate`, diuji dengan tiga permintaan beruntun. Catatan jujur yang sama seperti F1.4: penguncian hanya berlaku nyata di MySQL, SQLite yang dipakai uji mengabaikannya |
+| **Database dev = database deploy (R2)** | Aman selama isinya data seeder; berubah jadi berbahaya begitu ada satu registrasi nyata. **Sejak Tahap 11 taruhannya naik**: invoice adalah data pertama yang punya konsekuensi akuntansi | Seeder lengkap & idempoten sebagai jalur pulih; [batas pemakaian `migrate:fresh`](#kapan-migratefresh-berhenti-boleh) ditulis eksplisit. **Dipisahkan di F2.5.1 sebelum go-live** — tugas bernomor, bukan janji longgar |
 | Seeder tidak ikut diperbarui saat skema berubah | `migrate:fresh --seed` menghasilkan sistem setengah isi, dan itu baru ketahuan di device satunya | DoD #10 pada setiap tugas; putaran pembuktiannya di F2.5.11 — dengan F1.8 dicabut, tidak ada lagi pemeriksaan terpusat di tengah jalan, jadi DoD #10 yang harus benar-benar ditegakkan per tugas |
 | Kuota gratis Cloudinary terlampaui | Gambar katalog gagal tampil | Pantau pemakaian; transformasi `f_auto,q_auto` menekan bandwidth; kredensial terpusat di `ImageUploader` sehingga pindah penyedia hanya menyentuh satu berkas |
 | Filesystem Railway ephemeral | Berkas yang tidak sengaja ditulis ke disk hilang saat redeploy | Seluruh unggahan lewat `ImageUploader` → Cloudinary. Session, cache, dan queue memakai driver `database`, bukan `file` |

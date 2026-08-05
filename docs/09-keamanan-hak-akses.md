@@ -72,10 +72,10 @@ public function updateStatus(User $user, Booking $booking): bool
 | Melihat data seluruh customer | ✅ | ✅ | ❌ | ❌ |
 | Menyiapkan & menandai pesan WhatsApp booking | ✅ | ✅ | ❌ | ❌ |
 | Menyunting template WhatsApp | ✅ | ❌ | ❌ | ❌ |
-| Membuat & menerbitkan invoice | ✅ | ✅ | ❌ | ❌ |
-| Membatalkan (void) invoice | ✅ | ❌ | ❌ | ❌ |
+| Membuat, menyunting, menerbitkan, menandai lunas invoice | ✅ | ✅ | ❌ | ❌ |
+| Membatalkan (void) invoice — termasuk dari status `paid` | ✅ | ❌ | ❌ | ❌ |
 | Melihat invoice sendiri | — | — | ✅ | ❌ |
-| Laporan pendapatan | ✅ | ❌ | ❌ | ❌ |
+| Laporan pendapatan (`BookingPolicy::viewRevenueReport`) | ✅ | ❌ | ❌ | ❌ |
 | Katalog & paket layanan | ✅ | ❌ | ❌ | ❌ |
 | Konten landing (fasilitas, FAQ, testimoni) | ✅ | ❌ | ❌ | ❌ |
 | Pengguna internal & activity log | ✅ | ❌ | ❌ | ❌ |

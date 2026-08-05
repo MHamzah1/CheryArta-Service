@@ -1,4 +1,5 @@
 import BookingStatusPanel from '@/components/admin/booking-status-panel';
+import InvoicePanel from '@/components/admin/invoice-panel';
 import WhatsAppMessageHistory from '@/components/admin/whatsapp-message-history';
 import WhatsAppPanel from '@/components/admin/whatsapp-panel';
 import ConfirmDialog from '@/components/confirm-dialog';
@@ -18,6 +19,7 @@ import { bookingStatusMeta } from '@/lib/status';
 import {
     type AdminBookingDetail,
     type AdminTimelineEntry,
+    type InvoiceSummary,
     type StatusTransitionOption,
     type WhatsAppPanelProps,
 } from '@/types';
@@ -33,6 +35,10 @@ interface Props {
     canUpdateStatus: boolean;
     canDelete: boolean;
     whatsapp: WhatsAppPanelProps;
+    /** Invoice yang masih berlaku; null bila belum ada atau semuanya di-void. */
+    invoice: InvoiceSummary | null;
+    invoiceHistory: InvoiceSummary[];
+    canCreateInvoice: boolean;
 }
 
 function Baris({ label, children }: { label: string; children: ReactNode }) {
@@ -57,7 +63,17 @@ function Kartu({ judul, children }: { judul: string; children: ReactNode }) {
     );
 }
 
-export default function AdminBookingShow({ booking, timeline, statusOptions, canUpdateStatus, canDelete, whatsapp }: Props) {
+export default function AdminBookingShow({
+    booking,
+    timeline,
+    statusOptions,
+    canUpdateStatus,
+    canDelete,
+    whatsapp,
+    invoice,
+    invoiceHistory,
+    canCreateInvoice,
+}: Props) {
     const hapus = () => {
         router.delete(route('admin.bookings.destroy', booking.booking_code));
     };
@@ -192,6 +208,13 @@ export default function AdminBookingShow({ booking, timeline, statusOptions, can
                     <Kartu judul="Riwayat Pesan">
                         <WhatsAppMessageHistory bookingCode={booking.booking_code} messages={whatsapp.history} />
                     </Kartu>
+
+                    <InvoicePanel
+                        bookingCode={booking.booking_code}
+                        invoice={invoice}
+                        history={invoiceHistory}
+                        canCreate={canCreateInvoice}
+                    />
                 </div>
 
                 <div className="grid gap-6">

@@ -10,6 +10,7 @@ import {
     CalendarDays,
     CalendarRange,
     Car,
+    FileText,
     HelpCircle,
     History,
     Inbox,
@@ -32,9 +33,9 @@ import { useState, type ReactNode } from 'react';
  * dinonaktifkan. Menu yang mengantar ke halaman 404 membuat orang menyangka
  * aplikasinya rusak.
  *
- * Yang belum ada tinggal **Invoice** (Tahap 11). Dashboard dan Laporan masuk di
- * Tahap 8; Konten dan Sistem di Tahap 9, yang sekaligus menutup A13; Template
- * WA menyusul di Tahap 10.
+ * Sejak Tahap 11 seluruh menu A13 sudah dirender. Dashboard dan Laporan masuk
+ * di Tahap 8; Konten dan Sistem di Tahap 9, yang sekaligus menutup A13;
+ * Template WA di Tahap 10; Invoice di Tahap 11.
  *
  * `roles` hanya menyembunyikan menu — otorisasi sesungguhnya ada di
  * middleware + Policy di server (.claude/rules/50-keamanan.md).
@@ -63,9 +64,13 @@ function menuAdmin(pesanBelumDibaca: number): { title: string; items: NavItem[] 
             items: [
                 { title: 'Jadwal', url: path('admin.schedule.index'), icon: CalendarRange, roles: SEMUA_STAF },
                 { title: 'Booking', url: path('admin.bookings.index'), icon: CalendarDays, roles: SEMUA_STAF },
-                // Laporan pendapatan khusus Super Admin, tetapi halamannya
-                // sendiri terbuka untuk kedua role — tab pendapatan baru lahir
-                // di F2.4 (docs/09 §9.3).
+                // Kedua role staf: keduanya membuat dan menerbitkan invoice
+                // (docs/09 §9.3). Yang dibatasi hanya `void` — dan itu per
+                // invoice, dijawab InvoicePolicy, bukan disembunyikan di menu.
+                { title: 'Invoice', url: path('admin.invoices.index'), icon: FileText, roles: SEMUA_STAF },
+                // Halaman laporan terbuka untuk kedua role; tab Pendapatan di
+                // dalamnya khusus Super Admin dan tidak dirender bagi advisor
+                // (docs/09 §9.3).
                 { title: 'Laporan', url: path('admin.reports.index'), icon: BarChart3, roles: SEMUA_STAF },
             ],
         },

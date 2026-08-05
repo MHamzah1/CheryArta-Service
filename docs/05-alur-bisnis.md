@@ -126,7 +126,7 @@ stateDiagram-v2
 | `pending`/`confirmed` → `cancelled` | advisor | kapan pun, alasan wajib | sama, + draft WA "dibatalkan" |
 | `confirmed` → `in_progress` | advisor | tanggal booking = hari ini (peringatan bila tidak) | `started_at` diisi, `estimated_finish_at` dihitung |
 | `confirmed` → `no_show` | advisor | tanggal booking sudah lewat | kuota dilepas |
-| `in_progress` → `completed` | advisor | — | `completed_at` diisi, odometer kendaraan diperbarui, invoice draft dibuat, draft WA "selesai" disiapkan |
+| `in_progress` → `completed` | advisor | — | `completed_at` diisi, odometer kendaraan diperbarui, **invoice draft dibuat di dalam transaksi yang sama**, draft WA "selesai" disiapkan |
 | lainnya | — | **ditolak** oleh `BookingStatusController` | |
 
 Setiap transisi menulis satu baris `booking_status_histories` berisi status asal, status tujuan,
@@ -187,18 +187,40 @@ flowchart LR
 | Tahap | Yang terjadi | Terlihat customer? |
 |-------|--------------|--------------------|
 | Saat booking | Estimasi = `service_packages.price` (atau "Gratis") ditampilkan di form | Ya |
-| Status `completed` | `InvoiceService` membuat invoice `draft` berisi 1 item jasa dari paket | Tidak |
+| Status `completed` | `InvoiceService` membuat invoice `draft` berisi 1 item jasa dari paket, **di dalam transaksi perubahan status** | Tidak |
 | Advisor menyunting | Menambah item jasa/part, diskon; subtotal & total dihitung server | Tidak |
 | Advisor menerbitkan | Status `issued`, `invoice_number` terbit, `issued_at` diisi | Ya |
 | Pembayaran dicatat | Status `paid` + metode pembayaran | Ya |
+| Dibatalkan (SA) | Status `void` + `void_reason`; tetap terlihat pemiliknya berlencana "Dibatalkan" | Ya |
 
-Aturan: nilai total **tidak pernah** dikirim dari browser; server menghitung ulang
-`subtotal = Σ(qty × unit_price)` lalu `total = subtotal − discount + tax`. Invoice yang sudah
-`issued` tidak dapat disunting — hanya bisa di-`void` lalu dibuat ulang, dan keduanya tercatat di
-activity log.
+**Perhitungan.** Nilai total **tidak pernah** dikirim dari browser; server menghitung ulang
+`subtotal = Σ(qty × unit_price)` lalu `total = subtotal − discount + tax`. Diskon dan pajak
+diketik **nominal** (tanpa tarif PPN otomatis), dan `discount` tidak boleh melebihi subtotal —
+invoice bertotal negatif bukan invoice. Menerbitkan menuntut minimal satu item.
 
-Nomor invoice: `INV/{tahun}/{bulan}/{urut 4 digit per bulan}`, dibuat dalam transaksi dengan
-penguncian agar tidak kembar.
+**Paket gratis tetap dibuatkan invoice**, bernilai Rp 0. Servis garansi butuh bukti bahwa ia
+dikerjakan, dan sparepart di luar cakupan garansi tetap ditagihkan lewat invoice yang sama.
+Label "Gratis" di antarmuka tetap milik `service_packages.is_free`, bukan diturunkan dari
+`total = 0`.
+
+**Jalur koreksi.** Invoice yang sudah `issued` tidak dapat disunting. Satu-satunya jalan
+memperbaikinya: **`void` (Super Admin, wajib alasan) lalu buat invoice pengganti** dari detail
+booking. Berlaku juga dari status `paid`. Keduanya tercatat di activity log
+([09 §9.7](09-keamanan-hak-akses.md)). Karena itu `invoices.booking_id` **tidak** unik — lihat
+[04 §4.2](04-skema-database.md#invoices).
+
+**Invoice hanya lahir dari booking `completed`.** Selain lewat transisi status, ada tombol
+**Buat Invoice** di detail booking untuk tiga keadaan: booking yang selesai sebelum modul ini ada,
+invoice yang baru saja di-void, dan pemulihan bila pembuatan otomatis pernah gagal. Tidak ada
+pengisian mundur otomatis — harga paket bisa sudah berubah sejak servisnya dikerjakan.
+
+**Nomor invoice:** `INV/{tahun}/{bulan}/{urut 4 digit per bulan}`, terbit saat status menjadi
+`issued` (bukan saat draft dibuat, supaya draft yang tak pernah terbit tidak menghabiskan nomor).
+Dibuat dalam transaksi; tabrakan ditangkap unique index dan transaksinya diulang.
+
+**Yang terlihat pelanggan** dipatok `issued_at`, bukan status: draft dijawab **404**, sedangkan
+invoice yang pernah terbit lalu di-void tetap terbuka — pelanggan yang sudah memegang PDF-nya
+justru perlu tahu bahwa tagihan itu dicabut.
 
 ## 5.7 Alur Pelacakan Publik (tanpa login)
 

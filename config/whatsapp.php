@@ -64,9 +64,10 @@ return [
     | dan tests/Unit/WhatsAppPlaceholderTest.php yang menjaganya — selisih di
     | antara keduanya pernah nyata terjadi di dokumen (grill K3).
     |
-    | `ringkasan_biaya` SENGAJA belum ada: sumbernya tabel `invoices` yang baru
-    | lahir di Tahap 11 (keputusan grill Q4b). Placeholder yang sah tetapi
-    | selalu kosong lebih menyesatkan daripada yang ditolak dengan penjelasan.
+    | `ringkasan_biaya` DIHIDUPKAN di Tahap 11 (roadmap 2.4.8), setelah tabel
+    | `invoices` lahir. Ia merender satu baris total; bila invoicenya belum
+    | diterbitkan, isinya kalimat netral — bukan angka draft yang masih bisa
+    | berubah (keputusan grill Q8).
     */
     'allowed_placeholders' => [
         'nama',
@@ -79,6 +80,7 @@ return [
         'estimasi_selesai',
         'alasan',
         'alamat',
+        'ringkasan_biaya',
     ],
 
     /*

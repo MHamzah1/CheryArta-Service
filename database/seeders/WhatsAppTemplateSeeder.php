@@ -49,9 +49,15 @@ class WhatsAppTemplateSeeder extends Seeder
      * dipakai pada "- Chery Arta" karena em-dash tidak selalu terbaca sama di
      * seluruh papan ketik ponsel.
      *
-     * `{{ringkasan_biaya}}` sengaja TIDAK dipakai di `booking_completed`:
-     * sumbernya tabel `invoices` yang baru lahir di Tahap 11 (keputusan grill
-     * Q4b).
+     * `{{ringkasan_biaya}}` dipakai di `booking_completed` sejak Tahap 11
+     * (roadmap 2.4.8).
+     *
+     * **Perubahan ini hanya berlaku untuk instalasi baru.** Seeder ini sengaja
+     * hanya membuat baris yang belum ada dan TIDAK PERNAH menyentuh yang sudah
+     * ada — satu-satunya seeder produksi yang bukan `updateOrCreate`, dibuat
+     * begitu di Tahap 10 supaya suntingan Super Admin tidak hilang. Pada
+     * database yang sudah berjalan, placeholder ini harus disisipkan sekali
+     * lewat layar A7. Menimpanya otomatis akan mematahkan jaminan itu.
      */
     private function body(WhatsAppTemplateKey $key): string
     {
@@ -68,7 +74,7 @@ class WhatsAppTemplateSeeder extends Seeder
                 .'Estimasi selesai pukul {{estimasi_selesai}}. Kode: {{kode_booking}}. - Chery Arta',
 
             WhatsAppTemplateKey::BookingCompleted => 'Halo {{nama}}, servis kendaraan {{kendaraan}} ({{plat}}) telah *selesai* '
-                .'dan siap diambil. Kode: {{kode_booking}}. '
+                .'dan siap diambil. Kode: {{kode_booking}}. {{ringkasan_biaya}}. '
                 .'Terima kasih telah mempercayakan perawatan pada Chery Arta.',
 
             WhatsAppTemplateKey::BookingCancelled => 'Halo {{nama}}, booking *{{kode_booking}}* pada {{tanggal}} pukul {{jam}} '

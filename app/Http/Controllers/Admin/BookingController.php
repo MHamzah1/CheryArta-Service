@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingSource;
 use App\Enums\BookingStatus;
+use App\Enums\InvoiceStatus;
 use App\Enums\UserRole;
 use App\Enums\WhatsAppTemplateKey;
 use App\Http\Controllers\Controller;
@@ -14,12 +15,14 @@ use App\Http\Requests\Admin\StoreWalkInBookingRequest;
 use App\Http\Requests\Admin\WalkInLookupRequest;
 use App\Models\Booking;
 use App\Models\CarModel;
+use App\Models\Invoice;
 use App\Models\ServicePackage;
 use App\Models\User;
 use App\Services\SlotService;
 use App\Services\WalkInBookingService;
 use App\Services\WhatsApp\WhatsAppNotifier;
 use App\Support\BookingPresenter;
+use App\Support\InvoicePresenter;
 use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -119,6 +122,10 @@ class BookingController extends Controller
             // pesan dibaca beberapa kali saat menyusun panel, dan kueri di
             // dalam perulangan adalah cara N+1 masuk lewat pintu belakang.
             'whatsappMessages' => fn ($query) => $query->with('generatedBy:id,name')->latest('id'),
+            // Seluruh invoice, bukan hanya yang aktif: yang sudah di-void tetap
+            // ditampilkan sebagai jejak, dan advisor perlu melihat bahwa
+            // nomornya pernah terbit (keputusan grill Q1).
+            'invoices' => fn ($query) => $query->latest('id'),
         ]);
 
         return Inertia::render('admin/bookings/show', [
@@ -146,6 +153,21 @@ class BookingController extends Controller
                     : null,
                 $booking->whatsappMessages,
             ),
+
+            // A8 — panel invoice (roadmap 2.4.2). `invoice` adalah yang masih
+            // berlaku; `invoiceHistory` memuat yang sudah di-void.
+            'invoice' => $this->invoiceAktif($booking),
+            'invoiceHistory' => $booking->invoices
+                ->filter(fn (Invoice $i): bool => $i->status === InvoiceStatus::Void)
+                ->map(InvoicePresenter::summary(...))
+                ->values()
+                ->all(),
+            // Tombol "Buat Invoice" hanya dirender bila server mengizinkan.
+            // Layaknya dihitung ULANG di InvoiceService dengan baris terkunci —
+            // jawaban di sini bisa basi sedetik kemudian.
+            'canCreateInvoice' => $request->user()->can('create', [Invoice::class, $booking])
+                && $booking->status === BookingStatus::Completed
+                && $booking->invoices->every(fn (Invoice $i): bool => $i->status === InvoiceStatus::Void),
         ]);
     }
 
@@ -251,6 +273,18 @@ class BookingController extends Controller
             ->get(['id', 'name', 'category', 'description', 'applicable_series', 'estimated_duration_minutes', 'price', 'is_free'])
             ->map(BookingPresenter::packageOption(...))
             ->all();
+    }
+
+    /**
+     * Invoice booking ini yang masih berlaku (keputusan grill Q1).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function invoiceAktif(Booking $booking): ?array
+    {
+        $invoice = $booking->invoices->firstWhere(fn (Invoice $i): bool => $i->status !== InvoiceStatus::Void);
+
+        return $invoice === null ? null : InvoicePresenter::summary($invoice);
     }
 
     /**

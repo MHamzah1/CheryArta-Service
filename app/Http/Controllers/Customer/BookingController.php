@@ -13,6 +13,7 @@ use App\Models\ServicePackage;
 use App\Services\BookingService;
 use App\Services\SlotService;
 use App\Support\BookingPresenter;
+use App\Support\InvoicePresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -87,6 +88,12 @@ class BookingController extends Controller
 
             'cancelReasons' => CancelBookingRequest::ALASAN_UMUM,
             'slotRules' => BookingPresenter::slotRules($slots),
+
+            // Invoice hanya muncul setelah DITERBITKAN — patokannya `issued_at`,
+            // bukan status (keputusan grill Q7). Draft yang masih disunting
+            // advisor bukan urusan pelanggan; yang sudah terbit lalu di-void
+            // tetap tampil, karena justru itu yang perlu ia ketahui.
+            'invoice' => $this->invoiceTerbit($booking),
         ]);
     }
 
@@ -126,5 +133,24 @@ class BookingController extends Controller
             ->get(['id', 'name', 'category', 'description', 'applicable_series', 'estimated_duration_minutes', 'price', 'is_free'])
             ->map(BookingPresenter::packageOption(...))
             ->all();
+    }
+
+    /**
+     * Invoice yang boleh dilihat pemiliknya dari detail booking.
+     *
+     * Patokannya `issued_at`, bukan status (keputusan grill Q7): yang masih
+     * draft belum menjadi tagihan, sedangkan yang pernah terbit lalu di-void
+     * justru harus tetap terlihat.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function invoiceTerbit(Booking $booking): ?array
+    {
+        $invoice = $booking->invoices()
+            ->whereNotNull('issued_at')
+            ->latest('id')
+            ->first();
+
+        return $invoice === null ? null : InvoicePresenter::summary($invoice);
     }
 }

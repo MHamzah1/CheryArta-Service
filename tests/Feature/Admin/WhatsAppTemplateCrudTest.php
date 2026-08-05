@@ -50,16 +50,20 @@ it('menolak placeholder yang tidak dikenali dan menyebut namanya', function () {
     expect(session('errors')->first('body'))->toContain('{{harga}}');
 });
 
-it('menolak ringkasan_biaya sampai modul invoice lahir di Tahap 11', function () {
-    // Placeholder yang sah tetapi selalu kosong lebih menyesatkan daripada
-    // yang ditolak dengan penjelasan (keputusan grill Q4b).
+it('menerima ringkasan_biaya sejak modul invoice lahir di Tahap 11', function () {
+    // Sampai Tahap 10 placeholder ini DITOLAK: sumbernya tabel `invoices` yang
+    // belum ada, dan placeholder yang sah tetapi selalu kosong lebih
+    // menyesatkan daripada yang ditolak dengan penjelasan (keputusan grill
+    // Q4b). Dihidupkan di roadmap 2.4.8 bersama tabelnya.
     $this->actingAs($this->sa)
         ->put(route('admin.whatsapp-templates.update', $this->template), [
             'name' => 'Servis Selesai',
             'body' => 'Servis selesai. {{ringkasan_biaya}}',
             'is_active' => true,
         ])
-        ->assertSessionHasErrors('body');
+        ->assertSessionHasNoErrors();
+
+    expect($this->template->refresh()->body)->toContain('{{ringkasan_biaya}}');
 });
 
 it('menolak isi pesan yang melewati batas panjang template', function () {

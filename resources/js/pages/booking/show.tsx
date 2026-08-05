@@ -4,10 +4,10 @@ import { StatusBadge } from '@/components/status-badge';
 import Timeline from '@/components/timeline';
 import { Button } from '@/components/ui/button';
 import CustomerLayout from '@/layouts/customer-layout';
-import { formatDurasi, formatHargaPaket, formatJadwal, formatJamIso, formatPlat } from '@/lib/format';
-import { type BookingDetail, type SlotRules, type TimelineEntry } from '@/types';
+import { formatDurasi, formatHargaPaket, formatJadwal, formatJamIso, formatPlat, formatRupiah } from '@/lib/format';
+import { type BookingDetail, type InvoiceSummary, type SlotRules, type TimelineEntry } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Receipt } from 'lucide-react';
 
 interface Props {
     booking: BookingDetail;
@@ -17,9 +17,19 @@ interface Props {
     canCancel: boolean;
     cancelReasons: string[];
     slotRules: SlotRules;
+    /** Hanya terisi bila invoicenya sudah diterbitkan (keputusan grill Q7). */
+    invoice: InvoiceSummary | null;
 }
 
-export default function BookingShow({ booking, timeline, canReschedule, canCancel, cancelReasons, slotRules }: Props) {
+export default function BookingShow({
+    booking,
+    timeline,
+    canReschedule,
+    canCancel,
+    cancelReasons,
+    slotRules,
+    invoice,
+}: Props) {
     return (
         <CustomerLayout>
             <Head title={`Booking ${booking.booking_code}`} />
@@ -93,6 +103,31 @@ export default function BookingShow({ booking, timeline, canReschedule, canCance
                                 </Link>{' '}
                                 ({formatJadwal(booking.rescheduled_from.booking_date, booking.rescheduled_from.booking_time)}).
                             </p>
+                        )}
+
+                        {/* Invoice muncul hanya setelah DITERBITKAN — server yang
+                            memutuskan (keputusan grill Q7). Draft yang masih
+                            disunting advisor tidak pernah sampai ke sini, dan
+                            URL-nya pun dijawab 404. */}
+                        {invoice && (
+                            <div className="border-line mt-5 border-t pt-5">
+                                <div className="bg-canvas flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+                                    <div>
+                                        <p className="flex flex-wrap items-center gap-2 font-medium">
+                                            <span className="font-mono">{invoice.invoice_number}</span>
+                                            <StatusBadge status={invoice.status} kind="invoice" />
+                                        </p>
+                                        <p className="text-ink-soft text-sm">Total {formatRupiah(invoice.total)}</p>
+                                    </div>
+
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link href={route('customer.invoice.show', invoice.id)}>
+                                            <Receipt className="h-4 w-4" aria-hidden="true" />
+                                            Lihat Invoice
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </div>
                         )}
 
                         {/* Tombol hanya muncul bila server mengizinkan; server

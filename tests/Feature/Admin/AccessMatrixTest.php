@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\BookingStatus;
 use App\Enums\WhatsAppTemplateKey;
 use App\Models\Booking;
 use App\Models\ContactMessage;
 use App\Models\Facility;
 use App\Models\Faq;
+use App\Models\Invoice;
 use App\Models\Testimonial;
 use App\Models\User;
 use App\Models\WhatsAppMessage;
@@ -236,6 +238,80 @@ it('baris matriks: menyimpan template WA — SA saja', function () {
     $template = WhatsAppTemplate::factory()->key(WhatsAppTemplateKey::BookingConfirmed)->create();
 
     matriks('put', route('admin.whatsapp-templates.update', $template), sa: true, advisor: false, customer: false, tamu: false);
+});
+
+/*
+|--------------------------------------------------------------------------
+| A8 — Invoice (F2.4.6)
+|--------------------------------------------------------------------------
+|
+| Membuat, menyunting, menerbitkan, dan menandai lunas: KEDUA role staf.
+| Membatalkan (void): Super Admin saja — satu-satunya baris invoice yang
+| dibatasi (docs/09 §9.3).
+|
+*/
+
+it('baris matriks: daftar invoice — SA & advisor boleh', function () {
+    matriks('get', route('admin.invoices.index'), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: detail invoice — SA & advisor boleh', function () {
+    $invoice = Invoice::factory()->create();
+
+    matriks('get', route('admin.invoices.show', $invoice), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: membuat invoice dari booking — SA & advisor boleh', function () {
+    $booking = Booking::factory()->create(['status' => BookingStatus::Completed]);
+
+    matriks('post', route('admin.bookings.invoice.store', $booking), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: menyimpan rincian invoice — SA & advisor boleh', function () {
+    $invoice = Invoice::factory()->create();
+
+    matriks('put', route('admin.invoices.update', $invoice), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: menerbitkan invoice — SA & advisor boleh', function () {
+    $invoice = Invoice::factory()->create();
+
+    matriks('put', route('admin.invoices.issue', $invoice), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: menandai invoice lunas — SA & advisor boleh', function () {
+    $invoice = Invoice::factory()->issued()->create();
+
+    matriks('put', route('admin.invoices.paid', $invoice), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: membatalkan (void) invoice — SA saja', function () {
+    $invoice = Invoice::factory()->issued()->create();
+
+    matriks('put', route('admin.invoices.void', $invoice), sa: true, advisor: false, customer: false, tamu: false);
+});
+
+it('baris matriks: unduh PDF invoice dari panel — SA & advisor boleh', function () {
+    $invoice = Invoice::factory()->issued()->create();
+
+    matriks('get', route('admin.invoices.pdf', $invoice), sa: true, advisor: true, customer: false, tamu: false);
+});
+
+it('baris matriks: laporan pendapatan — SA saja', function () {
+    // Tidak lewat `matriks()`: penolakannya BUKAN 403. Advisor memang berhak
+    // membuka halaman laporan — yang tidak ada baginya hanyalah tab pendapatan,
+    // dan datanya tidak pernah dikirim ke sana (docs/09 §9.3).
+    $url = route('admin.reports.index', ['tab' => 'pendapatan']);
+
+    $this->get($url)->assertRedirect(route('login'));
+
+    $this->actingAs(superAdmin())->get($url)
+        ->assertInertia(fn ($page) => $page->where('tab', 'pendapatan')->has('revenue'));
+
+    $this->actingAs(serviceAdvisor())->get($url)
+        ->assertInertia(fn ($page) => $page->where('tab', 'rekap')->where('revenue', null));
+
+    $this->actingAs(customer())->get($url)->assertForbidden();
 });
 
 it('baris matriks: mencatat pesan WhatsApp — SA & advisor boleh', function () {

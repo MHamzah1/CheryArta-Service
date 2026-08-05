@@ -10,6 +10,7 @@ use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -133,6 +134,22 @@ class User extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Invoice milik pengguna ini, lewat booking-nya.
+     *
+     * Alasannya sama seperti dua relasi di atas dan itulah satu-satunya alasan
+     * relasi ini ada: `Customer\InvoiceController` mengambil invoice DARI SINI,
+     * bukan `Invoice::findOrFail()` lalu diperiksa policy belakangan. Dengan
+     * bentuk ini, invoice milik orang lain tidak pernah terambil sama sekali —
+     * policy menjadi lapis kedua, bukan satu-satunya (.claude/rules/50 #2).
+     *
+     * @return HasManyThrough<Invoice, Booking, $this>
+     */
+    public function invoices(): HasManyThrough
+    {
+        return $this->hasManyThrough(Invoice::class, Booking::class);
     }
 
     /** Boleh mengakses panel internal /admin. */

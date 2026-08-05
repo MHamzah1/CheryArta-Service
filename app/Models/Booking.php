@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -54,6 +55,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read Booking|null $rescheduledFrom
  * @property-read \Illuminate\Database\Eloquent\Collection<int, BookingStatusHistory> $statusHistories
  * @property-read \Illuminate\Database\Eloquent\Collection<int, WhatsAppMessage> $whatsappMessages
+ * @property-read Invoice|null $invoice
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Invoice> $invoices
  */
 class Booking extends Model
 {
@@ -183,6 +186,51 @@ class Booking extends Model
     public function whatsappMessages(): HasMany
     {
         return $this->hasMany(WhatsAppMessage::class);
+    }
+
+    /**
+     * Invoice yang masih berlaku — bukan sekadar `hasOne` polos.
+     *
+     * Sejak keputusan grill Q1, `invoices.booking_id` tidak lagi unik: invoice
+     * yang di-void tetap tersimpan sebagai jejak dan penggantinya adalah baris
+     * baru. `hasOne` tanpa saringan akan mengembalikan salah satunya tanpa bisa
+     * ditebak. Yang dimaksud "invoice booking ini" di seluruh layar adalah yang
+     * belum dicabut.
+     *
+     * @return HasOne<Invoice, $this>
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class)->active()->latestOfMany();
+    }
+
+    /**
+     * Seluruh invoice termasuk yang di-void.
+     *
+     * `@return` sengaja ditulis pada barisnya sendiri: bila digabung dengan
+     * kalimat penjelas di satu baris, PHPStan membaca seluruhnya sebagai
+     * deskripsi dan generic `<Invoice>`-nya hilang — sehingga scope `active()`
+     * pada relasi ini dilaporkan sebagai method yang tidak ada.
+     *
+     * @return HasMany<Invoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->latest('id');
+    }
+
+    /**
+     * Layak dibuatkan invoice (keputusan grill Q3).
+     *
+     * Dua syarat: pekerjaannya sudah selesai, dan belum ada invoice yang masih
+     * berlaku. Dipakai untuk memutuskan apakah tombol "Buat Invoice" dirender —
+     * dan diperiksa ULANG di InvoiceService dengan baris terkunci, karena
+     * jawaban di sini bisa basi sedetik kemudian.
+     */
+    public function needsInvoice(): bool
+    {
+        return $this->status === BookingStatus::Completed
+            && ! $this->invoices()->active()->exists();
     }
 
     /**

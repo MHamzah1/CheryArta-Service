@@ -141,8 +141,8 @@ routes/web.php
 │   ├── PUT  /booking/{booking}/jadwal-ulang  Customer\BookingController@reschedule
 │   ├── PUT  /booking/{booking}/batal          Customer\BookingController@cancel
 │   ├── GET  /riwayat                Customer\HistoryController@index
-│   ├── GET  /invoice/{invoice}      Customer\InvoiceController@show
-│   ├── GET  /invoice/{invoice}/pdf  Customer\InvoiceController@download
+│   ├── GET  /invoice/{invoice}      Customer\InvoiceController@show      (diambil lewat relasi; draft → 404)
+│   ├── GET  /invoice/{invoice}/pdf  Customer\InvoiceController@download  (throttle 10/menit)
 │   └── GET|PUT /profil              Customer\ProfileController
 │
 └── Admin (auth + role:super_admin|service_advisor) prefix /admin
@@ -152,7 +152,14 @@ routes/web.php
     ├── PUT  /bookings/{b}/status    Admin\BookingStatusController@update
     ├── resource /customers          Admin\CustomerController          (index/show saja)
     ├── resource /vehicles           Admin\VehicleController
-    ├── resource /invoices           Admin\InvoiceController
+    ├── POST /bookings/{b}/invoice   Admin\InvoiceController@store   (satu-satunya cara membuat)
+    ├── GET  /invoices               Admin\InvoiceController@index
+    ├── GET  /invoices/{invoice}     Admin\InvoiceController@show    (penyunting + baca-saja)
+    ├── PUT  /invoices/{invoice}     Admin\InvoiceController@update
+    ├── PUT  /invoices/{i}/terbitkan Admin\InvoiceStatusController@issue
+    ├── PUT  /invoices/{i}/lunas     Admin\InvoiceStatusController@markPaid
+    ├── PUT  /invoices/{i}/batal     Admin\InvoiceStatusController@void      (SA saja)
+    ├── GET  /invoices/{i}/pdf       Admin\InvoicePdfController      (throttle 10/menit)
     ├── GET  /laporan                Admin\ReportController@index
     ├── GET  /laporan/export         Admin\ReportController@export
     └── super_admin saja:
@@ -179,7 +186,7 @@ Logika bisnis **tidak** tinggal di controller. Empat service inti:
 |---------|----------------|
 | `SlotService` | Menghasilkan daftar slot suatu tanggal, menghitung sisa kuota, memvalidasi H-1 & hari tutup. Satu-satunya tempat aturan slot hidup. |
 | `BookingService` | Membuat, menjadwal ulang, membatalkan booking; menerbitkan kode booking; mencatat riwayat status. |
-| `InvoiceService` | Menyusun rincian biaya, menghitung subtotal/diskon/total, menerbitkan nomor invoice. |
+| `InvoiceService` | Menyusun rincian biaya, menghitung subtotal/diskon/total, menerbitkan nomor invoice, menegakkan "satu invoice aktif per booking" dengan baris booking terkunci, dan seluruh transisi status invoice. |
 | `WhatsAppNotifier` | Interface. Implementasi `ClickToChatNotifier` merender template menjadi tautan `wa.me`. Implementasi gateway otomatis bisa ditambahkan tanpa mengubah pemanggil. |
 
 ## 3.7 Konfigurasi Kunci

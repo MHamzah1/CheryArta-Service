@@ -208,27 +208,55 @@ Inilah sumber data timeline pada halaman tracking customer (US-C5).
 
 | Kolom | Tipe | Ket. |
 |-------|------|------|
-| id, booking_id FK unique | | satu booking maksimal satu invoice |
-| invoice_number | varchar(25) UNIQUE | `INV/2026/08/0001` |
-| subtotal, discount, tax, total | decimal(12,2) | `tax` default 0; PPN opsional |
+| id | | |
+| booking_id | FK → bookings, `restrictOnDelete`, **index biasa** | **bukan unique** — lihat catatan di bawah |
+| invoice_number | varchar(25) UNIQUE **nullable** | `INV/2026/08/0001`; terbit saat status menjadi `issued`, bukan saat draft dibuat |
+| subtotal, discount, tax, total | decimal(12,2) | `tax` default 0; PPN opsional, diketik nominal |
 | status | varchar(15) | `draft` \| `issued` \| `paid` \| `void` |
-| issued_at, paid_at | timestamp NULL | |
-| payment_method | varchar(30) NULL | `cash` \| `transfer` \| `edc` — pencatatan saja |
-| notes | text NULL | |
-| created_by | FK → users | |
-| timestamps | | |
+| issued_at, paid_at | timestamp NULL | zona `Asia/Jakarta` |
+| payment_method | varchar(30) NULL | `cash` \| `transfer` \| `edc` (`App\Enums\PaymentMethod`) — pencatatan saja |
+| void_reason | varchar(255) NULL | wajib terisi saat status menjadi `void` |
+| notes | text NULL | catatan untuk **pelanggan**; ikut tampil di PDF |
+| created_by | FK → users, nullable, `nullOnDelete` | |
+| timestamps | | tanpa soft delete — invoice tidak pernah dihapus |
+
+> **`booking_id` sengaja BUKAN unique** (keputusan grill Tahap 11 Q1, dikerjakan di F2.4.1).
+>
+> Versi awal dokumen ini menuliskannya unik dengan keterangan "satu booking maksimal satu
+> invoice". Kalimat itu bertabrakan dengan janji jalur koreksi di
+> [05 §5.6](05-alur-bisnis.md#56-alur-estimasi-biaya--invoice): invoice `issued` yang salah "hanya
+> bisa di-`void` lalu **dibuat ulang**". Begitu invoice pertama di-void, kolom unik menolak
+> penggantinya — dan menghapus baris void-nya dilarang [§4.5](#45-kebijakan-penghapusan).
+>
+> Yang berlaku sekarang: **satu booking boleh punya maksimal satu invoice yang belum di-void.**
+> Invoice `void` boleh menumpuk sebagai jejak, masing-masing dengan nomornya sendiri yang tidak
+> pernah dipakai ulang. Aturan itu ditegakkan `App\Services\InvoiceService` di dalam transaksi
+> dengan baris **booking**-nya dikunci `lockForUpdate` — baris invoice yang belum ada tidak bisa
+> dikunci, pola yang sama dengan perhitungan kuota slot di F1.4.
+>
+> Konsekuensi di model: `Booking::invoice()` adalah relasi "invoice aktif"
+> (`hasOne()->active()->latestOfMany()`), sedangkan `Booking::invoices()` memuat seluruh riwayat.
+>
+> **`void_reason` ditambahkan di F2.4.1.** [07 §A8](07-modul-admin.md) mewajibkan alasan saat
+> membatalkan, tetapi kolomnya belum pernah ada di sini; menumpangkannya di `notes` akan menimpa
+> catatan advisor untuk pelanggan.
 
 ### `invoice_items`
 
 | Kolom | Tipe | Ket. |
 |-------|------|------|
 | id, invoice_id FK cascade | | |
-| type | varchar(10) | `jasa` \| `part` |
-| description | varchar(200) | |
+| type | varchar(10) | `jasa` \| `part` (`App\Enums\InvoiceItemType`) |
+| description | varchar(200) | teks bebas — tidak ada master sparepart ([02 §2.6](02-kebutuhan-produk.md)) |
 | qty | decimal(8,2) | mendukung 0,5 jam jasa |
 | unit_price | decimal(12,2) | |
 | subtotal | decimal(12,2) | `qty × unit_price`, dihitung server |
-| sort_order, timestamps | | |
+| sort_order, timestamps | | index `(invoice_id, sort_order)` |
+
+> **`subtotal` tidak punya nilai bawaan.** Baris yang gagal dihitung harus menabrak batasan
+> NOT NULL, bukan tersimpan diam-diam sebagai nol rupiah — kegagalan senyap pada kolom uang baru
+> ketahuan saat ada yang membaca invoicenya. Yang mengisinya `InvoiceService` lewat `forceFill`;
+> kolomnya sengaja tidak `fillable`.
 
 ### `whatsapp_templates`
 
@@ -342,7 +370,29 @@ enum BookingStatus: string { case Pending    = 'pending';      // menunggu konfi
 
 enum InvoiceStatus: string { case Draft = 'draft'; case Issued = 'issued';
                              case Paid = 'paid';   case Void = 'void'; }
+
+enum InvoiceItemType: string { case Jasa = 'jasa'; case Part = 'part'; }
+
+enum PaymentMethod: string { case Cash = 'cash'; case Transfer = 'transfer';
+                             case Edc = 'edc'; }
 ```
+
+**Transisi status invoice yang sah** (ditegakkan `InvoiceService`, bukan controller):
+
+| Dari | Ke | Siapa |
+|------|-----|-------|
+| `draft` | `issued`, `void` | SA & advisor (kecuali `void`) |
+| `issued` | `paid`, `void` | SA & advisor (kecuali `void`) |
+| `paid` | `void` | **Super Admin saja** |
+| `void` | — | keadaan akhir |
+
+> **`paid → void` ditambahkan di Tahap 11** (keputusan grill Q2). Versi enum yang lahir di F1.0
+> menjadikan `paid` buntu, sehingga satu klik "Tandai Lunas" yang keliru hanya bisa diperbaiki
+> lewat DBeaver. `paid_at` dan `payment_method` **tetap disimpan** pada invoice yang di-void: uang
+> itu memang pernah tercatat masuk, dan menghapus jejaknya membuat log audit berbohong.
+>
+> Percobaan transisi yang tidak ada menghasilkan **422**, bukan 403 — advisornya memang berhak,
+> perpindahannya yang tidak ada. Pemisahan yang sama seperti `BookingStatus` sejak F1.5.
 
 Pemetaan dari status lama: `Successful → confirmed`, `Pending → pending`,
 `In Progress → in_progress`, `Completed → completed`, `Cancelled → cancelled`.
@@ -373,4 +423,4 @@ Perintah: `php artisan migrate:fresh --seed`. Seeder demo dilindungi `if (app()-
 | Vehicle | Soft delete; booking lama tetap merujuk kendaraan yang sama |
 | Car model | Tidak boleh dihapus bila masih dirujuk `vehicles`; cukup `is_active=false` |
 | Service package | Sama seperti di atas — nonaktifkan, jangan hapus |
-| Invoice | Tidak pernah dihapus; dibatalkan lewat status `void` |
+| Invoice | Tidak pernah dihapus; dibatalkan lewat status `void`. Baris `void` **boleh menumpuk** pada satu booking — penggantinya adalah invoice baru bernomor baru, dan nomor lama tidak pernah dipakai ulang |

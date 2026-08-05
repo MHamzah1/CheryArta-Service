@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Enums\InvoiceStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\UserRole;
 use App\Models\Booking;
+use App\Models\Invoice;
 use App\Models\User;
 use App\Support\ReportPeriod;
 use Generator;
@@ -16,10 +19,10 @@ use Illuminate\Support\Facades\Config;
 /**
  * Agregat halaman laporan (A9 — docs/07-modul-admin.md, PRD F2.1).
  *
- * Laporan **Pendapatan sengaja tidak ada di sini** (keputusan grill #1): ia
- * dihitung dari tabel `invoices` yang baru lahir di F2.4. Menampilkan "Rp 0"
- * untuk sesuatu yang belum dihitung lebih menyesatkan daripada tidak
- * menampilkannya sama sekali.
+ * Laporan **Pendapatan** lahir di F2.4 bersama tabel `invoices` — lihat
+ * `revenue()` di bawah. Ia satu-satunya laporan yang dibatasi Super Admin
+ * (docs/09 §9.3), dan pembatasannya ditegakkan ReportController lewat
+ * `viewRevenueReport`, bukan di sini.
  *
  * Seluruh kueri di berkas ini harus jalan di MySQL **dan** SQLite — uji Pest
  * memakai SQLite. Karena itu tidak ada `DATE_FORMAT` atau fungsi khas MySQL;
@@ -205,6 +208,136 @@ final readonly class ReportService
      *
      * @return list<array{label: string, jumlah: int}>
      */
+    /**
+     * Laporan Pendapatan (docs/07 §A9, keputusan grill Q9) — Super Admin saja.
+     *
+     * **Dikelompokkan menurut `issued_at`**, bukan `paid_at` dan bukan tanggal
+     * booking. Alasannya: memakai `paid_at` membuat invoice yang belum dibayar
+     * tidak muncul di mana pun, sehingga piutang menjadi tak terlihat — justru
+     * angka yang paling ingin diketahui pemilik bengkel.
+     *
+     * Tiga angka, bukan satu. "Rp 12 juta" yang ternyata separuhnya belum masuk
+     * kas adalah laporan yang salah dibaca. `draft` dan `void` dikecualikan:
+     * yang satu belum pernah menjadi tagihan, yang lain tagihannya dicabut.
+     *
+     * @return array<string, mixed>
+     */
+    public function revenue(ReportPeriod $period): array
+    {
+        $diterbitkan = $this->rekapInvoice($period, null);
+        $lunas = $this->rekapInvoice($period, InvoiceStatus::Paid);
+
+        return [
+            'issued_count' => $diterbitkan['count'],
+            'issued_total' => $diterbitkan['total'],
+            'paid_count' => $lunas['count'],
+            'paid_total' => $lunas['total'],
+            'unpaid_count' => $diterbitkan['count'] - $lunas['count'],
+            // Dihitung sebagai SELISIH, bukan dijumlah ulang dari baris
+            // berstatus `issued`. Dengan begitu ketiga angka mustahil berselisih
+            // satu sama lain — "diterbitkan − lunas = belum dibayar" selalu benar
+            // menurut konstruksinya, bukan menurut harapan.
+            'unpaid_total' => number_format(
+                round((float) $diterbitkan['total'] - (float) $lunas['total'], 2),
+                2,
+                '.',
+                '',
+            ),
+            'by_package' => $this->pendapatanPer($period, 'service_packages.name'),
+            'by_payment_method' => $this->pendapatanPerMetode($period),
+        ];
+    }
+
+    /**
+     * @return array{count: int, total: string}
+     */
+    private function rekapInvoice(ReportPeriod $period, ?InvoiceStatus $status): array
+    {
+        $baris = $this->invoiceDasar($period)
+            ->when($status, fn (Builder $q, InvoiceStatus $s) => $q->where('invoices.status', $s->value))
+            ->selectRaw('COUNT(*) as jumlah, COALESCE(SUM(invoices.total), 0) as nilai')
+            ->toBase()
+            ->first();
+
+        return [
+            'count' => (int) ($baris->jumlah ?? 0),
+            'total' => number_format((float) ($baris->nilai ?? 0), 2, '.', ''),
+        ];
+    }
+
+    /**
+     * Pecahan pendapatan per paket layanan.
+     *
+     * @return list<array{label: string, count: int, total: string}>
+     */
+    private function pendapatanPer(ReportPeriod $period, string $kolomLabel): array
+    {
+        return $this->invoiceDasar($period)
+            ->join('bookings', 'invoices.booking_id', '=', 'bookings.id')
+            ->join('service_packages', 'bookings.service_package_id', '=', 'service_packages.id')
+            ->selectRaw("{$kolomLabel} as label, COUNT(*) as jumlah, SUM(invoices.total) as nilai")
+            ->groupBy($kolomLabel)
+            ->orderByDesc('nilai')
+            ->toBase()
+            ->get()
+            ->map(fn (object $baris): array => [
+                'label' => (string) $baris->label,
+                'count' => (int) $baris->jumlah,
+                'total' => number_format((float) $baris->nilai, 2, '.', ''),
+            ])
+            ->all();
+    }
+
+    /**
+     * Pecahan per metode pembayaran — hanya invoice yang sudah lunas yang
+     * punya metode, jadi baris ini menjelaskan uang yang benar-benar masuk.
+     *
+     * @return list<array{label: string, count: int, total: string}>
+     */
+    private function pendapatanPerMetode(ReportPeriod $period): array
+    {
+        $perMetode = $this->invoiceDasar($period)
+            ->where('invoices.status', InvoiceStatus::Paid->value)
+            ->whereNotNull('invoices.payment_method')
+            ->selectRaw('invoices.payment_method, COUNT(*) as jumlah, SUM(invoices.total) as nilai')
+            ->groupBy('invoices.payment_method')
+            ->toBase()
+            ->get()
+            ->keyBy('payment_method');
+
+        // Seluruh metode ditampilkan termasuk yang nol, dengan alasan yang sama
+        // seperti status pada rekap booking: metode yang hilang dari daftar
+        // terbaca sebagai "tidak ada datanya", bukan "tidak pernah dipakai".
+        return array_map(
+            fn (PaymentMethod $metode): array => [
+                'label' => $metode->label(),
+                'count' => (int) ($perMetode[$metode->value]->jumlah ?? 0),
+                'total' => number_format((float) ($perMetode[$metode->value]->nilai ?? 0), 2, '.', ''),
+            ],
+            PaymentMethod::cases(),
+        );
+    }
+
+    /**
+     * Dasar seluruh kueri pendapatan: rentang atas `issued_at`, hanya status
+     * yang benar-benar menjadi tagihan.
+     *
+     * @return Builder<Invoice>
+     */
+    private function invoiceDasar(ReportPeriod $period): Builder
+    {
+        // Seluruh kolom dikualifikasi: kueri ini di-`join` ke `bookings`, yang
+        // punya kolom `status` sendiri (dan `created_at`/`updated_at` juga).
+        return Invoice::query()
+            ->countsAsRevenue()
+            ->whereNotNull('invoices.issued_at')
+            ->whereBetween('invoices.issued_at', [
+                $period->startDate().' 00:00:00',
+                $period->endDate().' 23:59:59',
+            ]);
+    }
+
+    /** @return list<array{label: string, jumlah: int}> */
     private function perRelasi(ReportPeriod $period, string $foreignKey, string $table): array
     {
         return Booking::query()

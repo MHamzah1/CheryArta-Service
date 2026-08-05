@@ -44,14 +44,21 @@ it('membuka laporan dengan periode bawaan 30 hari', function () {
             ->where('tab', 'rekap'));
 });
 
-it('tidak merender tab pendapatan selama tabel invoice belum ada', function () {
-    // Keputusan grill #1. Tab yang tampil lalu dinonaktifkan membuat orang
-    // menyangka fiturnya rusak.
+it('merender tab pendapatan hanya untuk super admin', function () {
+    // Sampai Tahap 10 tab ini TIDAK ADA sama sekali — tabel `invoices` baru
+    // lahir di F2.4.1, dan tab yang tampil lalu dinonaktifkan membuat orang
+    // menyangka fiturnya rusak (keputusan grill F2.1 #1). Sejak Tahap 11 ia
+    // ada, tetapi hanya bagi Super Admin (docs/09 §9.3).
+    //
+    // Perincian angkanya diuji di tests/Feature/Invoice/RevenueReportTest.php;
+    // yang dijaga di sini hanyalah siapa yang menerima datanya.
     $this->actingAs(superAdmin())
         ->get(route('admin.reports.index'))
-        ->assertInertia(fn ($page) => $page
-            ->missing('revenue')
-            ->missing('pendapatan'));
+        ->assertInertia(fn ($page) => $page->has('revenue'));
+
+    $this->actingAs(serviceAdvisor())
+        ->get(route('admin.reports.index'))
+        ->assertInertia(fn ($page) => $page->where('revenue', null));
 });
 
 it('mengiris rekap sesuai periode yang dipilih', function () {

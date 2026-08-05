@@ -4,13 +4,15 @@ import ExportButtons from '@/components/admin/export-buttons';
 import PeriodPicker from '@/components/admin/period-picker';
 import { StatusBadge } from '@/components/status-badge';
 import AdminLayout from '@/layouts/admin-layout';
-import { formatJam } from '@/lib/format';
+import { formatJam, formatRupiah } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import {
     type ReportNewCustomers,
     type ReportOccupancy,
     type ReportPeriodState,
     type ReportRecap,
+    type RevenueBreakdownRow,
+    type RevenueReport,
     type SelectOption,
 } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -22,6 +24,8 @@ interface Props {
     recap: ReportRecap;
     occupancy: ReportOccupancy;
     newCustomers: ReportNewCustomers;
+    /** `null` bagi Service Advisor — tab Pendapatan khusus Super Admin. */
+    revenue: RevenueReport | null;
 }
 
 const TABS = [
@@ -31,17 +35,19 @@ const TABS = [
 ];
 
 /**
- * A9 — Laporan (docs/07 §A9, roadmap 2.1.4).
+ * A9 — Laporan (docs/07 §A9, roadmap 2.1.4 & 2.4.7).
  *
- * Tiga tab dalam satu rute, berbagi satu pemilih periode (keputusan grill #7).
+ * Empat tab dalam satu rute, berbagi satu pemilih periode (keputusan grill #7).
  * Tab aktif dan periode hidup di query string, jadi tautannya bisa dibagikan
  * dan halaman yang di-refresh tidak kehilangan konteks.
  *
- * Tab **Pendapatan tidak ada** — tabel `invoices` baru lahir di F2.4
- * (keputusan grill #1). Sengaja tidak dirender sama sekali, bukan ditampilkan
- * lalu dinonaktifkan: tab yang mati membuat orang menyangka fiturnya rusak.
+ * Tab **Pendapatan** hanya dirender bila server benar-benar mengirim datanya —
+ * `revenue` bernilai `null` bagi advisor (docs/09 §9.3). Tab yang ditampilkan
+ * lalu dinonaktifkan membuat orang menyangka fiturnya rusak, dan angka yang
+ * dikirim lalu disembunyikan di React bukan pengaman sama sekali (temuan S3).
  */
-export default function LaporanIndex({ period, periodOptions, tab, recap, occupancy, newCustomers }: Props) {
+export default function LaporanIndex({ period, periodOptions, tab, recap, occupancy, newCustomers, revenue }: Props) {
+    const tabs = revenue === null ? TABS : [...TABS, { value: 'pendapatan', label: 'Pendapatan' }];
     const gantiTab = (nilai: string) => {
         router.get(
             route('admin.reports.index'),
@@ -68,7 +74,7 @@ export default function LaporanIndex({ period, periodOptions, tab, recap, occupa
                 <PeriodPicker period={period} options={periodOptions} tab={tab} />
 
                 <div className="border-line flex gap-1 overflow-x-auto border-b" role="tablist">
-                    {TABS.map((item) => (
+                    {tabs.map((item) => (
                         <button
                             key={item.value}
                             type="button"
@@ -186,8 +192,65 @@ export default function LaporanIndex({ period, periodOptions, tab, recap, occupa
                         </section>
                     </div>
                 )}
+
+                {tab === 'pendapatan' && revenue && (
+                    <div className="grid gap-4">
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <Angka
+                                label="Diterbitkan"
+                                text={formatRupiah(revenue.issued_total)}
+                                hint={`${revenue.issued_count} invoice, dihitung dari tanggal terbit`}
+                            />
+                            <Angka
+                                label="Lunas"
+                                text={formatRupiah(revenue.paid_total)}
+                                hint={`${revenue.paid_count} invoice sudah dibayar`}
+                            />
+                            <Angka
+                                label="Belum Dibayar"
+                                text={formatRupiah(revenue.unpaid_total)}
+                                hint={`${revenue.unpaid_count} invoice menunggu pembayaran`}
+                            />
+                        </div>
+
+                        <p className="text-ink-muted max-w-prose text-sm">
+                            Invoice draft dan yang dibatalkan tidak ikut dihitung. Periode diukur terhadap tanggal invoice
+                            diterbitkan, bukan tanggal booking — sehingga tagihan yang belum dibayar tetap terlihat.
+                        </p>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            <RincianUang judul="Per Paket Layanan" rows={revenue.by_package} />
+                            <RincianUang judul="Per Metode Pembayaran" rows={revenue.by_payment_method} />
+                        </div>
+                    </div>
+                )}
             </div>
         </AdminLayout>
+    );
+}
+
+/** Rincian bernilai rupiah — bentuknya sejajar dengan BreakdownList di tab lain. */
+function RincianUang({ judul, rows }: { judul: string; rows: RevenueBreakdownRow[] }) {
+    return (
+        <section className="border-line bg-surface shadow-card rounded-2xl border p-4">
+            <h3 className="mb-3 font-semibold">{judul}</h3>
+
+            {rows.length === 0 ? (
+                <p className="text-ink-muted text-sm">Belum ada invoice pada periode ini.</p>
+            ) : (
+                <dl className="grid gap-2 text-sm">
+                    {rows.map((baris) => (
+                        <div key={baris.label} className="flex items-center justify-between gap-4">
+                            <dt className="text-ink-soft">
+                                {baris.label}
+                                <span className="text-ink-muted ml-2 text-xs">{baris.count}×</span>
+                            </dt>
+                            <dd className="font-semibold tabular-nums">{formatRupiah(baris.total)}</dd>
+                        </div>
+                    ))}
+                </dl>
+            )}
+        </section>
     );
 }
 

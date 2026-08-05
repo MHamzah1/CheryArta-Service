@@ -58,8 +58,17 @@ class ReportFilterRequest extends FormRequest
         ];
     }
 
-    /** @var list<string> */
-    public const TABS = ['rekap', 'okupansi', 'customer'];
+    /**
+     * `pendapatan` ADA di daftar ini meski tab-nya khusus Super Admin.
+     *
+     * Yang ditolak untuk advisor adalah DATANYA, di ReportController lewat
+     * `viewRevenueReport` — bukan bentuk query stringnya. Membuang nilainya di
+     * sini akan mengubah percobaan advisor menjadi "tab tidak dikenali", yaitu
+     * pesan yang salah untuk penolakan yang sebenarnya soal wewenang.
+     *
+     * @var list<string>
+     */
+    public const TABS = ['rekap', 'okupansi', 'customer', 'pendapatan'];
 
     public function period(SlotService $slots): ReportPeriod
     {

@@ -21,10 +21,12 @@ use Inertia\Response;
  * grill #7): pemilih periode dipakai bersama seluruh tab, dan empat rute
  * berarti menyalinnya empat kali.
  *
- * Laporan **Pendapatan tidak ada di sini** — tabel `invoices` baru lahir di
- * F2.4 (keputusan grill #1). Tab-nya tidak dirender sama sekali, bukan
- * ditampilkan lalu dinonaktifkan: menu yang mengantar ke halaman kosong
- * membuat orang menyangka aplikasinya rusak.
+ * Laporan **Pendapatan** ditambahkan di F2.4 sebagai tab keempat. Ia
+ * satu-satunya yang dibatasi Super Admin (docs/09 §9.3), dan pembatasannya
+ * bekerja dengan **tidak mengirim datanya sama sekali** kepada advisor —
+ * bukan mengirim angka lalu menyembunyikan tabnya di React. Prop `revenue`
+ * bernilai `null` bagi advisor, dan halaman yang tidak menerimanya tidak
+ * merender tabnya.
  */
 class ReportController extends Controller
 {
@@ -33,14 +35,24 @@ class ReportController extends Controller
         Gate::authorize('viewReports', Booking::class);
 
         $period = $request->period($slots);
+        $bolehPendapatan = Gate::allows('viewRevenueReport', Booking::class);
 
         return Inertia::render('admin/laporan/index', [
             'period' => $period->toArray(),
             'periodOptions' => ReportPeriod::options(),
-            'tab' => $request->tab(),
+            // Advisor yang mengetik `?tab=pendapatan` dikembalikan ke tab
+            // pertama — bukan dijawab 403. Ia memang berhak membuka halaman
+            // laporan; yang tidak ada baginya hanyalah tab itu.
+            'tab' => $bolehPendapatan ? $request->tab() : $this->tabTanpaPendapatan($request->tab()),
             'recap' => $reports->bookingRecap($period),
             'occupancy' => $reports->occupancy($period),
             'newCustomers' => $reports->newCustomers($period),
+            'revenue' => $bolehPendapatan ? $reports->revenue($period) : null,
         ]);
+    }
+
+    private function tabTanpaPendapatan(string $tab): string
+    {
+        return $tab === 'pendapatan' ? ReportFilterRequest::TABS[0] : $tab;
     }
 }

@@ -144,7 +144,9 @@ Efek langsung: pilihan paket di form booking publik dan estimasi biaya invoice.
 ## A6 — Customer & Kendaraan  (SA, ADV)
 
 **`/admin/customers`** — daftar: nama, email, WA, jumlah kendaraan, jumlah booking, terakhir servis.
-Detail: profil, daftar kendaraan, riwayat booking lengkap, total nilai invoice.
+Detail: profil, daftar kendaraan, riwayat booking lengkap, **total nilai invoice** (dilengkapi di
+F2.4.6; hanya menjumlahkan invoice `issued` + `paid` — `draft` belum pernah ditagihkan dan `void`
+sudah dicabut, memasukkan keduanya membuat angkanya berbohong ke atas).
 Aksi: nonaktifkan akun (SA), reset password (SA), buat booking untuk customer ini (ADV).
 **Tidak ada** aksi hapus permanen.
 
@@ -184,16 +186,29 @@ tombol "nonaktifkan" tidak melakukan apa-apa.
 > disaring `wa=belum` ([A2](#a2--manajemen-booking-adminbookings--sa-adv)) — lihat
 > [08 §8.8](08-notifikasi-whatsapp.md#88-aturan-privasi).
 
-## A8 — Invoice  `/admin/invoices`  (SA, ADV) — ⏳ Big Fase 2
+## A8 — Invoice  `/admin/invoices`  (SA, ADV) — ✅ Tahap 11
 
 | Layar | Isi |
 |-------|-----|
-| Daftar | Nomor, tanggal, customer, kode booking, total, status, aksi |
+| Daftar | Nomor, tanggal terbit, customer, kode booking, total, status; saringan status + pencarian (nomor/kode booking/nama), paginasi 25 |
 | Penyunting | Item jasa & part (deskripsi, qty, harga satuan, subtotal otomatis), diskon, pajak, catatan |
 | Aksi | Simpan draft · Terbitkan · Tandai lunas (+ metode bayar) · Batalkan (void, wajib alasan) · Unduh PDF |
 
-Aturan: invoice `issued` tidak bisa disunting; hanya SA yang boleh mem-`void`. Seluruh perhitungan
-dilakukan di server ([05 §5.6](05-alur-bisnis.md#56-alur-estimasi-biaya--invoice)).
+**Tidak ada tombol "Buat Invoice" di daftar.** Invoice selalu lahir dari sebuah booking yang sudah
+`completed` — otomatis saat statusnya berubah, atau lewat tombol **Buat Invoice** di panel invoice
+pada detail booking. Form invoice kosong akan menghasilkan tagihan tanpa pekerjaan yang bisa
+ditelusuri.
+
+Aturan: invoice `issued` tidak bisa disunting; hanya SA yang boleh mem-`void` (termasuk dari status
+`paid`), dan alasannya wajib. Paket gratis tetap dibuatkan invoice Rp 0. Diskon tidak boleh
+melebihi subtotal, dan menerbitkan menuntut minimal satu item. Seluruh perhitungan dilakukan di
+server ([05 §5.6](05-alur-bisnis.md#56-alur-estimasi-biaya--invoice)).
+
+PDF disusun sebagai Blade view (`resources/views/pdf/invoice.blade.php`) memakai
+`barryvdh/laravel-dompdf`, **tanpa satu pun gambar raster** — kop suratnya teks dari
+`config/company.php`. Ekstensi PHP `gd` tidak terpasang di lingkungan pengembangan dan belum
+terbukti ada di runtime Railway; karena `gd` hanya *suggest* pada dompdf, ketiadaannya tidak
+menjatuhkan `composer install` melainkan baru muncul saat render pertama di produksi.
 
 ## A9 — Laporan & Export  `/admin/laporan`  (SA, ADV melihat; export keduanya) — ✅ F2.1
 
@@ -205,12 +220,24 @@ rentang kustom; bawaan 30 hari, batas 1 tahun dari `config('booking.reports')`).
 | Rekap booking | Per periode: total, per status, per paket, per model mobil | ✅ F2.1 |
 | Okupansi | Rata-rata pemakaian slot per hari & per jam — menunjukkan jam sibuk | ✅ F2.1 |
 | Customer baru | Jumlah registrasi per periode | ✅ F2.1 |
-| Pendapatan | Total invoice `issued`/`paid` per periode (SA saja) | ⏳ **F2.4.7** |
+| Pendapatan | **Tiga angka** per periode: diterbitkan · lunas · belum dibayar (SA saja) | ✅ F2.4.7 |
 
-> **Kenapa Pendapatan menyusul.** Sumbernya tabel `invoices`, yang baru lahir di F2.4.1.
-> Tiga laporan lain tidak bergantung padanya, jadi A9 dibangun tanpa Pendapatan dan tab-nya
-> **tidak dirender sama sekali** — bukan ditampilkan lalu dinonaktifkan, karena tab mati
-> membuat orang menyangka fiturnya rusak.
+> **Pendapatan dikelompokkan menurut `issued_at`**, bukan `paid_at` dan bukan tanggal booking.
+> Memakai tanggal bayar membuat invoice yang belum dibayar tidak muncul di mana pun, sehingga
+> piutang menjadi tak terlihat — justru angka yang paling ingin diketahui pemilik bengkel.
+>
+> Tiga angka, bukan satu: "Rp 12 juta" yang ternyata separuhnya belum masuk kas adalah laporan
+> yang salah dibaca. `belum dibayar` dihitung sebagai **selisih** diterbitkan − lunas, sehingga
+> ketiganya mustahil berselisih satu sama lain. Invoice `draft` dan `void` dikecualikan.
+> Pecahannya ditampilkan per paket layanan dan per metode pembayaran.
+>
+> **Tab-nya tidak dirender untuk advisor**, dan prop `revenue` bernilai `null` baginya — datanya
+> tidak dikirim sama sekali, bukan dikirim lalu disembunyikan di React (temuan S3). Advisor yang
+> mengetik `?tab=pendapatan` dikembalikan ke tab pertama, bukan dijawab 403: ia memang berhak
+> membuka halaman laporan.
+>
+> **Catatan jujur:** advisor tetap melihat total tiap invoice satu per satu di A8, karena ia yang
+> menerbitkannya. Pembatasan di sini soal kemudahan agregat, bukan kerahasiaan angka.
 
 Export mempertahankan kedua fitur sistem lama:
 - **Unduh CSV** — dibuat di server, dialirkan baris demi baris, mengikuti filter yang aktif.
@@ -345,8 +372,8 @@ Menu yang tidak boleh diakses **tidak ditampilkan**, dan tetap ditolak di server
 diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 
 > **Yang dirender selalu hanya menu yang modulnya sudah ada** — bukan
-> ditampilkan-lalu-dinonaktifkan. Sesudah Tahap 10, yang masih belum dirender tinggal **Invoice**
-> (Tahap 11).
+> ditampilkan-lalu-dinonaktifkan. Sejak Tahap 11 **seluruh menu A13 sudah dirender**; Invoice
+> adalah yang terakhir menyusul.
 >
 > "Pesan Masuk" membawa **lencana jumlah belum dibaca**. Angkanya dihitung server dan hanya
 > dikirim untuk Super Admin — peran lain menerima `null`, bukan angka nol, karena jumlah pesan
@@ -363,7 +390,8 @@ diketik langsung — otorisasi tidak pernah bergantung pada UI (temuan S3).
 > rute yang belum ada dibiarkan **merah**, bukan dilewati. Merah di sana adalah daftar pekerjaan
 > yang tersisa, dan uji matriksnya tidak bisa jatuh sebagai korban saat pekerjaan dikejar cepat.
 >
-> Baris template WA menyusul di F2.3.6, baris invoice di F2.4.6.
+> Baris template WA menyusul di F2.3.6, baris invoice di F2.4.6. **Sejak Tahap 11 seluruh baris
+> matriks di bawah sudah punya ujinya.**
 
 | Modul | Super Admin | Service Advisor |
 |-------|-------------|-----------------|

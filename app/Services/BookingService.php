@@ -29,7 +29,10 @@ use Illuminate\Support\Str;
  */
 class BookingService
 {
-    public function __construct(private readonly SlotService $slots) {}
+    public function __construct(
+        private readonly SlotService $slots,
+        private readonly InvoiceService $invoices,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -132,6 +135,19 @@ class BookingService
             // di meja servis (docs/05 §5.3).
             if ($target === BookingStatus::Completed && $terkini->odometer !== null) {
                 $this->perbaruiOdometerKendaraan($terkini);
+            }
+
+            // Invoice draft lahir DI DALAM transaksi ini, bukan sesudahnya
+            // (docs/05 §5.3, keputusan grill Q3). Bila pembuatannya gagal,
+            // statusnya ikut batal berubah — advisor melihat galat, bukan
+            // booking selesai tanpa tagihan yang baru ketahuan akhir bulan.
+            //
+            // Sengaja BERBEDA dari draft WhatsApp, yang justru baru lahir saat
+            // tombolnya ditekan (Tahap 10): draft WA adalah catatan bahwa
+            // seseorang bertindak, sedangkan invoice draft adalah data yang
+            // harus sudah ada untuk disunting.
+            if ($target === BookingStatus::Completed) {
+                $this->invoices->createDraftFor($terkini, $actor);
             }
 
             $this->catatRiwayat($terkini, $asal, $target, $actor, $note);

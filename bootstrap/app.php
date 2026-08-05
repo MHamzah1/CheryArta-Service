@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\InvalidInvoiceTransitionException;
 use App\Exceptions\InvalidStatusTransitionException;
 use App\Exceptions\InvalidWhatsAppTransitionException;
+use App\Exceptions\InvoiceUnavailableException;
 use App\Exceptions\LastSuperAdminException;
 use App\Exceptions\MasterDataInUseException;
 use App\Exceptions\SlotUnavailableException;
@@ -109,6 +111,28 @@ return Application::configure(basePath: dirname(__DIR__))
         // dan bukan 403: advisornya memang berhak menandai pesan booking ini —
         // yang ditolak adalah perpindahan yang sudah tidak ada lagi.
         $exceptions->render(function (InvalidWhatsAppTransitionException $e, Request $request) {
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage()], 422)
+                : back()->with('error', $e->getMessage());
+        });
+
+        // Transisi status invoice yang tidak ada di state machine (docs/05 §5.6).
+        // Alasan 422-nya sama dengan InvalidStatusTransitionException di atas:
+        // yang ditolak perpindahannya, bukan hak si advisor.
+        $exceptions->render(function (InvalidInvoiceTransitionException $e, Request $request) {
+            $errors = [InvalidInvoiceTransitionException::FIELD => [$e->getMessage()]];
+
+            return $request->expectsJson()
+                ? response()->json(['message' => $e->getMessage(), 'errors' => $errors], 422)
+                : back()->withErrors($errors);
+        });
+
+        // Invoice tidak bisa dibuat untuk booking ini: belum selesai, atau
+        // sudah punya invoice yang masih berlaku (keputusan grill Q1 & Q3).
+        // Sejak `booking_id` tidak lagi unik, inilah satu-satunya yang
+        // menangkap tabrakannya — dan pesannya harus menyebut invoice yang
+        // sudah ada, bukan sekadar "gagal".
+        $exceptions->render(function (InvoiceUnavailableException $e, Request $request) {
             return $request->expectsJson()
                 ? response()->json(['message' => $e->getMessage()], 422)
                 : back()->with('error', $e->getMessage());

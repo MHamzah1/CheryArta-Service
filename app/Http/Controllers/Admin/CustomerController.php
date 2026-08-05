@@ -179,9 +179,11 @@ class CustomerController extends Controller
     /**
      * Ringkasan yang dibaca advisor sebelum menerima telepon.
      *
-     * Total nilai invoice sengaja BELUM ada: tabel invoice baru lahir di
-     * F2.3 (docs/10). Menampilkan "Rp 0" untuk sesuatu yang belum dihitung
-     * lebih menyesatkan daripada tidak menampilkannya.
+     * `total_invoice` melunasi janji yang ditinggalkan F1.5 (docs/07 §A6):
+     * angkanya baru bisa dihitung setelah tabel `invoices` lahir di F2.4.
+     * Yang dijumlahkan hanya invoice yang benar-benar menjadi tagihan —
+     * `draft` belum pernah ditagihkan, `void` sudah dicabut, dan memasukkan
+     * keduanya membuat "total belanja pelanggan" berbohong ke atas.
      *
      * @return array<string, int|string|null>
      */
@@ -194,6 +196,12 @@ class CustomerController extends Controller
             'last_service_date' => $customer->bookings()
                 ->where('status', BookingStatus::Completed)
                 ->max('booking_date'),
+            'total_invoice' => number_format(
+                (float) $customer->invoices()->countsAsRevenue()->sum('invoices.total'),
+                2,
+                '.',
+                '',
+            ),
         ];
     }
 }

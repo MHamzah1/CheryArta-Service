@@ -1,4 +1,5 @@
 import { LucideIcon } from 'lucide-react';
+import { type InvoiceStatusValue } from '@/lib/status';
 
 export type UserRole = 'super_admin' | 'service_advisor' | 'customer';
 
@@ -615,6 +616,8 @@ export interface CustomerStats {
     completed_bookings: number;
     upcoming_bookings: number;
     last_service_date: string | null;
+    /** Σ invoice `issued` + `paid` — draft dan void tidak ikut (F2.4.6). */
+    total_invoice: string;
 }
 
 export interface CustomerVehicleRow {
@@ -845,6 +848,120 @@ export interface ActivityLogFilters {
 export interface ActivityLogOption {
     value: string;
     label: string;
+}
+
+/*
+|--------------------------------------------------------------------------
+| A8 — Invoice (docs/07 §A8)
+|--------------------------------------------------------------------------
+|
+| Uang datang sebagai STRING `decimal:2` dari server, bukan number: 12,2 desimal
+| melampaui presisi aman `number` JavaScript, dan yang memformatnya
+| `formatRupiah()` di lib/format.ts — yang memang menerima string.
+|
+| TIDAK ADA total yang dihitung di sisi ini untuk disimpan. Pratinjau di
+| penyunting boleh menjumlah, hasilnya tidak pernah dikirim balik
+| (.claude/rules/20 — temuan invoice).
+|
+*/
+
+export interface InvoiceItem {
+    id: number;
+    type: 'jasa' | 'part';
+    type_label: string;
+    description: string;
+    qty: string;
+    unit_price: string;
+    subtotal: string;
+    sort_order: number;
+}
+
+/** Bentuk paling ringkas — baris daftar dan panel di detail booking. */
+export interface InvoiceSummary {
+    id: number;
+    invoice_number: string | null;
+    status: InvoiceStatusValue;
+    subtotal: string;
+    discount: string;
+    tax: string;
+    total: string;
+    issued_at: string | null;
+    paid_at: string | null;
+    payment_method: string | null;
+    payment_method_label: string | null;
+    void_reason: string | null;
+    created_at: string | null;
+}
+
+export interface AdminInvoiceRow extends InvoiceSummary {
+    booking_code: string;
+    booking_date: string;
+    customer_name: string;
+    vehicle_plate: string;
+}
+
+/** Booking yang menaungi invoice, dalam bentuk yang dipakai kop penyunting. */
+export interface InvoiceBookingContext {
+    booking_code: string;
+    booking_date: string;
+    booking_time: string;
+    package_name: string;
+    vehicle_model: string;
+    vehicle_plate: string;
+    odometer: number | null;
+}
+
+export interface AdminInvoiceDetail extends AdminInvoiceRow {
+    notes: string | null;
+    created_by_name: string | null;
+    items: InvoiceItem[];
+    booking: InvoiceBookingContext & {
+        customer_name: string;
+        customer_phone: string | null;
+    };
+}
+
+/**
+ * Bentuk yang dilihat pemiliknya.
+ *
+ * Sengaja TIDAK memperluas AdminInvoiceRow: `customer_name`, `notes`, dan
+ * `created_by_name` tidak boleh ikut menyeberang (lihat InvoicePresenter).
+ */
+export interface OwnerInvoiceDetail extends InvoiceSummary {
+    items: InvoiceItem[];
+    booking: InvoiceBookingContext;
+}
+
+export interface InvoiceFilters {
+    cari: string | null;
+    status: string | null;
+    dari: string | null;
+    sampai: string | null;
+}
+
+/** Satu baris rincian di laporan Pendapatan (docs/07 §A9). */
+export interface RevenueBreakdownRow {
+    label: string;
+    count: number;
+    total: string;
+}
+
+/**
+ * Laporan Pendapatan — Super Admin saja.
+ *
+ * `null` bagi advisor, BUKAN objek bernilai nol: tab-nya tidak dirender sama
+ * sekali, dan angka nol yang dikirim ke orang yang tidak berhak melihatnya
+ * tetap memberi tahu bahwa laporannya ada.
+ */
+export interface RevenueReport {
+    issued_count: number;
+    issued_total: string;
+    paid_count: number;
+    paid_total: string;
+    unpaid_count: number;
+    unpaid_total: string;
+    by_package: RevenueBreakdownRow[];
+    by_payment_method: RevenueBreakdownRow[];
 }
 
 /** Bentuk paginasi Laravel, dipakai seluruh tabel daftar. */

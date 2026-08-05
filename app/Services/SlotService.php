@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\BookingSource;
 use App\Models\Booking;
 use App\Support\SlotTime;
+use App\Support\TanggalIndonesia;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Config;
 
@@ -92,19 +93,19 @@ class SlotService
     public function dateRejectionReason(CarbonImmutable $date, BookingSource $source = BookingSource::Web): ?string
     {
         if ($this->isClosedOn($date)) {
-            return 'Bengkel tutup pada hari '.$this->namaHari($date).'. Silakan pilih hari lain.';
+            return 'Bengkel tutup pada hari '.TanggalIndonesia::namaHari($date).'. Silakan pilih hari lain.';
         }
 
         $earliest = $this->earliestDate($source);
 
         if ($date->lessThan($earliest)) {
-            return 'Booking paling cepat untuk '.$this->tanggalIndonesia($earliest)
+            return 'Booking paling cepat untuk '.TanggalIndonesia::lengkap($earliest)
                 .'. Pemesanan dibutuhkan minimal H-'.Config::integer('booking.lead_time_days').'.';
         }
 
         if ($date->greaterThan($this->latestDate())) {
             return 'Booking paling jauh '.Config::integer('booking.max_advance_days')
-                .' hari ke depan, yaitu sampai '.$this->tanggalIndonesia($this->latestDate()).'.';
+                .' hari ke depan, yaitu sampai '.TanggalIndonesia::lengkap($this->latestDate()).'.';
         }
 
         return null;
@@ -243,22 +244,5 @@ class SlotService
     private function timezone(): string
     {
         return Config::string('booking.timezone');
-    }
-
-    private function namaHari(CarbonImmutable $date): string
-    {
-        return [
-            'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu',
-        ][$date->dayOfWeek];
-    }
-
-    private function tanggalIndonesia(CarbonImmutable $date): string
-    {
-        $bulan = [
-            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-        ][$date->month - 1];
-
-        return $this->namaHari($date).', '.$date->day.' '.$bulan.' '.$date->year;
     }
 }

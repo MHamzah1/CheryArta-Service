@@ -48,8 +48,11 @@ it('memakai nama yang sama pada nilai contoh dan nilai sungguhan', function () {
     expect($contoh)->toHaveCount(count(WhatsAppPlaceholders::names()));
 });
 
-it('belum menyediakan ringkasan_biaya sampai modul invoice lahir', function () {
-    expect(WhatsAppPlaceholders::names())->not->toContain('ringkasan_biaya');
+it('menyediakan ringkasan_biaya sejak modul invoice lahir', function () {
+    // Dihidupkan di Tahap 11 (roadmap 2.4.8). Sampai saat itu ia SENGAJA
+    // ditolak: placeholder yang sah tetapi selalu kosong membuat Super Admin
+    // menyangka penyuntingnya rusak (keputusan grill Q8 Tahap 10).
+    expect(WhatsAppPlaceholders::names())->toContain('ringkasan_biaya');
 });
 
 it('tidak menyediakan placeholder status yang pernah tertulis di docs/04', function () {
